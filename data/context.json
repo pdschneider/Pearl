@@ -1,0 +1,9 @@
+{
+  "Assistant": ["help", "assist", "question", "info", "general", "assistant"],
+  "Therapist": ["feel", "emotion", "stress", "anxiety", "support", "sad", "happy"],
+  "Financial Advisor": ["budget", "money", "spend", "save", "invest", "debt", "finance", "finances"],
+  "Storyteller": ["story", "tale", "adventure", "imagine", "narrative", "create", "fiction"],
+  "Conspiracy": ["conspiracy", "truth", "hidden", "secret", "government", "plot", "theory", "bilderberg"],
+  "Meditation": ["calm", "relax", "peace", "meditate", "breathe", "mindful", "zen", "mindfulness"],
+  "Motivation": ["motivate", "inspire", "encourage", "goal", "success", "push", "achieve", "motivation", "inspiration"]
+}

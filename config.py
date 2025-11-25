@@ -1,0 +1,149 @@
+# config.py
+
+from tkinter import ttk
+import os, json, sys, logging, platform, shutil
+import themes
+
+os_name = platform.platform()
+is_wine = bool(os.getenv("WINEPREFIX"))
+
+class Globals:
+    """Class to store global variables"""
+    def __init__(self):
+        """Initializes settings variables from load_settings"""
+        settings = load_settings()
+        all_prompts = load_prompts()
+
+        # Variables from settings
+        self.active_model = settings.get("active_model", "llama3.2:3b")
+        self.active_voice = settings.get("active_voice", "af_heart")
+        self.active_prompt = settings.get("active_prompt", "Assistant")
+        self.tts_enabled = settings.get("tts_enabled", False)
+        self.dynamic_mode = settings.get("dynamic_mode", False)
+        self.active_theme = settings.get("active_theme", "cosmic_sky")
+        self.logging_level = settings.get("logging_level", "INFO")
+
+        # UI variables
+        self.root = None
+        self.notebook = None
+        self.model_tree = None
+        self.system_prompt = all_prompts.get(self.active_prompt)
+
+        # Chat Variables
+        self.chat_history = []
+        self.chat_history.append({"role": "system", "content": all_prompts.get(self.active_prompt, {}).get("prompt", "")})
+        self.chat_message = None
+
+        # Other Variables
+        self.theme_var = None
+        self.logging_var = None
+
+def get_data_path(direct=None, filename=None):
+    """
+    Get the path to a writable data folder or a specific file, copying bundled files if needed.
+    
+    Args:
+    direct = The file type to specify its directory, either configuration, persistent user data, or logs.
+    filename = The file name being accessed.
+    
+    """
+    if getattr(sys, 'frozen', False):  # Running as bundled executable
+        if direct == "config":
+            if os_name == "Windows" or is_wine:
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("APPDATA"), "Pearl"))
+            else:
+                persistent_dir = os.path.normpath(os.path.expanduser("~/.config/Pearl"))
+            default_files = ["settings.json", "context.json", "prompts.json", "tts.json"]
+        elif direct == "local":
+            if os_name == "Windows" or is_wine:
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl"))
+            else:
+                persistent_dir = os.path.normpath(os.path.expanduser("~/.local/share/Pearl"))
+            default_files = []
+        else:
+            if os_name == "Windows" or is_wine:
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl", "Cache"))
+            else:
+                persistent_dir = os.path.normpath(os.path.expanduser("~/.cache/Pearl"))
+            default_files = []
+        try:
+            os.makedirs(persistent_dir, exist_ok=True)
+            if not os.access(persistent_dir, os.W_OK):
+                raise PermissionError(f"No write permission for {persistent_dir}")
+        except Exception as e:
+            logging.error(f"Error creating persistent data directory: {e}")
+            raise
+        bundled_dir = os.path.normpath(os.path.join(sys._MEIPASS, "data"))
+        for default_file in default_files:
+            bundled_file = os.path.normpath(os.path.join(bundled_dir, default_file))
+            persistent_file = os.path.normpath(os.path.join(persistent_dir, default_file))
+            if os.path.exists(bundled_file) and not os.path.exists(persistent_file):
+                try:
+                    logging.info(f"Copying {default_file} from {bundled_file} to {persistent_file}")
+                    shutil.copy(bundled_file, persistent_file)
+                except Exception as e:
+                    logging.error(f"Error copying {default_file}: {e}")
+        data_dir = persistent_dir
+    else:  # Running in development
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.normpath(os.path.join(base_dir, "data"))
+        try:
+            os.makedirs(data_dir, exist_ok=True)
+            if not os.access(data_dir, os.W_OK):
+                raise PermissionError(f"No write permission for {data_dir}")
+        except Exception as e:
+            logging.error(f"Error creating data directory: {e}")
+            raise
+    logging.debug(f"Accessing data directory: {data_dir}")
+    return os.path.normpath(os.path.join(data_dir, filename)) if filename else data_dir
+
+def load_settings():
+    try:
+        with open(get_data_path("config", 'settings.json')) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.error(f"Failed to load settings.json due to: {e}.")
+        return {}
+
+def save_settings(**kwargs):
+    """Save settings to settings.json."""
+    settings = load_settings()
+    settings.update(kwargs)
+    file_path = os.path.normpath(get_data_path("config", "settings.json"))
+    try:
+        with open(file_path, 'w') as f:
+            json.dump(settings, f, indent=4)
+        logging.info(f"Saving settings to: {file_path}")
+    except Exception as e:
+        logging.error(f"Error saving settings to {file_path}: {e}")
+
+def load_prompts():
+    try:
+        with open(get_data_path("config", 'prompts.json')) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.error(f"Failed to load prompts.json ({e}), using default prompts")
+        return {"Custom": {"prompt": "", "greeting": "Pearl at your service!"}}
+
+def load_tts():
+    try:
+        with open(get_data_path("config", 'tts.json')) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.error(f"Failed to load tts.json ({e}), returning empty dict")
+        return {}
+
+def apply_theme(name: str) -> None:
+    """Loads the user's chosen theme and applies it to ttk widgets."""
+    if name not in themes.styles:
+        raise KeyError(f"Theme {name} not found.")
+    theme_dict = themes.styles[name]
+    style = ttk.Style()
+    for widget, cfg in theme_dict.items():
+        if isinstance(cfg, dict) and "configure" in cfg:
+            style.configure(widget, **cfg["configure"])
+        if "map" in cfg:
+            style.map(widget, **cfg["map"])
+        else:
+            style.configure(widget, **cfg)
+    ttk.Style().theme_use(style.theme_use())

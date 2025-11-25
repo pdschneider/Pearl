@@ -1,0 +1,10 @@
+{
+    "active_model": "llama3.2:latest",
+    "active_voice": "af_heart",
+    "active_prompt": "Assistant",
+    "tts_enabled": false,
+    "dynamic_mode": false,
+    "logging_level": "INFO",
+    "saved_logging_level": "INFO",
+    "active_theme": "cosmic_sky"
+}
