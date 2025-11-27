@@ -5,6 +5,14 @@ from Connections.ollama import chat_stream
 
 def create_chat_tab(globals):
     """Creates the chat frame for talking with the LLM."""
+
+    # Sets tkinter widgets to inactive status if Ollama isn't found
+    widget_state = None
+    if globals.ollama_active:
+        widget_state = "normal"
+    else:
+        widget_state = "disabled"
+
     chat_frame = ttk.Frame(globals.notebook)
     globals.notebook.add(chat_frame, text="Chat")
 
@@ -22,6 +30,19 @@ def create_chat_tab(globals):
                                          pady=10)
     chat_box.pack(fill="both", expand=True)
 
+    if not globals.ollama_active:
+        chat_box.config(state="normal")
+        chat_box.insert(f"1.0", 
+                        f"To use Pearl's chat feature, Ollama must be installed.\n\n" \
+                        f"Installation instructions:\n\n" \
+                        f"Head to https://ollama.com/download and follow the instructions for your OS.\n\n" \
+                        f"After installing Ollama, you'll need to also download a compatible model.\n\n" \
+                        f"There are many models to choose from,\nbut the recommended model to start is" \
+                        f"llama3.2:latest.\n\n" \
+                        f"Find models here: https://ollama.com/search\n\n" \
+                        f"Have fun!")
+        chat_box.config(state="disabled")
+
     entry_frame = ttk.Frame(chat_frame)
     entry_frame.pack(fill="both", padx=10, pady=5)
 
@@ -29,12 +50,14 @@ def create_chat_tab(globals):
               bg="white",
               fg="black",
               wrap="word",
+              state=widget_state,
               height=5)
     entrybox.grid(row=0, column=0, padx=5, pady=5)
     entrybox.focus_set()
 
     ttk.Button(entry_frame,
                text="Send",
+               state=widget_state,
                style="TButton",
                command=lambda: send_message()).grid(row=0, column=1, padx=5, pady=5)
 

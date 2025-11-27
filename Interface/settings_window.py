@@ -1,5 +1,4 @@
 # Interface/settings_window.py
-import tkinter as tk
 from tkinter import ttk, messagebox
 import logging
 import config

@@ -1,4 +1,5 @@
 # Interface/models_window.py
+import logging
 from tkinter import ttk
 from Connections.ollama import get_all_models, get_loaded_models, unload_model, load_model
 import config
@@ -52,13 +53,15 @@ def create_models_tab(globals):
 
     def refresh_tree():
         model_tree.delete(*model_tree.get_children())
+        try:
+            all_models = get_all_models()
+            loaded_models = set(get_loaded_models())
 
-        all_models = get_all_models()
-        loaded_models = set(get_loaded_models())
-
-        for model in all_models:
-            status = "Yes" if model in loaded_models else "No"
-            model_tree.insert(parent="", index="end", text=model, values=(status),)
-        model_tree.pack(padx=5, pady=5, fill="both", expand=True)
+            for model in all_models:
+                status = "Yes" if model in loaded_models else "No"
+                model_tree.insert(parent="", index="end", text=model, values=(status),)
+            model_tree.pack(padx=5, pady=5, fill="both", expand=True)
+        except Exception as e:
+            logging.error(f"Could not refresh tree due to: {e}.")
 
     refresh_tree()

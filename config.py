@@ -1,7 +1,7 @@
 # config.py
-
 from tkinter import ttk
 import os, json, sys, logging, platform, shutil
+from logging.handlers import TimedRotatingFileHandler
 import themes
 
 os_name = platform.platform()
@@ -37,6 +37,8 @@ class Globals:
         # Other Variables
         self.theme_var = None
         self.logging_var = None
+        self.ollama_active = None
+        self.kokoro_active = None
 
 def get_data_path(direct=None, filename=None):
     """
@@ -147,3 +149,22 @@ def apply_theme(name: str) -> None:
         else:
             style.configure(widget, **cfg)
     ttk.Style().theme_use(style.theme_use())
+
+def setup_logging():
+    """Sets up logging for both the log file as well as standard console output."""
+    logging.getLogger().handlers.clear() # Clears output destinations
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+    logs_dir = os.path.join(get_data_path(direct="cache"), "logs") # Sets up logs folder
+    os.makedirs(logs_dir, exist_ok=True) # Creates the logs folder if it doesn't exist
+
+    # Sets up logging to files
+    logfile_handler = TimedRotatingFileHandler(os.path.join(logs_dir, "pearl.log"), when="midnight", backupCount=100)
+    logfile_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logging.getLogger().addHandler(logfile_handler)
+
+    # Loads correct logging level from settings
+    settings = load_settings()
+    logging.root.setLevel(getattr(logging, settings.get("logging_level", "INFO")))
+    
+    logging.info(f"File and console logging initialized.")

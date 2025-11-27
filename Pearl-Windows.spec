@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-import os
+
 
 a = Analysis(
-    ['InvoiceBuddy.py'],
+    ['pearl.py'],
     pathex=[],
     binaries=[],
     datas=[('data', 'data')],
-    hiddenimports=['openpyxl', 'getpass', 'json', 'shutil', 'watchdog', 'getpass', 'msoffcrypto', 'os', 'csv', 'tkinter', '_tkinter', 'pytesseract', 'pdf2image', 'PIL', 'packaging', 'pkg_resources', 'pdfplumber'],
+    hiddenimports=['tkinter', 'json', 'pygame', 'csv', 'shutil', 'requests', 'string', 'os', 're', 'packaging', 'pkg_resources'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='InvoiceBuddy-Windows',
+    name='Pearl-Windows',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

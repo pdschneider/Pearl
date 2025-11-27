@@ -1,6 +1,16 @@
 # Utils/ollama.py
 import config
-import requests, time, json, logging
+import requests, time, json, logging, socket
+
+def ollama_test():
+    """Tests Ollama to set flag for active/inactive."""
+    try:
+        socket.create_connection(("localhost", 11434), timeout=1).close()
+        logging.info(f"Ollama found!")
+        return True
+    except Exception as e:
+        logging.error(f"Ollama not installed. Chat features unavailable.")
+        return False
 
 def get_all_models():
     """Fetch list of available model names from Ollama API"""

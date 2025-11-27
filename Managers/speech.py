@@ -1,10 +1,20 @@
 # Managers/tts.py
-import json, os, pygame, requests, logging
+import json, os, pygame, requests, logging, socket
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 from io import BytesIO
 from config import Globals
 
 globals = Globals()
+
+def kokoro_test():
+    """Tests Kokoro to set flag for active/inactive."""
+    try:
+        socket.create_connection(("localhost", 8880), timeout=1).close()
+        logging.info(f"Kokokro found!")
+        return True
+    except Exception as e:
+        logging.error(f"Kokoro not installed. TTS features will be unavailable.")
+        return False
 
 def initialize_tts():
     """loads possible Kokoro models"""

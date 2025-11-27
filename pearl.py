@@ -1,10 +1,25 @@
 # pearl.py
-# v0.1.0
+# v0.1.1
+from config import Globals, setup_logging
 from Interface.interface import create_interface
-from config import Globals
+from Connections.ollama import ollama_test
+from Managers.speech import kokoro_test
 
-# Initiates global variables and GUI
+# Sets up logging
+setup_logging()
+
+# Initiates global variables
 globals = Globals()
+
+# Tests dependencies and sets flags
+ollama_success = ollama_test()
+if ollama_success:
+    globals.ollama_active = True
+kokoro_success = kokoro_test()
+if kokoro_success:
+    globals.kokoro_active = True
+
+# Initialize GUI
 create_interface(globals)
 
 # Start the Tkinter main event loop
@@ -13,24 +28,9 @@ globals.root.mainloop()
 """
 Changelog:
 
-- Created wireframe
-- Added Cosmic Sky theme
-- Added Pastel Green theme
-- Ollama functions for model fetching, unloading, and chat
-- Budget script for later implementation
-- TTS script for later implementation
-- Hardware checking script for later implementation
-- Chat page, models page, and settings page
-- Context script for later implementation
-- Added models list treeview
-- Added load and unload buttons to models treeview
-- Added logging
-- Added docstrings to most functions
-- Added logging level setting
-- Corrected file paths for Windows or Linux
-- Added load/unload models buttons
-- Added button for selecting active model
-- Added persistent chat history
-- Added changelog
+- Added requirements.txt
+- Added rotating log files
+- Improved error handling 
+- Added setup instructions for users without Ollama installed
 
 """
