@@ -10,9 +10,35 @@ is_wine = bool(os.getenv("WINEPREFIX"))
 class Globals:
     """Class to store global variables"""
     def __init__(self):
-        """Initializes settings variables from load_settings"""
-        settings = load_settings()
+        """Initializes settings variables from refresh_globals."""
         all_prompts = load_prompts()
+        self.refresh_globals()
+
+        # Temporary Variables
+        self.theme_var = None
+        self.logging_var = None
+        self.tts_var = None
+        self.active_voice_var = None
+
+        # UI variables
+        self.root = None
+        self.notebook = None
+        self.model_tree = None
+
+        # Chat Variables
+        self.chat_history = []
+        self.system_prompt = all_prompts.get(self.active_prompt)
+        self.chat_history.append({"role": "system", "content": all_prompts.get(self.active_prompt, {}).get("prompt", "")})
+        self.chat_message = None
+
+        # Flags
+        self.ollama_active = None
+        self.kokoro_active = None
+
+    def refresh_globals(self):
+        """Reloads all settings from disk and updates the class."""
+        settings = load_settings()
+        self.all_prompts = load_prompts()
 
         # Variables from settings
         self.active_model = settings.get("active_model", "llama3.2:3b")
@@ -22,23 +48,6 @@ class Globals:
         self.dynamic_mode = settings.get("dynamic_mode", False)
         self.active_theme = settings.get("active_theme", "cosmic_sky")
         self.logging_level = settings.get("logging_level", "INFO")
-
-        # UI variables
-        self.root = None
-        self.notebook = None
-        self.model_tree = None
-        self.system_prompt = all_prompts.get(self.active_prompt)
-
-        # Chat Variables
-        self.chat_history = []
-        self.chat_history.append({"role": "system", "content": all_prompts.get(self.active_prompt, {}).get("prompt", "")})
-        self.chat_message = None
-
-        # Other Variables
-        self.theme_var = None
-        self.logging_var = None
-        self.ollama_active = None
-        self.kokoro_active = None
 
 def get_data_path(direct=None, filename=None):
     """
@@ -127,14 +136,6 @@ def load_prompts():
         logging.error(f"Failed to load prompts.json ({e}), using default prompts")
         return {"Custom": {"prompt": "", "greeting": "Pearl at your service!"}}
 
-def load_tts():
-    try:
-        with open(get_data_path("config", 'tts.json')) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logging.error(f"Failed to load tts.json ({e}), returning empty dict")
-        return {}
-
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ttk widgets."""
     if name not in themes.styles:
@@ -154,6 +155,7 @@ def setup_logging():
     """Sets up logging for both the log file as well as standard console output."""
     logging.getLogger().handlers.clear() # Clears output destinations
     logging.basicConfig(level=logging.INFO, format='%(message)s')
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     logs_dir = os.path.join(get_data_path(direct="cache"), "logs") # Sets up logs folder
     os.makedirs(logs_dir, exist_ok=True) # Creates the logs folder if it doesn't exist
@@ -168,3 +170,5 @@ def setup_logging():
     logging.root.setLevel(getattr(logging, settings.get("logging_level", "INFO")))
     
     logging.info(f"File and console logging initialized.")
+
+globals = Globals()

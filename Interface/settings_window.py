@@ -2,6 +2,7 @@
 from tkinter import ttk, messagebox
 import logging
 import config
+from Managers.speech import fetch_tts_models
 
 def create_settings_tab(globals):
     """Creates the settings tab and initializes widgets."""
@@ -27,12 +28,39 @@ def create_settings_tab(globals):
         state="readonly",
         width=18).pack(side="left")
     
+    # TTS Frame
+    tts_frame = ttk.Frame(settings_frame)
+    tts_frame.pack(fill="x", padx=10, pady=10)
+
+    ttk.Label(tts_frame,
+              text="TTS:",
+              style="TLabel").pack(side="left", padx=5)
+    
+    ttk.Checkbutton(tts_frame,
+                    variable=globals.tts_var,
+                    onvalue=True,
+                    offvalue=False,
+                    style="TCheckbutton").pack(side="left", padx=5)
+    
+    if globals.kokoro_active:
+        ttk.Combobox(tts_frame,
+                    textvariable=globals.active_voice_var,
+                    values=fetch_tts_models(),
+                    style="TCombobox",
+                    state="readonly",
+                    width=18).pack(side="left", padx=5)
+
+    # Advanced Frame
     advanced_frame = ttk.Frame(settings_frame)
     advanced_frame.pack(anchor="w", pady=5)
 
+    ttk.Label(advanced_frame,
+              text="Advanced",
+              style="TLabel").grid(row=1, column=0, padx=5, pady=5)
+
     ttk.Label(advanced_frame, 
              text="Logging Level:", 
-             style="TLabel").grid(row=1, column=0, padx=5, sticky="w")
+             style="TLabel").grid(row=2, column=0, padx=5, sticky="w")
     
     levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     col = 1
@@ -41,7 +69,7 @@ def create_settings_tab(globals):
                        text=level, 
                        value=level, 
                        variable=globals.logging_var, 
-                       style="TRadiobutton").grid(row=1, column=col, padx=5, sticky="w")
+                       style="TRadiobutton").grid(row=2, column=col, padx=5, sticky="w")
         col += 1
 
     # Save Button Frame
@@ -66,6 +94,8 @@ def save_all_settings(globals):
     current_logging_level = globals.logging_var.get()
     saved_logging_level = settings.get("saved_logging_level", "INFO")
     current_active_theme = globals.theme_var.get()
+    current_tts = globals.tts_var.get()
+    current_active_voice = globals.active_voice_var.get()
 
     # Handle logging level based on dev mode change
     logging_level = current_logging_level
@@ -75,12 +105,19 @@ def save_all_settings(globals):
     config.save_settings(
     logging_level=logging_level,
     saved_logging_level=saved_logging_level,
-    active_theme=current_active_theme)
+    active_theme=current_active_theme,
+    tts_enabled = current_tts,
+    active_voice = current_active_voice)
     
+    # Refresh Globals
+    globals.refresh_globals()
+
     # Reload settings to update globals
     settings = config.load_settings()
     globals.logging_var.set(settings["logging_level"])
     globals.theme_var.set(settings["active_theme"])
+    globals.tts_var.set(settings["tts_enabled"])
+    globals.active_voice_var.set(settings["active_voice"])
 
     # Update logging
     logging.root.setLevel(getattr(logging, settings["logging_level"]))

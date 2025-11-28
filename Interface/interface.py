@@ -38,6 +38,8 @@ def create_interface(globals):
         """Initiates critical UI functionality."""
         globals.logging_var = tk.StringVar(value=globals.logging_level)
         globals.theme_var = tk.StringVar(value=globals.active_theme)
+        globals.tts_var = tk.BooleanVar(value=globals.tts_enabled)
+        globals.active_voice_var = tk.StringVar(value=globals.active_voice)
 
         create_chat_tab(globals)
         create_models_tab(globals)

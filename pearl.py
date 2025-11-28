@@ -1,15 +1,12 @@
 # pearl.py
-# v0.1.1
-from config import Globals, setup_logging
+# v0.1.2
+from config import globals, setup_logging
 from Interface.interface import create_interface
 from Connections.ollama import ollama_test
 from Managers.speech import kokoro_test
 
 # Sets up logging
 setup_logging()
-
-# Initiates global variables
-globals = Globals()
 
 # Tests dependencies and sets flags
 ollama_success = ollama_test()
@@ -28,9 +25,9 @@ globals.root.mainloop()
 """
 Changelog:
 
-- Added requirements.txt
-- Added rotating log files
-- Improved error handling 
-- Added setup instructions for users without Ollama installed
+- Skips intitial Ollama API requests when Ollama is not found, speeding up loading on systems without Ollama.
+- Added TTS (requires Kokoro)
+- Suppressed requests debug log messages
+- Added dynamic settings updates
 
 """

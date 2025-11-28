@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import scrolledtext, ttk
 from Connections.ollama import chat_stream
+from Managers.speech import speak_text
 
 def create_chat_tab(globals):
     """Creates the chat frame for talking with the LLM."""
@@ -37,7 +38,7 @@ def create_chat_tab(globals):
                         f"Installation instructions:\n\n" \
                         f"Head to https://ollama.com/download and follow the instructions for your OS.\n\n" \
                         f"After installing Ollama, you'll need to also download a compatible model.\n\n" \
-                        f"There are many models to choose from,\nbut the recommended model to start is" \
+                        f"There are many models to choose from,\nbut the recommended starting model is" \
                         f"llama3.2:latest.\n\n" \
                         f"Find models here: https://ollama.com/search\n\n" \
                         f"Have fun!")
@@ -84,6 +85,8 @@ def create_chat_tab(globals):
             chat_box.update_idletasks()
         globals.chat_history.append({"role": "assistant", "content": assistant_reply})
         append_to_chat(f"\n\n")
+        if globals.kokoro_active and globals.tts_enabled == True:
+            speak_text(assistant_reply, globals.active_voice)
 
     entrybox.bind("<Return>", lambda e: send_message() if not e.state & 1 else "break")
     entrybox.bind("<Shift-Return>", lambda e: "break")

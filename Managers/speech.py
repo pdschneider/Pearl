@@ -1,5 +1,5 @@
 # Managers/tts.py
-import json, os, pygame, requests, logging, socket
+import os, pygame, requests, logging, socket
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 from io import BytesIO
 from config import Globals
@@ -16,13 +16,18 @@ def kokoro_test():
         logging.error(f"Kokoro not installed. TTS features will be unavailable.")
         return False
 
-def initialize_tts():
+def fetch_tts_models():
     """loads possible Kokoro models"""
     try:
-        with open(globals.resource_path(os.path.join(globals.data_dir, 'tts.json'))) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logging.error(f"ERROR: Failed to load tts.json ({e}), returning empty dict")
+        voices = requests.get("http://localhost:8880/v1/audio/voices")
+        if voices.status_code == 200:
+            logging.info(f"Kokoro voices fetch succeeded. Returning voices dictionary.")
+            return voices.json()["voices"]
+        else:
+            logging.error(f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
+            return {}
+    except Exception as e:
+        logging.error(f"Failed to load voices due to {e}. Returning empty dictionary.")
         return {}
 
 def speak_text(text, voice):
@@ -37,6 +42,7 @@ def speak_text(text, voice):
             "response_format": "wav"
         })
         if response.status_code == 200:
+            logging.debug(f"status code: {response.status_code}. Playing TTS.")
             audio_data = BytesIO(response.content)
             sound = pygame.mixer.Sound(audio_data)
             sound.play()
