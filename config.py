@@ -30,6 +30,8 @@ class Globals:
         self.system_prompt = all_prompts.get(self.active_prompt)
         self.chat_history.append({"role": "system", "content": all_prompts.get(self.active_prompt, {}).get("prompt", "")})
         self.chat_message = None
+        self.assistant_message = ""
+        self.markdown_tag = "assistant"
 
         # Flags
         self.ollama_active = None

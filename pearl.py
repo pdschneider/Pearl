@@ -1,5 +1,5 @@
 # pearl.py
-# v0.1.2
+# v0.1.3
 from config import globals, setup_logging
 from Interface.interface import create_interface
 from Connections.ollama import ollama_test
@@ -25,9 +25,9 @@ globals.root.mainloop()
 """
 Changelog:
 
-- Skips intitial Ollama API requests when Ollama is not found, speeding up loading on systems without Ollama.
-- Added TTS (requires Kokoro)
-- Suppressed requests debug log messages
-- Added dynamic settings updates
+- Updated fonts for Windows users
+- Removed unused query_ollama function
+- Added support for markdown italics, bold, and strikethrough
+- Improved TTS by removing italics, bold, and strikethrough markdown from speech
 
 """

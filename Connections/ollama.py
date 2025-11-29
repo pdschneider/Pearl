@@ -101,16 +101,3 @@ def chat_stream(model, messages):
         yield "Ollama timed out\n"
     except Exception as e:
         yield f"Error: {e}\n"
-
-def query_ollama(model, prompt, active_voice, speak_text):
-    """Generate response with optional TTS"""
-    tts_enabled = config.settings.get("tts_enabled", True)
-    if tts_enabled:
-        full_response = ""
-        for chunk in chat_stream(model, prompt):
-            full_response += chunk
-            yield chunk
-        speak_text(full_response, active_voice)
-    else:
-        for chunk in chat_stream(model, prompt):
-            yield chunk

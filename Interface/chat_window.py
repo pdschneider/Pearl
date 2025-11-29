@@ -1,8 +1,10 @@
 # Interface/chat_window.py
 import tkinter as tk
 from tkinter import scrolledtext, ttk
+import logging
 from Connections.ollama import chat_stream
 from Managers.speech import speak_text
+import themes
 
 def create_chat_tab(globals):
     """Creates the chat frame for talking with the LLM."""
@@ -23,13 +25,26 @@ def create_chat_tab(globals):
     chat_box = scrolledtext.ScrolledText(text_frame,
                                          wrap=tk.WORD,
                                          state="disabled",
-                                         font=("Ubuntu", 10),
+                                         font=(themes.body_font, 10),
                                          bg="white",
                                          fg="black",
                                          relief="flat",
                                          padx=10,
                                          pady=10)
     chat_box.pack(fill="both", expand=True)
+
+    # Rich Text
+    chat_box.tag_config("user",      font=(themes.body_font), justify="left")
+    chat_box.tag_config("assistant", font=(themes.body_font))
+    chat_box.tag_config("you",       font=(themes.body_font), justify="left")
+    chat_box.tag_config("timestamp", font=(themes.mono_font))
+    chat_box.tag_config("error",     font=(themes.mono_font))
+
+    # Markdown
+    chat_box.tag_config("markdown_bold",   font=(themes.body_font, 11, "bold"))
+    chat_box.tag_config("markdown_italic", font=(themes.body_font, 11, "italic"))
+    chat_box.tag_config("markdown_bold_italic", font=(themes.body_font, 11, "bold", "italic"))
+    chat_box.tag_config("markdown_strike", font=(themes.body_font, 11, "overstrike"))
 
     if not globals.ollama_active:
         chat_box.config(state="normal")
@@ -63,30 +78,131 @@ def create_chat_tab(globals):
                command=lambda: send_message()).grid(row=0, column=1, padx=5, pady=5)
 
     # Chat Functions
-    def append_to_chat(text=""):
-        """Appends messages to the chat box."""
-        chat_box.config(state="normal")
-        chat_box.insert("end", text)
-        chat_box.config(state="disabled")
-        chat_box.see("end")
-
     def send_message(event=None):
         """Sends queries to the LLM."""
+        globals.markdown_tag = None
+        globals.assistant_message = ""
         message = entrybox.get("1.0", "end").strip()
         if not message:
             return
-        append_to_chat("You: " + message + "\n\n")
+        append_to_chat("You: ", "you")
+        append_to_chat(message + "\n\n", "user")
+
+        #Create markers for markdown
+        chat_box.mark_set("assistant_start", "end-1c")
+        chat_box.mark_gravity("assistant_start", "left")
+
         entrybox.delete("1.0", "end")
         globals.chat_history.append({"role": "user", "content": message})
-        assistant_reply = ""
         for chunk in chat_stream(globals.active_model, globals.chat_history + [{"role": "user", "content": message}]):
-            assistant_reply += chunk
-            append_to_chat(chunk)
+            globals.assistant_message += chunk
+            append_with_markdown(chunk)
             chat_box.update_idletasks()
-        globals.chat_history.append({"role": "assistant", "content": assistant_reply})
+        globals.chat_history.append({"role": "assistant", "content": globals.assistant_message})
         append_to_chat(f"\n\n")
         if globals.kokoro_active and globals.tts_enabled == True:
-            speak_text(assistant_reply, globals.active_voice)
+            globals.assistant_message = globals.assistant_message.replace("***", "").replace("___", "").replace("**", "").replace("__", "").replace("*", "").replace("_", "").replace("~~", "")
+            speak_text(globals.assistant_message, globals.active_voice)
+
+    def append_to_chat(text="", tag=None):
+        """Appends messages to the chat box."""
+        chat_box.config(state="normal")
+        chat_box.insert("end", text, tag)
+        chat_box.config(state="disabled")
+        chat_box.see("end")
+
+    def append_with_markdown(chunk=""):
+        """Appends assistant messages to chat box with markdown."""
+        chat_box.config(state="normal")
+        clean_chunk = chunk.strip()
+        if (clean_chunk.startswith("***") or 
+            clean_chunk.endswith("***") or 
+            clean_chunk.startswith("___") or 
+            clean_chunk.endswith("___")) and globals.markdown_tag != "markdown_bold_italic":
+            globals.markdown_tag = "markdown_bold_italic"
+            chunk = chunk.replace("***", "").replace("___", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.info(f"Markdown flag set to bold italic")
+            return
+        elif (clean_chunk.startswith("***") or 
+              clean_chunk.endswith("***") or 
+              clean_chunk.startswith("___") or 
+              clean_chunk.endswith("___")) and globals.markdown_tag == "markdown_bold_italic":
+            globals.markdown_tag = "assistant"
+            chunk = chunk.replace("***", "").replace("___", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.debug(f"Markdown flag set back to assistant")
+            return
+        elif (clean_chunk.startswith("**") or 
+              clean_chunk.endswith("**") or 
+              clean_chunk.startswith("__") or 
+              clean_chunk.endswith("__")) and globals.markdown_tag != "markdown_bold":
+            globals.markdown_tag = "markdown_bold"
+            chunk = chunk.replace("**", "").replace("__", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.info(f"Markdown flag set to bold")
+            return
+        elif (clean_chunk.startswith("**") or 
+              clean_chunk.endswith("**") or 
+              clean_chunk.startswith("__") or 
+              clean_chunk.endswith("__")) and globals.markdown_tag == "markdown_bold":
+            globals.markdown_tag = "assistant"
+            chunk = chunk.replace("**", "").replace("__", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.debug(f"Markdown flag set back to assistant")
+            return
+        elif (clean_chunk.startswith("*") or 
+              clean_chunk.endswith("*") or 
+              clean_chunk.startswith("_") or 
+              clean_chunk.endswith("_")) and globals.markdown_tag != "markdown_italic":
+            globals.markdown_tag = "markdown_italic"
+            chunk = chunk.replace("*", "").replace("_", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.info(f"Markdown flag set to italic")
+            return
+        elif (clean_chunk.startswith("*") or 
+              clean_chunk.endswith("*") or 
+              clean_chunk.startswith("_") or 
+              clean_chunk.endswith("_")) and globals.markdown_tag == "markdown_italic":
+            globals.markdown_tag = "assistant"
+            chunk = chunk.replace("*", "").replace("_", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.debug(f"Markdown flag set back to assistant")
+            return
+        elif (clean_chunk.startswith("~~") or 
+              clean_chunk.endswith("~~")) and globals.markdown_tag != "markdown_strike":
+            globals.markdown_tag = "markdown_strike"
+            chunk = chunk.replace("~~", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.info(f"Markdown flag set to strike")
+            return
+        elif (clean_chunk.startswith("~~") or 
+              clean_chunk.endswith("~~")) and globals.markdown_tag == "markdown_strike":
+            globals.markdown_tag = "assistant"
+            chunk = chunk.replace("~~", "")
+            if chunk != "":
+                chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+            logging.debug(f"Markdown flag set back to assistant")
+            return
+        else:
+            chat_box.insert("end", chunk, globals.markdown_tag)
+            chat_box.config(state="disabled")
+        chat_box.see("end")
 
     entrybox.bind("<Return>", lambda e: send_message() if not e.state & 1 else "break")
     entrybox.bind("<Shift-Return>", lambda e: "break")
