@@ -15,8 +15,8 @@ def create_interface(globals):
     screen_height = globals.root.winfo_screenheight()
     x = (screen_width - 900) // 2
     y = (screen_height - 850) // 2
-    globals.root.geometry(f"900x850+{x}+{y}")
-    globals.root.minsize(width="850", height="675")
+    globals.root.geometry(f"850x850+{x}+{y}")
+    globals.root.minsize(width="750", height="675")
 
     # String Vars
     globals.chat_message = tk.StringVar()
@@ -40,6 +40,7 @@ def create_interface(globals):
         globals.theme_var = tk.StringVar(value=globals.active_theme)
         globals.tts_var = tk.BooleanVar(value=globals.tts_enabled)
         globals.active_voice_var = tk.StringVar(value=globals.active_voice)
+        globals.tts_source_var = tk.StringVar(value=globals.tts_source)
 
         create_chat_tab(globals)
         create_models_tab(globals)

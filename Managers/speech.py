@@ -1,11 +1,19 @@
 # Managers/tts.py
-import os, pygame, requests, logging, socket
+import os, pygame, requests, logging, socket, pyttsx3
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 from io import BytesIO
 from config import Globals
 
 globals = Globals()
 
+# Default TTS
+def default_speak(text: str):
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+    engine.stop()
+
+# Kokoro
 def kokoro_test():
     """Tests Kokoro to set flag for active/inactive."""
     try:
@@ -30,7 +38,7 @@ def fetch_tts_models():
         logging.error(f"Failed to load voices due to {e}. Returning empty dictionary.")
         return {}
 
-def speak_text(text, voice):
+def kokoro_speak(text, voice):
     """Communicates with the Kokoro endpoint for tts"""
     try:
         if not pygame.mixer.get_init():

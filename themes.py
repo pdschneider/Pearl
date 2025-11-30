@@ -1,5 +1,4 @@
 # themes.py
-
 import platform
 os_name = platform.platform()
 
@@ -62,6 +61,21 @@ styles = {
                 "foreground": "white",
                 "font": body_font,
                 "padding": (10, 5),
+                "relief": "raised",
+                "focuscolor": "red",
+                "bordercolor": "darkblue",
+                "lightcolor": "lightblue",
+                "darkcolor": "darkblue"
+            }
+        },
+        "TSendbutton.TButton": {
+            "configure": {
+                "background": teal,
+                "foreground": "white",
+                "font": body_font,
+                "padding": (10, 5),
+                "relief": "raised",
+                "width": 2,
                 "focuscolor": "red",
                 "bordercolor": "darkblue",
                 "lightcolor": "lightblue",
@@ -141,12 +155,27 @@ styles = {
                 "foreground": "white",
                 "font": body_font,
                 "padding": (10, 5),
+                "relief": "raised",
                 "focuscolor": clementine,
                 "bordercolor": clementine,
                 "lightcolor": clementine,
                 "darkcolor": clementine
                 }
             },
+        "TSendbutton": {
+            "configure": {
+                "background": clementine,
+                "foreground": "white",
+                "font": body_font,
+                "padding": (10, 5),
+                "relief": "raised",
+                "width": 1,
+                "focuscolor": clementine,
+                "bordercolor": clementine,
+                "lightcolor": clementine,
+                "darkcolor": clementine
+                }
+        },
         "TEntry": {
             "configure": {
                 "background": mint,

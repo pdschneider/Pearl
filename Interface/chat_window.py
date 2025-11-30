@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import scrolledtext, ttk
 import logging
 from Connections.ollama import chat_stream
-from Managers.speech import speak_text
+from Managers.speech import kokoro_speak, default_speak
 import themes
 
 def create_chat_tab(globals):
@@ -53,7 +53,7 @@ def create_chat_tab(globals):
                         f"Installation instructions:\n\n" \
                         f"Head to https://ollama.com/download and follow the instructions for your OS.\n\n" \
                         f"After installing Ollama, you'll need to also download a compatible model.\n\n" \
-                        f"There are many models to choose from,\nbut the recommended starting model is" \
+                        f"There are many models to choose from,\nbut the recommended starting model is " \
                         f"llama3.2:latest.\n\n" \
                         f"Find models here: https://ollama.com/search\n\n" \
                         f"Have fun!")
@@ -68,14 +68,14 @@ def create_chat_tab(globals):
               wrap="word",
               state=widget_state,
               height=5)
-    entrybox.grid(row=0, column=0, padx=5, pady=5)
+    entrybox.pack(side="left", padx=5, pady=5, fill="x", expand=True)
     entrybox.focus_set()
 
     ttk.Button(entry_frame,
-               text="Send",
+               text="➤",
                state=widget_state,
-               style="TButton",
-               command=lambda: send_message()).grid(row=0, column=1, padx=5, pady=5)
+               style="TSendbutton.TButton",
+               command=lambda: send_message()).pack(side="left", padx=5, pady=5)
 
     # Chat Functions
     def send_message(event=None):
@@ -100,9 +100,12 @@ def create_chat_tab(globals):
             chat_box.update_idletasks()
         globals.chat_history.append({"role": "assistant", "content": globals.assistant_message})
         append_to_chat(f"\n\n")
-        if globals.kokoro_active and globals.tts_enabled == True:
-            globals.assistant_message = globals.assistant_message.replace("***", "").replace("___", "").replace("**", "").replace("__", "").replace("*", "").replace("_", "").replace("~~", "")
-            speak_text(globals.assistant_message, globals.active_voice)
+        globals.assistant_message = globals.assistant_message.replace("***", "").replace("___", "").replace("**", "").replace("__", "").replace("*", "").replace("_", "").replace("~~", "")
+        if globals.kokoro_active and globals.tts_enabled == True and globals.tts_source == "kokoro":
+            kokoro_speak(globals.assistant_message, globals.active_voice)
+        elif globals.tts_enabled == True and globals.tts_source == "default":
+            default_speak(globals.assistant_message)
+        
 
     def append_to_chat(text="", tag=None):
         """Appends messages to the chat box."""
@@ -204,5 +207,15 @@ def create_chat_tab(globals):
             chat_box.config(state="disabled")
         chat_box.see("end")
 
-    entrybox.bind("<Return>", lambda e: send_message() if not e.state & 1 else "break")
-    entrybox.bind("<Shift-Return>", lambda e: "break")
+    def upon_enter():
+        """Triggerrs send message and prevents additional lines in the entry box upon pressing enter"""
+        send_message()
+        return "break"
+    
+    def upon_shift_enter():
+        """Ensures Shift+Enter creates a new line in the entry box and nothing more"""
+        entrybox.insert(tk.INSERT, "\n")
+        return "break"
+
+    entrybox.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
+    entrybox.bind("<Shift-Return>", lambda e: upon_shift_enter())

@@ -1,5 +1,4 @@
 # Utils/ollama.py
-import config
 import requests, time, json, logging, socket
 
 def ollama_test():
@@ -9,7 +8,7 @@ def ollama_test():
         logging.info(f"Ollama found!")
         return True
     except Exception as e:
-        logging.error(f"Ollama not installed. Chat features unavailable.")
+        logging.error(f"Ollama not installed. Chat features unavailable. Error: {e}")
         return False
 
 def get_all_models():

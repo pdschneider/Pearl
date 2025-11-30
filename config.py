@@ -19,6 +19,7 @@ class Globals:
         self.logging_var = None
         self.tts_var = None
         self.active_voice_var = None
+        self.tts_source_var = None
 
         # UI variables
         self.root = None
@@ -36,6 +37,9 @@ class Globals:
         # Flags
         self.ollama_active = None
         self.kokoro_active = None
+        self.ram_found = None
+        self.cpu_found = None
+        self.gpu_found = None
 
     def refresh_globals(self):
         """Reloads all settings from disk and updates the class."""
@@ -47,6 +51,7 @@ class Globals:
         self.active_voice = settings.get("active_voice", "af_heart")
         self.active_prompt = settings.get("active_prompt", "Assistant")
         self.tts_enabled = settings.get("tts_enabled", False)
+        self.tts_source = settings.get("tts_source", "default")
         self.dynamic_mode = settings.get("dynamic_mode", False)
         self.active_theme = settings.get("active_theme", "cosmic_sky")
         self.logging_level = settings.get("logging_level", "INFO")

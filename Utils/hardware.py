@@ -1,21 +1,81 @@
 # Utils/hardware.py
-import subprocess
+import subprocess, logging, psutil
+from themes import os_name
 
-def get_hardware_stats():
-    """Collect system hardware stats (RAM, CPU, GPU)"""
-    with open('/proc/meminfo') as f:
-        meminfo = f.read()
-    total_ram_gb = int(meminfo.split('MemTotal:')[1].split('kB')[0].strip()) / (1024**2)
-    avail_ram_gb = int(meminfo.split('MemAvailable:')[1].split('kB')[0].strip()) / (1024**2)
+def get_ram_info():
+    """Retrieves information about total RAM & active usage"""
+    try:
+        total_ram_gb = psutil.virtual_memory().total / (1024**3)
+        avail_ram_gb = psutil.virtual_memory().available / (1024**3)
+        return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb,}
+    except Exception as e:
+        logging.warning(f"Could not retrieve RAM information: {e}.")
+    if os_name == "Linux":
+        try:
+            with open('/proc/meminfo') as f:
+                meminfo = f.read()
+            total_ram_gb = int(meminfo.split('MemTotal:')[1].split('kB')[0].strip()) / (1024**2)
+            avail_ram_gb = int(meminfo.split('MemAvailable:')[1].split('kB')[0].strip()) / (1024**2)
+            return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb,}
+        except Exception as e:
+            logging.warning(f"Could not retrieve RAM information from /proc/meminfo: {e}.")
+            return {}
+    else:
+        return {}
+
+def get_cpu_info():
+    """Retrieves the number of CPU threads"""
+    try:
+        cpu_threads = psutil.cpu_count(logical=True)
+        return {'cpu_threads': cpu_threads}
+    except Exception as e:
+        logging.warning(f"Unable to retrieve CPU thread count: {e}")
+    if os_name == "Linux":
+        try:
+            with open('/proc/cpuinfo') as f:
+                cpuinfo = f.read()
+            cpu_threads = cpuinfo.count('processor')
+            return {'cpu_threads': cpu_threads}
+        except Exception as e:
+            logging.warning(f"Unable to retrieve CPU thread count from /proc/cpuinfo: {e}")
+            return {}
+    else:
+        return {}
+
+def cpu_temp_info():
+    """Retrieves CPU temperature"""
+    try:
+        temp_output = psutil.sensors_temperatures()
+        # AMD:
+        if 'k10temp' in temp_output:
+            return {'cpu_temp_c': temp_output['k10temp'][0].current}
+        # Intel:
+        if 'coretemp' in temp_output:
+            for entry in temp_output['coretemp']:
+                if 'Package' in entry.label or 'Core 0' in entry.label:
+                    return {'cpu_temp_c': entry.current}
+            return {'cpu_temp_c': temp_output['coretemp'][0].current}
+    except Exception as e:
+        logging.warning(f"Unable to retrieve CPU temperature data: {e}")
+    if os_name == "Linux":
+        try:
+            sensors_output = subprocess.check_output(['sensors']).decode('utf-8') # Uses sensors bash command to pull data from sensors internal Linux file for finding CPU temperature
+            cpu_temp_c = None
+            for line in sensors_output.split('\n'): # Iterates between each line of temp_output
+                if 'Core' in line or 'Tdie' in line or 'Tctl' in line: # Checks for the words Core or Tdie in each line (Tdie is a critical overheating condition)
+                    cpu_temp_c = float(line.split(':')[1].split('°C')[0].strip('+')) # Saves temp as a float, stripping non-numerical characters
+            return {'cpu_temp_c': cpu_temp_c} if cpu_temp_c is not None else {}
+        except Exception as e:
+            logging.warning(f"Unable to retrieve CPU temperature: {e}")
+            return {}
+    else:
+        return {}
     
-    with open('/proc/cpuinfo') as f:
-        cpuinfo = f.read()
-    cpu_threads = cpuinfo.count('processor')
-    
+def get_gpu_info():
     has_llm_gpu = False
     gpu_vram_gb = 0
     gpu_type = "None"
-    
+
     # Check for NVIDIA GPU
     try:
         nvidia_output = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.total', '--format=csv,noheader,nounits']).decode('utf-8').strip()
@@ -23,9 +83,10 @@ def get_hardware_stats():
             gpu_vram_gb = int(nvidia_output.split('\n')[0]) / 1024
             has_llm_gpu = True
             gpu_type = "NVIDIA"
-    except:
+    except Exception as e:
+        logging.warning(f"Unable to retrieve NVIDIA GPU information: {e}.")
         pass
-    
+
     # Check for AMD GPU with ROCm
     if not has_llm_gpu:
         try:
@@ -35,44 +96,24 @@ def get_hardware_stats():
                 gpu_vram_gb = int(vram_line.split()[-2]) / (1024**3)
                 has_llm_gpu = True
                 gpu_type = "AMD with ROCm"
-        except:
+        except Exception as e:
+            logging.warning(f"Unable to retrieve AMD GPU information: {e}.")
             pass
+    return {'has_llm_gpu': has_llm_gpu, 'gpu_vram_gb': gpu_vram_gb, 'gpu_type': gpu_type}
+
+def get_hardware_stats():
+    """Collect system hardware stats (RAM, CPU, GPU)"""
+    ram = get_ram_info()
+    cpu = get_cpu_info()
+    cput = cpu_temp_info()
+    gpu = get_gpu_info()
     
-    return {
-        'avail_ram_gb': avail_ram_gb,
-        'total_ram_gb': total_ram_gb,
-        'cpu_threads': cpu_threads,
-        'has_llm_gpu': has_llm_gpu,
-        'gpu_vram_gb': gpu_vram_gb,
-        'gpu_type': gpu_type
-    }
+    stats = {**ram, **cpu, **cput, **gpu}
+    
+    logging.info("Detected Hardware:")
+    logging.info(f"  - RAM: {stats['avail_ram_gb']:.1f}GB available / {stats['total_ram_gb']:.1f}GB total")
+    logging.info(f"  - CPU Threads: {stats['cpu_threads']}")
+    logging.info(f"  - CPU Temperature: {stats['cpu_temp_c']}°C")
+    logging.info(f"  - LLM-capable GPU: {'Yes' if stats['has_llm_gpu'] else 'No'} ({stats['gpu_type']}, {stats['gpu_vram_gb']:.1f}GB VRAM)")
 
-def select_optimal_variant(base):
-    """Select best model variant based on hardware"""
-    stats = get_hardware_stats()
-    if 'llama' in base.lower():
-        if stats['has_llm_gpu'] and stats['gpu_vram_gb'] >= 8:
-            return "llama3:latest"
-        elif stats['avail_ram_gb'] >= 8 and stats['cpu_threads'] >= 16:
-            return "llama3.2:3b-instruct-q8_0"
-        else:
-            return "llama3.2:latest"
-    return f"{base}:latest"
-
-def initialize_hardware():
-    """Detect hardware and select initial model"""
-    stats = get_hardware_stats()
-    if stats['has_llm_gpu'] and stats['gpu_vram_gb'] >= 8:
-        model_name = "Llama 3"
-        model = "llama3:latest"
-    elif stats['avail_ram_gb'] >= 16 and stats['cpu_threads'] >= 16:
-        model_name = "Llama 3.2 q8"
-        model = "llama3.2:3b-instruct-q8_0"
-    else:
-        model_name = "Llama 3.2 latest"
-        model = "llama3.2:latest"
-    print("Detected Hardware:")
-    print(f"  - RAM: {stats['avail_ram_gb']:.1f}GB available / {stats['total_ram_gb']:.1f}GB total")
-    print(f"  - CPU Threads: {stats['cpu_threads']}")
-    print(f"  - LLM-capable GPU: {'Yes' if stats['has_llm_gpu'] else 'No'} ({stats['gpu_type']}, {stats['gpu_vram_gb']:.1f}GB VRAM)")
-    return model_name, model
+    return stats
