@@ -20,6 +20,7 @@ class Globals:
         self.tts_var = None
         self.active_voice_var = None
         self.tts_source_var = None
+        self.save_chats_var = None
 
         # UI variables
         self.root = None
@@ -55,6 +56,7 @@ class Globals:
         self.dynamic_mode = settings.get("dynamic_mode", False)
         self.active_theme = settings.get("active_theme", "cosmic_sky")
         self.logging_level = settings.get("logging_level", "INFO")
+        self.save_chats = settings.get("save_chats", False)
 
 def get_data_path(direct=None, filename=None):
     """

@@ -7,7 +7,7 @@ def get_ram_info():
     try:
         total_ram_gb = psutil.virtual_memory().total / (1024**3)
         avail_ram_gb = psutil.virtual_memory().available / (1024**3)
-        return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb,}
+        return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb}
     except Exception as e:
         logging.warning(f"Could not retrieve RAM information: {e}.")
     if os_name == "Linux":
@@ -19,9 +19,9 @@ def get_ram_info():
             return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb,}
         except Exception as e:
             logging.warning(f"Could not retrieve RAM information from /proc/meminfo: {e}.")
-            return {}
+            return {'avail_ram_gb': None, 'total_ram_gb': None}
     else:
-        return {}
+        return {'avail_ram_gb': None, 'total_ram_gb': None}
 
 def get_cpu_info():
     """Retrieves the number of CPU threads"""
@@ -38,9 +38,9 @@ def get_cpu_info():
             return {'cpu_threads': cpu_threads}
         except Exception as e:
             logging.warning(f"Unable to retrieve CPU thread count from /proc/cpuinfo: {e}")
-            return {}
+            return {'cpu_threads': None}
     else:
-        return {}
+        return {'cpu_threads': None}
 
 def cpu_temp_info():
     """Retrieves CPU temperature"""
@@ -67,10 +67,33 @@ def cpu_temp_info():
             return {'cpu_temp_c': cpu_temp_c} if cpu_temp_c is not None else {}
         except Exception as e:
             logging.warning(f"Unable to retrieve CPU temperature: {e}")
-            return {}
+            return {'cpu_temp_c': None}
     else:
-        return {}
+        return {'cpu_temp_c': None}
     
+# Currently not functional - needs work
+def get_l3_cache():
+    """Fetches the size of the CPU's l3 cache"""
+    try:
+        output = subprocess.check_output("lscpu", shell=True).decode('utf-8').strip()
+        parts = output.split()
+        l3_size_str = parts[1]  # e.g., '64'
+        l3_unit = parts[2]  # e.g., 'MiB'
+        l3_size = float(l3_size_str)
+        if l3_unit == 'KiB':
+            l3_size_mb = l3_size / 1024
+        elif l3_unit == 'MiB':
+            l3_size_mb = l3_size
+        elif l3_unit == 'GiB':
+            l3_size_mb = l3_size * 1024
+        else:
+            l3_size_mb = 32  # Fallback
+        logging.debug(f"Parsed L3 cache size: {l3_size_mb:.1f} MiB")
+        return {'l3_size': l3_size_mb}
+    except Exception as e:
+        logging.warning(f"Failed to parse L3 cache: {e}, using fallback 8 MiB")
+        return {'l3_size': 8}
+
 def get_gpu_info():
     has_llm_gpu = False
     gpu_vram_gb = 0
@@ -106,14 +129,19 @@ def get_hardware_stats():
     ram = get_ram_info()
     cpu = get_cpu_info()
     cput = cpu_temp_info()
+    l3c = get_l3_cache()
     gpu = get_gpu_info()
     
-    stats = {**ram, **cpu, **cput, **gpu}
+    stats = {**ram, **cpu, **cput, **l3c, **gpu}
     
-    logging.info("Detected Hardware:")
-    logging.info(f"  - RAM: {stats['avail_ram_gb']:.1f}GB available / {stats['total_ram_gb']:.1f}GB total")
-    logging.info(f"  - CPU Threads: {stats['cpu_threads']}")
-    logging.info(f"  - CPU Temperature: {stats['cpu_temp_c']}°C")
-    logging.info(f"  - LLM-capable GPU: {'Yes' if stats['has_llm_gpu'] else 'No'} ({stats['gpu_type']}, {stats['gpu_vram_gb']:.1f}GB VRAM)")
+    try:
+        logging.info("Detected Hardware:")
+        logging.info(f"  - RAM: {stats['avail_ram_gb']:.1f}GB available / {stats['total_ram_gb']:.1f}GB total")
+        logging.info(f"  - CPU Threads: {stats['cpu_threads']}")
+        logging.info(f"  - CPU Temperature: {stats['cpu_temp_c']}°C")
+        # logging.info(f"  - L3 Cache Size: {stats['l3_size']}")
+        logging.info(f"  - LLM-capable GPU: {'Yes' if stats['has_llm_gpu'] else 'No'} ({stats['gpu_type']}, {stats['gpu_vram_gb']:.1f}GB VRAM)")
+    except:
+        pass
 
     return stats

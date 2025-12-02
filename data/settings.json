@@ -7,5 +7,6 @@
     "dynamic_mode": false,
     "logging_level": "INFO",
     "saved_logging_level": "INFO",
-    "active_theme": "cosmic_sky"
+    "active_theme": "cosmic_sky",
+    "save_chats": false
 }

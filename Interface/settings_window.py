@@ -2,7 +2,7 @@
 from tkinter import ttk, messagebox
 import logging
 import config
-from Managers.speech import fetch_tts_models
+from Managers.speech_manager import fetch_tts_models
 
 def create_settings_tab(globals):
     """Creates the settings tab and initializes widgets."""
@@ -13,6 +13,20 @@ def create_settings_tab(globals):
              text="App Settings", 
              anchor="center",
              style="TLabel").pack(fill="x", pady=20, padx=10)
+
+    # General Frame
+    general_frame = ttk.Frame(settings_frame)
+    general_frame.pack(fill="x", padx=10, pady=10)
+
+    ttk.Label(general_frame,
+              text="Save Chats:",
+              style="TLabel").pack(side="left", padx=5)
+    
+    ttk.Checkbutton(general_frame,
+                    variable=globals.save_chats_var,
+                    onvalue=True,
+                    offvalue=False,
+                    style="TCheckbutton").pack(side="left", padx=5)
 
     # Theme Frame
     theme_frame = ttk.Frame(settings_frame)
@@ -84,7 +98,7 @@ def create_settings_tab(globals):
              text="Logging Level:", 
              style="TLabel").grid(row=2, column=0, padx=5, sticky="w")
     
-    levels = ["DEBUG", "INFO", "ERROR", "WARNING", "CRITICAL"]
+    levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     col = 1
     for level in levels:
         ttk.Radiobutton(advanced_frame, 
@@ -119,6 +133,7 @@ def save_all_settings(globals):
     current_tts = globals.tts_var.get()
     current_active_voice = globals.active_voice_var.get()
     current_tts_source = globals.tts_source_var.get()
+    current_save_chats = globals.save_chats_var.get()
 
     # Handle logging level based on dev mode change
     logging_level = current_logging_level
@@ -131,7 +146,8 @@ def save_all_settings(globals):
     active_theme=current_active_theme,
     tts_enabled = current_tts,
     active_voice = current_active_voice,
-    tts_source = current_tts_source)
+    tts_source = current_tts_source,
+    save_chats = current_save_chats)
     
     # Refresh Globals
     globals.refresh_globals()
@@ -143,6 +159,7 @@ def save_all_settings(globals):
     globals.tts_var.set(settings["tts_enabled"])
     globals.active_voice_var.set(settings["active_voice"])
     globals.tts_source_var.set(settings["tts_source"])
+    globals.save_chats_var.set(settings["save_chats"])
 
     # Update logging
     logging.root.setLevel(getattr(logging, settings["logging_level"]))

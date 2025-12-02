@@ -1,9 +1,9 @@
 # pearl.py
-# v0.1.4
+# v0.1.5
 from config import globals, setup_logging
 from Interface.interface import create_interface
 from Connections.ollama import ollama_test
-from Managers.speech import kokoro_test
+from Managers.speech_manager import kokoro_test
 from Utils.hardware import get_hardware_stats
 
 # Sets up logging
@@ -29,9 +29,9 @@ globals.root.mainloop()
 """
 Changelog:
 
-- Added universal cross-platform default TTS
-- UI improvements
-- Queries and logs CPU/RAM/GPU data for logging & error handling
-- General error handling improvements
+- Added threading for more responsive UI during chats
+- Added initial greeting
+- Added model and hardware checks for later implementation
+- Optional save chats toggle
 
 """

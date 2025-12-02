@@ -1,9 +1,10 @@
 # Interface/chat_window.py
 import tkinter as tk
 from tkinter import scrolledtext, ttk
-import logging
+import logging, queue, threading
 from Connections.ollama import chat_stream
-from Managers.speech import kokoro_speak, default_speak
+from Managers.speech_manager import kokoro_speak, default_speak
+from Managers.chat_history import add_message, save_conversation
 import themes
 
 def create_chat_tab(globals):
@@ -34,6 +35,7 @@ def create_chat_tab(globals):
     chat_box.pack(fill="both", expand=True)
 
     # Rich Text
+    chat_box.tag_config("header",    font=(themes.title_font))
     chat_box.tag_config("user",      font=(themes.body_font), justify="left")
     chat_box.tag_config("assistant", font=(themes.body_font))
     chat_box.tag_config("you",       font=(themes.body_font), justify="left")
@@ -58,6 +60,9 @@ def create_chat_tab(globals):
                         f"Find models here: https://ollama.com/search\n\n" \
                         f"Have fun!")
         chat_box.config(state="disabled")
+    if globals.ollama_active:
+        chat_box.config(state="normal")
+        chat_box.insert(f"1.0", "Pearl at your service!\n\n", "header")
 
     entry_frame = ttk.Frame(chat_frame)
     entry_frame.pack(fill="both", padx=10, pady=5)
@@ -80,13 +85,23 @@ def create_chat_tab(globals):
     # Chat Functions
     def send_message(event=None):
         """Sends queries to the LLM."""
+        q = queue.Queue()
+        model = globals.active_model
+        user_text = entrybox.get("1.0", "end").strip()
+        if not user_text:
+            return
+        messages = globals.chat_history + [{"role": "user", "content": user_text}]
+        threading.Thread(target=chat_stream, args=(model, messages, q), daemon=True, name="Chat Stream").start()
+
         globals.markdown_tag = None
         globals.assistant_message = ""
-        message = entrybox.get("1.0", "end").strip()
+        message = user_text
         if not message:
             return
         append_to_chat("You: ", "you")
         append_to_chat(message + "\n\n", "user")
+
+        add_message("user", user_text, combo=None) # Adds user message to chat file
 
         #Create markers for markdown
         chat_box.mark_set("assistant_start", "end-1c")
@@ -94,18 +109,31 @@ def create_chat_tab(globals):
 
         entrybox.delete("1.0", "end")
         globals.chat_history.append({"role": "user", "content": message})
-        for chunk in chat_stream(globals.active_model, globals.chat_history + [{"role": "user", "content": message}]):
-            globals.assistant_message += chunk
-            append_with_markdown(chunk)
-            chat_box.update_idletasks()
-        globals.chat_history.append({"role": "assistant", "content": globals.assistant_message})
-        append_to_chat(f"\n\n")
-        globals.assistant_message = globals.assistant_message.replace("***", "").replace("___", "").replace("**", "").replace("__", "").replace("*", "").replace("_", "").replace("~~", "")
-        if globals.kokoro_active and globals.tts_enabled == True and globals.tts_source == "kokoro":
-            kokoro_speak(globals.assistant_message, globals.active_voice)
-        elif globals.tts_enabled == True and globals.tts_source == "default":
-            default_speak(globals.assistant_message)
-        
+
+        def pull_response():
+            """Pulls the response from Ollama via the thread-safe queue and sends those via item to append_with_markdown"""
+            try:
+                while True:
+                    item = q.get_nowait()
+                    if item is None:
+                        globals.chat_history.append({"role": "assistant", "content": globals.assistant_message})
+                        append_to_chat(f"\n\n")
+                        globals.assistant_message = globals.assistant_message.replace("***", "").replace("___", "").replace("**", "").replace("__", "").replace("*", "").replace("_", "").replace("~~", "")
+                        if globals.kokoro_active and globals.tts_enabled == True and globals.tts_source == "kokoro":
+                            kokoro_speak(globals.assistant_message, globals.active_voice)
+                        elif globals.tts_enabled == True and globals.tts_source == "default":
+                            default_speak(globals.assistant_message)
+                        if globals.save_chats:
+                            add_message("assistant", globals.assistant_message, combo=None) # Adds assistant message to chat file
+                        save_conversation()
+                        return
+                    globals.assistant_message += item
+                    append_with_markdown(item)
+                    chat_box.update_idletasks()
+            except queue.Empty:
+                pass
+            globals.root.after(20, pull_response)
+        pull_response()
 
     def append_to_chat(text="", tag=None):
         """Appends messages to the chat box."""

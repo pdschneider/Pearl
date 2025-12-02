@@ -5,7 +5,7 @@ from Interface.settings_window import create_settings_tab
 from Interface.chat_window import create_chat_tab
 from Interface.models_window import create_models_tab
 from themes import styles
-import config
+from config import apply_theme
 
 def create_interface(globals):
     """Creates the core GUI interface."""
@@ -25,7 +25,7 @@ def create_interface(globals):
     # Configure styles
     style = ttk.Style()
     style.theme_use("clam")
-    config.apply_theme(globals.active_theme)
+    apply_theme(globals.active_theme)
 
     main_frame = ttk.Frame(globals.root)
     main_frame.pack(side="left", fill="both", expand=True)
@@ -41,6 +41,7 @@ def create_interface(globals):
         globals.tts_var = tk.BooleanVar(value=globals.tts_enabled)
         globals.active_voice_var = tk.StringVar(value=globals.active_voice)
         globals.tts_source_var = tk.StringVar(value=globals.tts_source)
+        globals.save_chats_var = tk.BooleanVar(value=globals.save_chats)
 
         create_chat_tab(globals)
         create_models_tab(globals)
