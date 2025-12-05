@@ -2,11 +2,11 @@
     "active_model": "llama3.2:latest",
     "active_voice": "af_heart",
     "active_prompt": "Assistant",
-    "tts_enabled": true,
-    "tts_source": "kokoro",
+    "tts_enabled": false,
+    "tts_source": "default",
     "dynamic_mode": false,
-    "logging_level": "INFO",
-    "saved_logging_level": "INFO",
+    "logging_level": "DEBUG",
+    "saved_logging_level": "DEBUG",
     "active_theme": "cosmic_sky",
     "save_chats": false
 }

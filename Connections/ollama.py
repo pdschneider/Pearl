@@ -40,6 +40,7 @@ def load_model(model):
     payload = {"model": model, "prompt": "", "stream": False, "keep_alive": "30m"}
     try:
         response = requests.post("http://localhost:11434/api/generate", json=payload)
+        logging.debug(f"Sent request to {model}. Response code: {response.status_code}")
         if response.status_code == 200:
             start_time = time.time()
             while time.time() - start_time < 30:
@@ -61,6 +62,7 @@ def unload_model(model):
             start_time = time.time()
             while time.time() - start_time < 10:
                 if model not in get_loaded_models():
+                    logging.info(f"Unloaded {model}")
                     return True
                 time.sleep(0.5)
             logging.info(f"Timeout unloading {model}")

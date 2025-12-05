@@ -136,6 +136,7 @@ def get_hardware_stats():
     
     try:
         logging.info("Detected Hardware:")
+        logging.info(f"  - OS: {os_name}")
         logging.info(f"  - RAM: {stats['avail_ram_gb']:.1f}GB available / {stats['total_ram_gb']:.1f}GB total")
         logging.info(f"  - CPU Threads: {stats['cpu_threads']}")
         logging.info(f"  - CPU Temperature: {stats['cpu_temp_c']}°C")

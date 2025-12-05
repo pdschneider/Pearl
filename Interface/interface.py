@@ -1,37 +1,41 @@
 # Interface/interface.py
 import tkinter as tk
-from tkinter import ttk
-from Interface.settings_window import create_settings_tab
+import customtkinter as ctk
+from Interface.Settings.settings import create_settings
 from Interface.chat_window import create_chat_tab
-from Interface.models_window import create_models_tab
-from themes import styles
+from Interface.Settings.model_settings import create_models_tab
+from Interface.Components.top_bar import create_top_bar
 from config import apply_theme
 
 def create_interface(globals):
     """Creates the core GUI interface."""
-    globals.root = tk.Tk()
+    globals.root = ctk.CTk()
     globals.root.title("Pearl")
     screen_width = globals.root.winfo_screenwidth()
     screen_height = globals.root.winfo_screenheight()
     x = (screen_width - 900) // 2
     y = (screen_height - 850) // 2
     globals.root.geometry(f"850x850+{x}+{y}")
-    globals.root.minsize(width="750", height="675")
+    globals.root.minsize(width=750, height=675)
 
     # String Vars
     globals.chat_message = tk.StringVar()
     globals.chat_message.set("")
 
-    # Configure styles
-    style = ttk.Style()
-    style.theme_use("clam")
+    # Configure theme
     apply_theme(globals.active_theme)
 
-    main_frame = ttk.Frame(globals.root)
-    main_frame.pack(side="left", fill="both", expand=True)
+    # Add Navigation
+    create_top_bar(globals)
 
-    globals.notebook = ttk.Notebook(main_frame)
-    globals.notebook.pack(fill="both", expand=True, padx=10, pady=10)
+    # Main frame
+    globals.main_frame = ctk.CTkFrame(globals.root)
+    globals.main_frame.pack(side="left", fill="both", expand=True)
+
+    globals.settings_overlay = ctk.CTkFrame(globals.root)
+
+    globals.chat_page = ctk.CTkFrame(globals.main_frame)
+    globals.chat_page.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Initiate Tabs
     def create_tabs():
@@ -43,8 +47,7 @@ def create_interface(globals):
         globals.tts_source_var = tk.StringVar(value=globals.tts_source)
         globals.save_chats_var = tk.BooleanVar(value=globals.save_chats)
 
-        create_chat_tab(globals)
-        create_models_tab(globals)
-        create_settings_tab(globals)
+        create_chat_tab(globals, globals.chat_page)
+        create_settings(globals, globals.settings_overlay)
     
     create_tabs()

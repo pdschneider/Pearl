@@ -1,15 +1,15 @@
 # Interface/chat_window.py
 import tkinter as tk
-from tkinter import scrolledtext, ttk
+from tkinter import scrolledtext
+import customtkinter as ctk
 import logging, queue, threading
 from Connections.ollama import chat_stream
 from Managers.speech_manager import kokoro_speak, default_speak
 from Managers.chat_history import add_message, save_conversation
 import themes
 
-def create_chat_tab(globals):
+def create_chat_tab(globals, chat_tab):
     """Creates the chat frame for talking with the LLM."""
-
     # Sets tkinter widgets to inactive status if Ollama isn't found
     widget_state = None
     if globals.ollama_active:
@@ -17,10 +17,7 @@ def create_chat_tab(globals):
     else:
         widget_state = "disabled"
 
-    chat_frame = ttk.Frame(globals.notebook)
-    globals.notebook.add(chat_frame, text="Chat")
-
-    text_frame = ttk.Frame(chat_frame)
+    text_frame = ctk.CTkFrame(chat_tab)
     text_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     chat_box = scrolledtext.ScrolledText(text_frame,
@@ -43,10 +40,10 @@ def create_chat_tab(globals):
     chat_box.tag_config("error",     font=(themes.mono_font))
 
     # Markdown
-    chat_box.tag_config("markdown_bold",   font=(themes.body_font, 11, "bold"))
-    chat_box.tag_config("markdown_italic", font=(themes.body_font, 11, "italic"))
-    chat_box.tag_config("markdown_bold_italic", font=(themes.body_font, 11, "bold", "italic"))
-    chat_box.tag_config("markdown_strike", font=(themes.body_font, 11, "overstrike"))
+    chat_box.tag_config("markdown_bold",   font=(themes.body_font, 14, "bold"))
+    chat_box.tag_config("markdown_italic", font=(themes.body_font, 14, "italic"))
+    chat_box.tag_config("markdown_bold_italic", font=(themes.body_font, 14, "bold", "italic"))
+    chat_box.tag_config("markdown_strike", font=(themes.body_font, 14, "overstrike"))
 
     if not globals.ollama_active:
         chat_box.config(state="normal")
@@ -62,24 +59,26 @@ def create_chat_tab(globals):
         chat_box.config(state="disabled")
     if globals.ollama_active:
         chat_box.config(state="normal")
-        chat_box.insert(f"1.0", "Pearl at your service!\n\n", "header")
 
-    entry_frame = ttk.Frame(chat_frame)
+    entry_frame = ctk.CTkFrame(chat_tab, bg_color="transparent", fg_color="transparent")
     entry_frame.pack(fill="both", padx=10, pady=5)
 
-    entrybox = tk.Text(entry_frame,
-              bg="white",
-              fg="black",
+    entrybox = ctk.CTkTextbox(entry_frame,
+              font=themes.body_font,
               wrap="word",
+              fg_color="white",
               state=widget_state,
-              height=5)
+              corner_radius=20,
+              height=100)
     entrybox.pack(side="left", padx=5, pady=5, fill="x", expand=True)
     entrybox.focus_set()
 
-    ttk.Button(entry_frame,
+    send_button = ctk.CTkButton(entry_frame,
                text="➤",
                state=widget_state,
-               style="TSendbutton.TButton",
+               height=50,
+               width=40,
+               corner_radius=35,
                command=lambda: send_message()).pack(side="left", padx=5, pady=5)
 
     # Chat Functions

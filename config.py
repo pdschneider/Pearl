@@ -1,11 +1,13 @@
 # config.py
-from tkinter import ttk
+import customtkinter as ctk
 import os, json, sys, logging, platform, shutil
 from logging.handlers import TimedRotatingFileHandler
 import themes
 
 os_name = platform.platform()
-is_wine = bool(os.getenv("WINEPREFIX"))
+pyinstaller_bundle = getattr(sys, 'frozen', False)
+if pyinstaller_bundle:
+    logging.info(f"Application built with Pyinstaller.")
 
 class Globals:
     """Class to store global variables"""
@@ -24,8 +26,12 @@ class Globals:
 
         # UI variables
         self.root = None
-        self.notebook = None
+        self.chat_page = None
+        self.tabview = None
         self.model_tree = None
+        self.settings_overlay = None
+        self.top_bar = None
+        self.main_frame = None
 
         # Chat Variables
         self.chat_history = []
@@ -69,24 +75,33 @@ def get_data_path(direct=None, filename=None):
     """
     if getattr(sys, 'frozen', False):  # Running as bundled executable
         if direct == "config":
-            if os_name == "Windows" or is_wine:
+            if os_name.startswith("Windows"):
                 persistent_dir = os.path.normpath(os.path.join(os.getenv("APPDATA"), "Pearl"))
             else:
                 persistent_dir = os.path.normpath(os.path.expanduser("~/.config/Pearl"))
-            default_files = ["settings.json", "context.json", "prompts.json", "tts.json"]
+                if not os_name.startswith("Linux"):
+                    logging.warning(f"OS not found. Defaulting to Linux paths.")
+            default_files = ["settings.json", "context.json", "prompts.json", "tts.json", "themes/cosmic_sky.json", "themes/pastel_green.json", "themes/blazing_red.json", "themes/dark_cloud.json", "themes/soft_light.json"]
         elif direct == "local":
-            if os_name == "Windows" or is_wine:
+            if os_name.startswith("Windows"):
                 persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl"))
             else:
                 persistent_dir = os.path.normpath(os.path.expanduser("~/.local/share/Pearl"))
+                if not os_name.startswith("Linux"):
+                    logging.warning(f"OS not found. Defaulting to Linux paths.")
             default_files = []
         else:
-            if os_name == "Windows" or is_wine:
+            if os_name.startswith("Windows"):
                 persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl", "Cache"))
             else:
                 persistent_dir = os.path.normpath(os.path.expanduser("~/.cache/Pearl"))
+                if not os_name.startswith("Linux"):
+                    logging.warning(f"OS not found. Defaulting to Linux paths.")
             default_files = []
         try:
+            if "themes/" in str(default_files):  # checks if any file has themes/ path
+                themes_dir = os.path.join(persistent_dir, "themes")
+                os.makedirs(themes_dir, exist_ok=True)
             os.makedirs(persistent_dir, exist_ok=True)
             if not os.access(persistent_dir, os.W_OK):
                 raise PermissionError(f"No write permission for {persistent_dir}")
@@ -146,19 +161,13 @@ def load_prompts():
         return {"Custom": {"prompt": "", "greeting": "Pearl at your service!"}}
 
 def apply_theme(name: str) -> None:
-    """Loads the user's chosen theme and applies it to ttk widgets."""
-    if name not in themes.styles:
-        raise KeyError(f"Theme {name} not found.")
-    theme_dict = themes.styles[name]
-    style = ttk.Style()
-    for widget, cfg in theme_dict.items():
-        if isinstance(cfg, dict) and "configure" in cfg:
-            style.configure(widget, **cfg["configure"])
-        if "map" in cfg:
-            style.map(widget, **cfg["map"])
-        else:
-            style.configure(widget, **cfg)
-    ttk.Style().theme_use(style.theme_use())
+    """Loads the user's chosen theme and applies it to ctk widgets."""
+    try:
+        ctk_theme_path = os.path.normpath(os.path.join(get_data_path(direct="config"), f"themes/{globals.active_theme}.json"))
+        ctk.set_default_color_theme(ctk_theme_path)
+        logging.debug(f"CTk theme found at: {ctk_theme_path}")
+    except Exception as e:
+        logging.warning(f"Could not retrieve CTk active theme due to: {e}")
 
 def setup_logging():
     """Sets up logging for both the log file as well as standard console output."""
@@ -170,7 +179,7 @@ def setup_logging():
     os.makedirs(logs_dir, exist_ok=True) # Creates the logs folder if it doesn't exist
 
     # Sets up logging to files
-    logfile_handler = TimedRotatingFileHandler(os.path.join(logs_dir, "pearl.log"), when="midnight", backupCount=100)
+    logfile_handler = TimedRotatingFileHandler(os.path.join(logs_dir, "pearl.log"), when="midnight", backupCount=50)
     logfile_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(logfile_handler)
 
