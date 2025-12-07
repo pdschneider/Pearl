@@ -5,7 +5,13 @@ import logging
 import config
 
 def create_general_settings_tab(globals, general_frame):
-    """Creates the general settings tab and initializes widgets."""
+    """
+    Creates the general settings tab and initializes widgets.
+
+            Parameters:
+                    globals: Global variables
+                    general_frame: The main frame of the general settings window
+    """
 
     ctk.CTkLabel(general_frame, 
              text="General Settings", 
@@ -17,7 +23,7 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkLabel(options_frame,
               text="Save Chats:").pack(side="left", padx=(0, 12))
-    
+
     ctk.CTkCheckBox(options_frame,
                     variable=globals.save_chats_var,
                     onvalue=True,
@@ -46,7 +52,7 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkLabel(advanced_frame, 
              text="Logging Level:").grid(row=2, column=0, padx=5, sticky="w")
-    
+
     levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     col = 1
     for level in levels:

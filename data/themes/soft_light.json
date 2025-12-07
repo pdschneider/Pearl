@@ -67,13 +67,6 @@
         "border_width_checked": 6,
         "text_color_disabled": "#888888"
     },
-    "CTkTreeview": {
-        "bg_color": "#fafafa",
-        "fg_color": "#ffffff",
-        "border_color": "#e0e0e0",
-        "border_width": 1,
-        "text_color": "#212121"
-    },
     "CTkComboBox": {
         "bg_color": "#fafafa",
         "fg_color": "#ffffff",

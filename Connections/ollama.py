@@ -96,6 +96,7 @@ def chat_stream(model, messages, out_q):
                     out_q.put(chunk["message"]["content"])
                 except json.JSONDecodeError:
                     continue
+        logging.debug(f"{model} has finished streaming its response.")
     except requests.ConnectionError:
         out_q.put("Cannot reach Ollama — is it running?\n")
     except requests.Timeout:

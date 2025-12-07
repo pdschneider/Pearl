@@ -2,13 +2,19 @@
 import logging, time
 from tkinter import messagebox
 import customtkinter as ctk
-from Connections.ollama import get_all_models, get_loaded_models, unload_model, load_model
+from Connections.ollama import get_all_models, get_loaded_models, load_model
 from Utils.hardware import get_ram_info
 import config
 from Interface.Components.selector import Treeview
 
 def create_models_tab(globals, models_frame):
-    """Creates the Models tab frame and initializes widgets"""
+    """
+    Creates the Models tab frame and initializes widgets.
+
+            Parameters:
+                    globals: Global variables
+                    models_frame: The main frame of the models settings tab
+    """
 
     model_selector = Treeview(globals, models_frame, get_dir=lambda: get_all_models())
 
@@ -36,17 +42,6 @@ def create_models_tab(globals, models_frame):
             else:
                 logging.debug(f"{model_name} is already loaded!")
 
-    def unload_selected():
-        """Unloads selected model from memory"""
-        logging.debug(f"Attempting to unload model...")
-        sel = model_selector.selection()
-        if not sel:
-            logging.warning(f"No model selected.")
-            return
-        model_name = sel[0]
-        unload_model(model_name)
-        refresh_tree()
-
     def set_selected():
         """Sets selected model as active model"""
         logging.debug(f"Attempting to select model...")
@@ -73,11 +68,12 @@ def create_models_tab(globals, models_frame):
         else:
             logging.debug(f"{globals.active_model} is already the selected model.")
 
+    # Buttons
     buttons_frame = ctk.CTkFrame(models_frame, bg_color="transparent", fg_color="transparent")
     buttons_frame.pack(padx=5, pady=5)
 
     ctk.CTkButton(buttons_frame, text="Load", command=load_selected).grid(row=0, column=0, padx=5)
-    ctk.CTkButton(buttons_frame, text="Select", command=set_selected).grid(row=0, column=2, padx=5)
+    ctk.CTkButton(buttons_frame, text="Select", command=set_selected).grid(row=0, column=1, padx=5)
 
     def refresh_tree():
         if globals.ollama_active:

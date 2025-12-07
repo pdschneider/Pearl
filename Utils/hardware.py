@@ -3,7 +3,7 @@ import subprocess, logging, psutil
 from themes import os_name
 
 def get_ram_info():
-    """Retrieves information about total RAM & active usage"""
+    """Retrieves information about total RAM & active usage."""
     try:
         total_ram_gb = psutil.virtual_memory().total / (1024**3)
         avail_ram_gb = psutil.virtual_memory().available / (1024**3)
@@ -24,7 +24,7 @@ def get_ram_info():
         return {'avail_ram_gb': None, 'total_ram_gb': None}
 
 def get_cpu_info():
-    """Retrieves the number of CPU threads"""
+    """Retrieves the number of CPU threads."""
     try:
         cpu_threads = psutil.cpu_count(logical=True)
         return {'cpu_threads': cpu_threads}
@@ -43,7 +43,7 @@ def get_cpu_info():
         return {'cpu_threads': None}
 
 def cpu_temp_info():
-    """Retrieves CPU temperature"""
+    """Retrieves CPU temperature."""
     try:
         temp_output = psutil.sensors_temperatures()
         # AMD:
@@ -59,21 +59,21 @@ def cpu_temp_info():
         logging.warning(f"Unable to retrieve CPU temperature data: {e}")
     if os_name == "Linux":
         try:
-            sensors_output = subprocess.check_output(['sensors']).decode('utf-8') # Uses sensors bash command to pull data from sensors internal Linux file for finding CPU temperature
+            sensors_output = subprocess.check_output(['sensors']).decode('utf-8')  # Uses sensors bash command to pull data from sensors internal Linux file for finding CPU temperature
             cpu_temp_c = None
-            for line in sensors_output.split('\n'): # Iterates between each line of temp_output
-                if 'Core' in line or 'Tdie' in line or 'Tctl' in line: # Checks for the words Core or Tdie in each line (Tdie is a critical overheating condition)
-                    cpu_temp_c = float(line.split(':')[1].split('°C')[0].strip('+')) # Saves temp as a float, stripping non-numerical characters
+            for line in sensors_output.split('\n'):  # Iterates between each line of temp_output
+                if 'Core' in line or 'Tdie' in line or 'Tctl' in line:  # Checks for the words Core or Tdie in each line (Tdie is a critical overheating condition)
+                    cpu_temp_c = float(line.split(':')[1].split('°C')[0].strip('+'))  # Saves temp as a float, stripping non-numerical characters
             return {'cpu_temp_c': cpu_temp_c} if cpu_temp_c is not None else {}
         except Exception as e:
             logging.warning(f"Unable to retrieve CPU temperature: {e}")
             return {'cpu_temp_c': None}
     else:
         return {'cpu_temp_c': None}
-    
+
 # Currently not functional - needs work
 def get_l3_cache():
-    """Fetches the size of the CPU's l3 cache"""
+    """Fetches the size of the CPU's l3 cache."""
     try:
         output = subprocess.check_output("lscpu", shell=True).decode('utf-8').strip()
         parts = output.split()
@@ -125,15 +125,15 @@ def get_gpu_info():
     return {'has_llm_gpu': has_llm_gpu, 'gpu_vram_gb': gpu_vram_gb, 'gpu_type': gpu_type}
 
 def get_hardware_stats():
-    """Collect system hardware stats (RAM, CPU, GPU)"""
+    """Collect system hardware stats (RAM, CPU, GPU)."""
     ram = get_ram_info()
     cpu = get_cpu_info()
     cput = cpu_temp_info()
     l3c = get_l3_cache()
     gpu = get_gpu_info()
-    
+
     stats = {**ram, **cpu, **cput, **l3c, **gpu}
-    
+
     try:
         logging.info("Detected Hardware:")
         logging.info(f"  - OS: {os_name}")

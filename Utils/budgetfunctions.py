@@ -23,7 +23,7 @@ def read_budget():
     if os.path.exists(budget_file):
         with open(budget_file, 'r') as file:
             reader = csv.reader(file)
-            next(reader)  # Skip header
+            next(reader)  #  Skip header
             for row in reader:
                 amount_str = row[1].strip(' "\t\n\r')
                 budget[row[0]] = float(amount_str)
@@ -54,7 +54,7 @@ def update_budget(category, amount_change=None, new_amount=None):
             budget[category] = float(amount_change)
     else:
         return "Error: No amount specified!"
-    
+
     # Save updated budget
     with open(budget_file, 'w', newline='') as file:
         writer = csv.writer(file)
@@ -77,12 +77,11 @@ def clean_amount(amount_str):
     if not cleaned:
         raise ValueError("No valid number found")
     return cleaned if '.' in cleaned else cleaned + '.0'
-
 def parse_command(command):
     """Parse budget-related commands (add, subtract, set, show)"""
     command = command.lower().strip()
     parts = command.split()
-    
+
     if "add" in parts and "to" in parts:
         try:
             add_index = parts.index("add")
@@ -97,7 +96,7 @@ def parse_command(command):
             return f"Invalid amount: {str(e)}. Please use a number like '$50' or '50'."
         except IndexError:
             return "Invalid add command format. Try 'Add $50 to groceries'."
-    
+
     elif ("subtract" in parts or "remove" in parts) and "from" in parts:
         verb = "subtract" if "subtract" in parts else "remove"
         try:
@@ -113,7 +112,7 @@ def parse_command(command):
             return f"Invalid amount: {str(e)}. Please use a number like '$20' or '20'."
         except IndexError:
             return "Invalid subtract command format. Try 'Subtract $20 from restaurants'."
-    
+
     elif ("change" in parts or "set" in parts) and "to" in parts:
         verb = "change" if "change" in parts else "set"
         try:
@@ -129,8 +128,8 @@ def parse_command(command):
             return f"Invalid amount: {str(e)}. Please use a number like '$300' or '300'."
         except IndexError:
             return "Invalid change command format. Try 'Change groceries to $300'."
-    
+
     elif "show" in parts or "read" in parts:
         return str(read_budget())
-    
+
     return ""

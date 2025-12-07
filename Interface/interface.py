@@ -3,12 +3,17 @@ import tkinter as tk
 import customtkinter as ctk
 from Interface.Settings.settings import create_settings
 from Interface.chat_window import create_chat_tab
-from Interface.Settings.model_settings import create_models_tab
 from Interface.Components.top_bar import create_top_bar
+from Interface.setup_window import create_setup_tab
 from config import apply_theme
 
 def create_interface(globals):
-    """Creates the core GUI interface."""
+    """
+    Creates the core GUI interface.
+
+            Parameters:
+                    globals: Global variables
+    """
     globals.root = ctk.CTk()
     globals.root.title("Pearl")
     screen_width = globals.root.winfo_screenwidth()
@@ -32,10 +37,19 @@ def create_interface(globals):
     globals.main_frame = ctk.CTkFrame(globals.root)
     globals.main_frame.pack(side="left", fill="both", expand=True)
 
-    globals.settings_overlay = ctk.CTkFrame(globals.root)
+    # Window Frames
+    globals.settings_overlay = ctk.CTkFrame(globals.main_frame)
+    globals.settings_overlay.pack_forget()
 
     globals.chat_page = ctk.CTkFrame(globals.main_frame)
     globals.chat_page.pack(fill="both", expand=True, padx=10, pady=10)
+    if not globals.ollama_active:
+        globals.chat_page.pack_forget()
+
+    globals.setup_page = ctk.CTkFrame(globals.main_frame)
+    globals.setup_page.pack(fill="both", expand=True, padx=10, pady=10)
+    if globals.ollama_active:
+        globals.setup_page.pack_forget()
 
     # Initiate Tabs
     def create_tabs():
@@ -49,5 +63,6 @@ def create_interface(globals):
 
         create_chat_tab(globals, globals.chat_page)
         create_settings(globals, globals.settings_overlay)
-    
+        create_setup_tab(globals, globals.setup_page)
+
     create_tabs()

@@ -44,8 +44,7 @@ def kokoro_speak(text, voice):
             "model": "kokoro",
             "input": text,
             "voice": voice,
-            "response_format": "wav"
-        })
+            "response_format": "wav"})
         if response.status_code == 200:
             logging.debug(f"status code: {response.status_code}. Playing TTS.")
             audio_data = BytesIO(response.content)

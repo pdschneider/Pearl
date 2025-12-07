@@ -3,7 +3,7 @@ import config
 import json, os, logging
 
 def load_context():
-    """Load context keywords from JSON file, return empty dict on failure"""
+    """Load context keywords from JSON file, return empty dict on failure."""
     try:
         with open(config.resource_path(os.path.join(config.data_dir, 'context.json'))) as f:
             return json.load(f)
@@ -12,26 +12,26 @@ def load_context():
         return {}
 
 def detect_context(user_input, prompts_dict, context_keywords, current_prompt=None, is_new_conversation=False):
-    """Score prompts based on keyword matches in user input"""
+    """Score prompts based on keyword matches in user input."""
     scores = {name: 0 for name in prompts_dict}
     user_input = user_input.lower()
-    
+
     # Count keyword matches for each prompt
     for prompt_name, keywords in context_keywords.items():
         for keyword in keywords:
             if keyword in user_input:
                 scores[prompt_name] += 1
                 logging.info(f"Added 1 point to {prompt_name} for keyword '{keyword}'")
-    
+
     # Log non-zero scores for debugging
     non_zero_scores = [f"{name}: {score}" for name, score in scores.items() if score > 0]
     if non_zero_scores:
         logging.info("Current points: " + ", ".join(non_zero_scores))
-    
+
     # Set threshold based on conversation state
     threshold = 1 if is_new_conversation else 2
     max_score = max(scores.values())
-    
+
     # Return top-scoring prompt if threshold met
     if max_score >= threshold:
         top_prompts = [name for name, score in scores.items() if score == max_score]
@@ -43,5 +43,5 @@ def detect_context(user_input, prompts_dict, context_keywords, current_prompt=No
         else:
             best_prompt = top_prompts[0]
         return best_prompt, prompts_dict[best_prompt]
-    
+
     return None, None

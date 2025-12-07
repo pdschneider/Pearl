@@ -2,7 +2,6 @@
 import customtkinter as ctk
 import os, json, sys, logging, platform, shutil
 from logging.handlers import TimedRotatingFileHandler
-import themes
 
 os_name = platform.platform()
 pyinstaller_bundle = getattr(sys, 'frozen', False)
@@ -15,6 +14,9 @@ class Globals:
         """Initializes settings variables from refresh_globals."""
         all_prompts = load_prompts()
         self.refresh_globals()
+
+        # Current Version
+        self.current_version = "v0.1.7"
 
         # Temporary Variables
         self.theme_var = None
@@ -30,8 +32,15 @@ class Globals:
         self.tabview = None
         self.model_tree = None
         self.settings_overlay = None
+        self.setup_page = None
         self.top_bar = None
         self.main_frame = None
+        self.assistant_label = None
+        self.theme_path = None
+        self.theme_dict = None
+        self.greeting = "Pearl at your service!"
+        self.ollama_download_tooltip = None
+        self.kokoro_download_tooltip = None
 
         # Chat Variables
         self.chat_history = []
@@ -39,7 +48,6 @@ class Globals:
         self.chat_history.append({"role": "system", "content": all_prompts.get(self.active_prompt, {}).get("prompt", "")})
         self.chat_message = None
         self.assistant_message = ""
-        self.markdown_tag = "assistant"
 
         # Flags
         self.ollama_active = None
@@ -47,6 +55,8 @@ class Globals:
         self.ram_found = None
         self.cpu_found = None
         self.gpu_found = None
+        self.ollama_download_state = None
+        self.kokoro_download_state = None
 
     def refresh_globals(self):
         """Reloads all settings from disk and updates the class."""
@@ -67,11 +77,11 @@ class Globals:
 def get_data_path(direct=None, filename=None):
     """
     Get the path to a writable data folder or a specific file, copying bundled files if needed.
-    
+
     Args:
     direct = The file type to specify its directory, either configuration, persistent user data, or logs.
     filename = The file name being accessed.
-    
+
     """
     if getattr(sys, 'frozen', False):  # Running as bundled executable
         if direct == "config":
@@ -81,7 +91,15 @@ def get_data_path(direct=None, filename=None):
                 persistent_dir = os.path.normpath(os.path.expanduser("~/.config/Pearl"))
                 if not os_name.startswith("Linux"):
                     logging.warning(f"OS not found. Defaulting to Linux paths.")
-            default_files = ["settings.json", "context.json", "prompts.json", "tts.json", "themes/cosmic_sky.json", "themes/pastel_green.json", "themes/blazing_red.json", "themes/dark_cloud.json", "themes/soft_light.json"]
+            default_files = ["settings.json", 
+                             "context.json", 
+                             "prompts.json", 
+                             "tts.json", 
+                             "themes/cosmic_sky.json", 
+                             "themes/pastel_green.json", 
+                             "themes/blazing_red.json", 
+                             "themes/dark_cloud.json", 
+                             "themes/soft_light.json"]
         elif direct == "local":
             if os_name.startswith("Windows"):
                 persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl"))
@@ -163,20 +181,25 @@ def load_prompts():
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ctk widgets."""
     try:
-        ctk_theme_path = os.path.normpath(os.path.join(get_data_path(direct="config"), f"themes/{globals.active_theme}.json"))
-        ctk.set_default_color_theme(ctk_theme_path)
-        logging.debug(f"CTk theme found at: {ctk_theme_path}")
+        globals.theme_path = os.path.normpath(os.path.join(get_data_path(direct="config"), f"themes/{globals.active_theme}.json"))
+        try:
+            with open(globals.theme_path, 'r') as f:
+                globals.theme_dict = json.load(f)
+        except:
+            logging.warning(f"Unable to load theme into dictionary.")
+        ctk.set_default_color_theme(globals.theme_path)
+        logging.debug(f"CTk theme found at: {globals.theme_path}")
     except Exception as e:
         logging.warning(f"Could not retrieve CTk active theme due to: {e}")
 
 def setup_logging():
     """Sets up logging for both the log file as well as standard console output."""
-    logging.getLogger().handlers.clear() # Clears output destinations
+    logging.getLogger().handlers.clear()  # Clears output destinations
     logging.basicConfig(level=logging.INFO, format='%(message)s')
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    logs_dir = os.path.join(get_data_path(direct="cache"), "logs") # Sets up logs folder
-    os.makedirs(logs_dir, exist_ok=True) # Creates the logs folder if it doesn't exist
+    logs_dir = os.path.join(get_data_path(direct="cache"), "logs")  # Sets up logs folder
+    os.makedirs(logs_dir, exist_ok=True)  # Creates the logs folder if it doesn't exist
 
     # Sets up logging to files
     logfile_handler = TimedRotatingFileHandler(os.path.join(logs_dir, "pearl.log"), when="midnight", backupCount=50)
@@ -186,7 +209,7 @@ def setup_logging():
     # Loads correct logging level from settings
     settings = load_settings()
     logging.root.setLevel(getattr(logging, settings.get("logging_level", "INFO")))
-    
+
     logging.info(f"File and console logging initialized.")
 
 globals = Globals()

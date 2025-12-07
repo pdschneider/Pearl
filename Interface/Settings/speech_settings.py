@@ -6,25 +6,31 @@ import config
 from Managers.speech_manager import fetch_tts_models
 
 def create_speech_tab(globals, speech_frame):
-    """Creates the general settings tab and initializes widgets."""
+    """
+    Creates the general settings tab and initializes widgets.
+
+            Parameters:
+                    globals: Global variables
+                    speech_frame: The main frame of the speech settings window.
+    """
 
     ctk.CTkLabel(speech_frame, 
              text="Speech Settings", 
              anchor="center").pack(fill="x", pady=20, padx=10)
-    
+
     # Options Frame
     options_frame = ctk.CTkFrame(speech_frame, bg_color="transparent", fg_color="transparent")
     options_frame.pack(fill="both", padx=10, pady=10)
 
     ctk.CTkLabel(options_frame,
               text="Enable TTS:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    
+
     ctk.CTkCheckBox(options_frame,
                     variable=globals.tts_var,
                     text=None,
                     onvalue=True,
                     offvalue=False).grid(row=0, column=1, padx=5, pady=5, sticky="w")
-    
+
     # Dynamically build the source list
     source_options = ["default"]
     if globals.kokoro_active:
@@ -91,7 +97,7 @@ def save_all_settings(globals):
     active_voice = current_active_voice,
     tts_source = current_tts_source,
     save_chats = current_save_chats)
-    
+
     # Refresh Globals
     globals.refresh_globals()
 
