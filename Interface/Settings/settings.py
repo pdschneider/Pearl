@@ -4,6 +4,7 @@ from Interface.Settings.general_settings import create_general_settings_tab
 from Interface.Settings.model_settings import create_models_tab
 from Interface.Settings.speech_settings import create_speech_tab
 from Interface.Settings.about_settings import create_about_tab
+from Interface.Settings.advanced_settings import create_advanced_tab
 
 def create_settings(globals, settings_frame):
     """
@@ -23,10 +24,12 @@ def create_settings(globals, settings_frame):
         general_tab = globals.settings_notebook.add("General")
         models_tab = globals.settings_notebook.add("Models")
         speech_tab = globals.settings_notebook.add("Speech")
+        advanced_tab = globals.settings_notebook.add("Advanced")
         about_tab = globals.settings_notebook.add("About")
         create_general_settings_tab(globals, general_tab)
         create_models_tab(globals, models_tab)
         create_speech_tab(globals, speech_tab)
+        create_advanced_tab(globals, advanced_tab)
         create_about_tab(globals, about_tab)
 
     create_settings_tabs()

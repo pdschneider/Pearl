@@ -2,8 +2,6 @@
 import logging
 import customtkinter as ctk
 from Connections.ollama import get_all_models, get_loaded_models, unload_model
-if not hasattr(ctk, "CTkScrollableFrame"): #  Checks if CTkScrollableFrame is available
-    logging.critical(f"CTkScrollableFrame missing.")
 
 class Treeview:
     def __init__(self, globals_obj, parent, get_dir=None):

@@ -4,11 +4,14 @@
         "size": 14,
         "weight": "normal"
     },
+    "CTk": {
+        "fg_color": "#1e1e1e"
+    },
     "CTkFrame": {
         "bg_color": "#1e1e1e",
         "fg_color": "#242424",
         "corner_radius": 10,
-        "border_color": "#404040",
+        "border_color": "#242424",
         "border_width": 1,
         "text_color": "#e8e8e8",
         "top_fg_color": "#404040",
@@ -85,7 +88,7 @@
         "border_color": "#555555",
         "corner_radius": 8,
         "border_width": 2,
-        "text_color": "#e8e8e8",
+        "text_color": "#282828",
         "scrollbar_button_color": "#404040",
         "scrollbar_button_hover_color": "#505050"
     },

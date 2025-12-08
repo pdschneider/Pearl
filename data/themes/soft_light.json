@@ -8,7 +8,7 @@
         "bg_color": "#fafafa",
         "fg_color": "#ffffff",
         "corner_radius": 12,
-        "border_color": "#e0e0e0",
+        "border_color": "#fafafa",
         "border_width": 1,
         "text_color": "#212121",
         "top_fg_color": "#e0e0e0",

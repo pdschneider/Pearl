@@ -3,6 +3,7 @@ import threading, queue
 from Connections.ollama import chat_stream
 from Managers.speech_manager import kokoro_speak, default_speak
 from Managers.chat_history import save_conversation, add_message
+from Utils.context import detect_context
 
 # Chat Functions
 def send_message(globals, ui_elements, event=None):
@@ -12,7 +13,9 @@ def send_message(globals, ui_elements, event=None):
     user_text = ui_elements['entrybox'].get("1.0", "end").strip()
     if not user_text:
         return
-    
+
+    detect_context(globals, user_text)
+
     ui_elements["add_bubble"]("user", user_text)
     ui_elements['entrybox'].delete("1.0", "end")
 

@@ -1,52 +1,42 @@
-# Interface/Settings/general_settings.py
-from tkinter import messagebox
+# Interface/Settings/advanced_settings.py
 import customtkinter as ctk
-import logging
+from tkinter import messagebox
 import config
+import logging
 import themes
 
-def create_general_settings_tab(globals, general_frame):
+def create_advanced_tab(globals, advanced_frame):
     """
-    Creates the general settings tab and initializes widgets.
+    Creates the advanced tab and initializes widgets.
 
             Parameters:
                     globals: Global variables
-                    general_frame: The main frame of the general settings window
+                    about_frame: The main frame of the about tab
     """
 
-    ctk.CTkLabel(general_frame, 
-             text="General Settings", 
+    ctk.CTkLabel(advanced_frame, 
+             text="Advanced Settings", 
              font=themes.title_font,
              anchor="center").pack(fill="x", pady=20, padx=10)
 
     # Options Frame
-    options_frame = ctk.CTkFrame(general_frame, bg_color="transparent", fg_color="transparent")
-    options_frame.pack(fill="x", padx=10, pady=10)
+    options_frame = ctk.CTkFrame(advanced_frame, bg_color="transparent", fg_color="transparent")
+    options_frame.pack(anchor="w", pady=5)
 
-    ctk.CTkLabel(options_frame,
-              text="Save Chats:").pack(side="left", padx=(0, 12))
+    ctk.CTkLabel(options_frame, 
+             text="Logging Level:").grid(row=2, column=0, padx=5, sticky="w")
 
-    ctk.CTkCheckBox(options_frame,
-                    variable=globals.save_chats_var,
-                    onvalue=True,
-                    text=None,
-                    offvalue=False).pack(side="left", padx=5)
-
-    # Theme Frame
-    theme_frame = ctk.CTkFrame(general_frame, bg_color="transparent", fg_color="transparent")
-    theme_frame.pack(fill="x", pady=10, padx=10)
-
-    ctk.CTkLabel(theme_frame, 
-    text="Theme:").pack(side="left", padx=(0, 12))
-
-    ctk.CTkComboBox(theme_frame,
-        variable=globals.theme_var,
-        values=["cosmic_sky", "pastel_green", "blazing_red", "dark_cloud",  "soft_light"],
-        state="readonly",
-        width=150).pack(side="left")
+    levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    col = 1
+    for level in levels:
+        ctk.CTkRadioButton(options_frame, 
+                       text=level, 
+                       value=level, 
+                       variable=globals.logging_var).grid(row=2, column=col, padx=5, sticky="w")
+        col += 1
 
     # Save Button Frame
-    save_button_frame = ctk.CTkFrame(general_frame, bg_color="transparent", fg_color="transparent")
+    save_button_frame = ctk.CTkFrame(advanced_frame, bg_color="transparent", fg_color="transparent")
     save_button_frame.pack(pady=10)
 
     ctk.CTkButton(save_button_frame, 

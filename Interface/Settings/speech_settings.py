@@ -4,6 +4,7 @@ import customtkinter as ctk
 import logging
 import config
 from Managers.speech_manager import fetch_tts_models
+import themes
 
 def create_speech_tab(globals, speech_frame):
     """
@@ -16,6 +17,7 @@ def create_speech_tab(globals, speech_frame):
 
     ctk.CTkLabel(speech_frame, 
              text="Speech Settings", 
+             font=themes.title_font, 
              anchor="center").pack(fill="x", pady=20, padx=10)
 
     # Options Frame
@@ -44,7 +46,7 @@ def create_speech_tab(globals, speech_frame):
 
     tts_source_combobox = ctk.CTkComboBox(options_frame,
                 variable=globals.active_voice_var,
-                values=fetch_tts_models(),
+                values=fetch_tts_models(globals),
                 width=150,
                 state="readonly")
 
@@ -59,7 +61,7 @@ def create_speech_tab(globals, speech_frame):
     globals.tts_source_var.trace_add("write", update_voice_combobox)
 
     # Save Button Frame
-    save_button_frame = ctk.CTkFrame(speech_frame)
+    save_button_frame = ctk.CTkFrame(speech_frame, bg_color="transparent", fg_color="transparent")
     save_button_frame.pack(pady=10)
 
     ctk.CTkButton(save_button_frame, 

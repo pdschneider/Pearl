@@ -21,19 +21,21 @@ def kokoro_test():
         logging.error(f"Kokoro not installed. TTS features will be unavailable.")
         return False
 
-def fetch_tts_models():
+def fetch_tts_models(globals):
     """loads possible Kokoro models"""
-    try:
-        voices = requests.get("http://localhost:8880/v1/audio/voices")
-        if voices.status_code == 200:
-            logging.info(f"Kokoro voices fetch succeeded. Returning voices dictionary.")
-            return voices.json()["voices"]
-        else:
-            logging.error(f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
+    if globals.kokoro_active:
+        try:
+                logging.debug(f"Attempting to load Kokoro voice list...")
+                voices = requests.get("http://localhost:8880/v1/audio/voices")
+                if voices.status_code == 200:
+                    logging.info(f"Kokoro voices fetch succeeded. Returning voices dictionary.")
+                    return voices.json()["voices"]
+                else:
+                    logging.error(f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
+                    return {}
+        except Exception as e:
+            logging.error(f"Failed to load voices due to {e}. Returning empty dictionary.")
             return {}
-    except Exception as e:
-        logging.error(f"Failed to load voices due to {e}. Returning empty dictionary.")
-        return {}
 
 def kokoro_speak(text, voice):
     """Communicates with the Kokoro endpoint for tts"""

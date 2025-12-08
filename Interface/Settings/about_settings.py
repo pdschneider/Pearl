@@ -1,5 +1,6 @@
 # Interface/Settings/about_settings.py
 import customtkinter as ctk
+import themes
 
 def create_about_tab(globals, about_frame):
     """
@@ -12,6 +13,7 @@ def create_about_tab(globals, about_frame):
 
     ctk.CTkLabel(about_frame, 
              text="About", 
+             font=themes.title_font,
              anchor="center").pack(fill="x", pady=20, padx=10)
 
     ctk.CTkLabel(about_frame,
@@ -22,9 +24,8 @@ def create_about_tab(globals, about_frame):
                         f"Requirements:\n\n" \
                         f"- Ollama (with at least one LLM - llama3.2:latest is currently the most compatible).\n" \
                         f"- Kokoro Fast-API for TTS integration.\n\n" \
-                        f"Currently Supported Operating Systems:\n\n" \
-                        f"- Linux Mint\n" \
-                        f"- Windows 11\n\n" \
+                        f"Currently Supported on Linux and Windows.\n\n" \
+                        f"Icon by Twoeliz\n\n" \
                         f"Disclaimer - Third-Party AI Models\n\n" \
                         f"Pearl integrates third-party artificial intelligence models selected by the user. \n" \
                         f"The developer of this software is not responsible for the accuracy, appropriateness, \n" \
@@ -39,9 +40,19 @@ def create_about_tab(globals, about_frame):
              text=f"Current Version: {globals.current_version}", 
              anchor="center").pack(fill="x", pady=20, padx=10)
 
-    ctk.CTkButton(about_frame, text="View Setup Page", command= lambda: bring_back_setup()).pack(padx=5, pady=5)
+    buttons_frame = ctk.CTkFrame(about_frame, fg_color="transparent")
+    buttons_frame.pack(padx=10, pady=10)
+
+    ctk.CTkButton(buttons_frame, text="View Setup Page", command= lambda: bring_back_setup()).grid(row=0, column=0, padx=5)
+    ctk.CTkButton(buttons_frame, text="View Changelog", command= lambda: show_changelog()).grid(row=0, column=1, padx=5)
 
     def bring_back_setup():
         """Reinitiates the setup window."""
         globals.settings_overlay.pack_forget()
-        globals.setup_page.pack(fill="both", expand=True, padx=10, pady=10)
+        globals.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
+
+    def show_changelog():
+        """Brings up the changelog window."""
+        globals.settings_overlay.pack_forget()
+        globals.chat_page.pack_forget()
+        globals.changelog.pack(fill="both", expand=True, padx=10, pady=0)

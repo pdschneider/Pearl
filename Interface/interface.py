@@ -5,7 +5,9 @@ from Interface.Settings.settings import create_settings
 from Interface.chat_window import create_chat_tab
 from Interface.Components.top_bar import create_top_bar
 from Interface.setup_window import create_setup_tab
-from config import apply_theme
+from Interface.Components.sidebar import create_sidebar
+from Interface.changelog import create_changelog_tab
+from config import apply_theme, get_data_path
 
 def create_interface(globals):
     """
@@ -14,6 +16,7 @@ def create_interface(globals):
             Parameters:
                     globals: Global variables
     """
+    # Set up main window
     globals.root = ctk.CTk()
     globals.root.title("Pearl")
     screen_width = globals.root.winfo_screenwidth()
@@ -22,6 +25,11 @@ def create_interface(globals):
     y = (screen_height - 850) // 2
     globals.root.geometry(f"850x850+{x}+{y}")
     globals.root.minsize(width=750, height=675)
+
+    # Get Icon
+    globals.icon = get_data_path("config", "assets/Pearl_Sparkle.png")
+    icon_image = tk.PhotoImage(file=str(globals.icon))
+    globals.root.iconphoto(False, icon_image)
 
     # String Vars
     globals.chat_message = tk.StringVar()
@@ -32,6 +40,7 @@ def create_interface(globals):
 
     # Add Navigation
     create_top_bar(globals)
+    create_sidebar(globals)
 
     # Main frame
     globals.main_frame = ctk.CTkFrame(globals.root)
@@ -42,14 +51,17 @@ def create_interface(globals):
     globals.settings_overlay.pack_forget()
 
     globals.chat_page = ctk.CTkFrame(globals.main_frame)
-    globals.chat_page.pack(fill="both", expand=True, padx=10, pady=10)
+    globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
     if not globals.ollama_active:
         globals.chat_page.pack_forget()
 
     globals.setup_page = ctk.CTkFrame(globals.main_frame)
-    globals.setup_page.pack(fill="both", expand=True, padx=10, pady=10)
+    globals.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
     if globals.ollama_active:
         globals.setup_page.pack_forget()
+
+    globals.changelog = ctk.CTkFrame(globals.main_frame)
+    globals.changelog.pack_forget()
 
     # Initiate Tabs
     def create_tabs():
@@ -64,5 +76,6 @@ def create_interface(globals):
         create_chat_tab(globals, globals.chat_page)
         create_settings(globals, globals.settings_overlay)
         create_setup_tab(globals, globals.setup_page)
+        create_changelog_tab(globals, globals.changelog)
 
     create_tabs()

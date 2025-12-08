@@ -10,7 +10,7 @@ if os_name.startswith("Windows"):
     mono_font    = ("DejaVu Sans Mono", 10)
 elif os_name.startswith("Linux"):
     title_font   = ("Ubuntu", 18, "bold")
-    heading_font = ("Ubuntu", 26, "bold")
+    heading_font = ("Ubuntu", 16, "bold")
     body_font    = ("Ubuntu", 14)
     mono_font    = ("Ubuntu Mono", 10)
 else:  # macOS or anything else

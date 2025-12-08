@@ -2,6 +2,7 @@
 import webbrowser
 import customtkinter as ctk
 from tktooltip import ToolTip
+import themes
 
 def create_setup_tab(globals, setup_tab):
     """
@@ -20,6 +21,7 @@ def create_setup_tab(globals, setup_tab):
 
     ctk.CTkLabel(ollama_frame, 
                 text="Installation Instructions", 
+                font=themes.title_font,
                 anchor="center").pack(fill="x", pady=20, padx=10)
 
     ctk.CTkLabel(ollama_frame, 
@@ -88,15 +90,13 @@ def create_setup_tab(globals, setup_tab):
             globals.ollama_download_tooltip = ToolTip(ollama_download_button, msg="Ollama already installed!", delay=0.3, follow=True, fg="white", bg="gray20", padx=10, pady=5)
         else:
             globals.ollama_download_state = "normal"
-            if globals.ollama_download_tooltip:
-                globals.ollama_download_tooltip = None
+            globals.ollama_download_tooltip = None
         if globals.kokoro_active:
             globals.kokoro_download_state = "disabled"
             globals.kokoro_download_tooltip = ToolTip(kokoro_download_button, msg="Kokoro already installed!", delay=0.3, follow=True, fg="white", bg="gray20", padx=10, pady=5)
         else:
             globals.kokoro_download_state = "normal"
-            if globals.kokoro_download_tooltip:
-                globals.kokoro_download_tooltip = None
+            globals.kokoro_download_tooltip = None
 
     refresh_button_states()
 
@@ -104,4 +104,4 @@ def create_setup_tab(globals, setup_tab):
         """Forgets setup and settings pages to return the user to a clean chat page"""
         globals.settings_overlay.pack_forget()
         globals.setup_page.pack_forget()
-        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=10)
+        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)

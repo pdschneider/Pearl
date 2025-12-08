@@ -16,9 +16,9 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.1.7"
+        self.current_version = "v0.1.8"
 
-        # Temporary Variables
+        # Tkinter Variables
         self.theme_var = None
         self.logging_var = None
         self.tts_var = None
@@ -28,12 +28,16 @@ class Globals:
 
         # UI variables
         self.root = None
+        self.startup_root = None
         self.chat_page = None
         self.tabview = None
         self.model_tree = None
         self.settings_overlay = None
+        self.sidebar = None
+        self.changelog = None
         self.setup_page = None
         self.top_bar = None
+        self.hamburger = None
         self.main_frame = None
         self.assistant_label = None
         self.theme_path = None
@@ -57,11 +61,16 @@ class Globals:
         self.gpu_found = None
         self.ollama_download_state = None
         self.kokoro_download_state = None
+        self.sidebar_open = False
+
+        # Miscellaneous Variables
+        self.icon = None
 
     def refresh_globals(self):
         """Reloads all settings from disk and updates the class."""
         settings = load_settings()
         self.all_prompts = load_prompts()
+        self.all_context = load_context()
 
         # Variables from settings
         self.active_model = settings.get("active_model", "llama3.2:3b")
@@ -78,9 +87,9 @@ def get_data_path(direct=None, filename=None):
     """
     Get the path to a writable data folder or a specific file, copying bundled files if needed.
 
-    Args:
-    direct = The file type to specify its directory, either configuration, persistent user data, or logs.
-    filename = The file name being accessed.
+            Parameters:
+                    direct = The file type to specify its directory, either configuration, persistent user data, or logs
+                    filename = The file name being accessed
 
     """
     if getattr(sys, 'frozen', False):  # Running as bundled executable
@@ -94,7 +103,8 @@ def get_data_path(direct=None, filename=None):
             default_files = ["settings.json", 
                              "context.json", 
                              "prompts.json", 
-                             "tts.json", 
+                             "assets/Pearl.png",
+                             "assets/Pearl_Sparkle.png",
                              "themes/cosmic_sky.json", 
                              "themes/pastel_green.json", 
                              "themes/blazing_red.json", 
@@ -116,10 +126,15 @@ def get_data_path(direct=None, filename=None):
                 if not os_name.startswith("Linux"):
                     logging.warning(f"OS not found. Defaulting to Linux paths.")
             default_files = []
+
+        # Checks if any file has themes/ or assets/ path
         try:
-            if "themes/" in str(default_files):  # checks if any file has themes/ path
+            if "themes/" in str(default_files):
                 themes_dir = os.path.join(persistent_dir, "themes")
                 os.makedirs(themes_dir, exist_ok=True)
+            if "assets/" in str(default_files):
+                assets_dir = os.path.join(persistent_dir, "assets")
+                os.makedirs(assets_dir, exist_ok=True)
             os.makedirs(persistent_dir, exist_ok=True)
             if not os.access(persistent_dir, os.W_OK):
                 raise PermissionError(f"No write permission for {persistent_dir}")
@@ -137,6 +152,7 @@ def get_data_path(direct=None, filename=None):
                 except Exception as e:
                     logging.error(f"Error copying {default_file}: {e}")
         data_dir = persistent_dir
+
     else:  # Running in development
         base_dir = os.path.dirname(os.path.abspath(__file__))
         data_dir = os.path.normpath(os.path.join(base_dir, "data"))
@@ -171,12 +187,24 @@ def save_settings(**kwargs):
         logging.error(f"Error saving settings to {file_path}: {e}")
 
 def load_prompts():
+    """Loads the prompts dictionary."""
     try:
         with open(get_data_path("config", 'prompts.json')) as f:
+            logging.debug(f"Successfully loaded prompts dictionary.")
             return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logging.error(f"Failed to load prompts.json ({e}), using default prompts")
-        return {"Custom": {"prompt": "", "greeting": "Pearl at your service!"}}
+    except Exception as e:
+        logging.error(f"Failed to load prompts.json due to: {e}")
+        return {"greeting": "Pearl at your service!"}
+
+def load_context():
+    """Load context keywords from JSON file, return empty dict on failure."""
+    try:
+        with open(get_data_path("config", 'context.json')) as f:
+            logging.debug(f"Successfully loaded context dictionary.")
+            return json.load(f)
+    except Exception as e:
+        logging.error(f"Error loading context.json: {e}")
+        return {}
 
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ctk widgets."""
