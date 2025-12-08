@@ -9,9 +9,7 @@ Requirements:
 - Ollama (with at least one LLM - llama3.2:latest is currently the most compatible).
 - Kokoro Fast-API for TTS integration.
 
-Currently Supported Operating Systems:
-- Linux Mint
-- Windows 11
+Currently Supported on both Windows and Linux.
 
 Disclaimer - Third-Party AI Models
 
