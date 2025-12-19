@@ -1,5 +1,5 @@
 # pearl.py
-# v0.1.8
+# v0.1.9
 from config import globals, setup_logging
 from Interface.interface import create_interface
 from Utils.startup import startup
@@ -19,13 +19,8 @@ globals.root.mainloop()
 """
 Changelog:
 
-- Ships as AppImage for Linux users
-- Added progress bar for slow startup scenarios
-- Added program icon
-- Added sidebar for later chat history implementation
-- Added changelog page
-- Moved startup logic to new script
-- Added context detection logging
+- Functional chat history introduced
+- Added audio output selection (Linux Only)
 - Minor bug fixes and improvements
 
 """

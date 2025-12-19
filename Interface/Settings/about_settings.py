@@ -1,6 +1,6 @@
 # Interface/Settings/about_settings.py
 import customtkinter as ctk
-import themes
+import Utils.fonts as fonts
 
 def create_about_tab(globals, about_frame):
     """
@@ -13,7 +13,7 @@ def create_about_tab(globals, about_frame):
 
     ctk.CTkLabel(about_frame, 
              text="About", 
-             font=themes.title_font,
+             font=fonts.title_font,
              anchor="center").pack(fill="x", pady=20, padx=10)
 
     ctk.CTkLabel(about_frame,

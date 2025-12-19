@@ -3,7 +3,7 @@ import logging, threading
 import tkinter as tk
 import customtkinter as ctk
 from Connections.ollama import ollama_test, load_model, get_loaded_models
-from Managers.speech_manager import kokoro_test
+from Managers.sound_manager import kokoro_test
 from Utils.hardware import get_hardware_stats
 
 def startup(globals):

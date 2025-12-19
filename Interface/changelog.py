@@ -1,6 +1,6 @@
-# Interface/setup_window.py
+# Interface/changelog.py
 import customtkinter as ctk
-import themes
+import Utils.fonts as fonts
 
 def create_changelog_tab(globals, changelog_tab):
     """
@@ -12,7 +12,7 @@ def create_changelog_tab(globals, changelog_tab):
     """
     ctk.CTkLabel(changelog_tab, 
                 text="Changelog",
-                font=themes.title_font,
+                font=fonts.title_font,
                 anchor="center").pack(fill="x", pady=20, padx=10)
 
     changelog_frame = ctk.CTkScrollableFrame(changelog_tab)
@@ -20,10 +20,24 @@ def create_changelog_tab(globals, changelog_tab):
 
     # Main Changelog Sections
 
+    # v0.1.9
+    ctk.CTkLabel(changelog_frame,
+                 text="v0.1.9",
+                 font=fonts.heading_font,
+                 anchor="center").pack(fill="x", pady=20, padx=10)
+    
+    ctk.CTkLabel(changelog_frame,
+                 justify="left",
+                 anchor="center",
+                 wraplength=400,
+                 text="- Functional chat history introduced\n" \
+                        "- Added audio output selection (Linux Only)\n" \
+                        "- Minor bug fixes and improvements").pack(fill="both", expand=True, padx=10, pady=10)
+
     # v0.1.8
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.8",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -42,7 +56,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.7
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.7",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -59,7 +73,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.6
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.6",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -75,7 +89,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.5
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.5",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -90,7 +104,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.4
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.4",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -105,7 +119,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.3
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.3",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -120,7 +134,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.2
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.2",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -135,7 +149,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.1
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.1",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -150,7 +164,7 @@ def create_changelog_tab(globals, changelog_tab):
     # v0.1.0
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.0",
-                 font=themes.heading_font,
+                 font=fonts.heading_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
     
     ctk.CTkLabel(changelog_frame,
@@ -190,3 +204,4 @@ def create_changelog_tab(globals, changelog_tab):
         globals.settings_overlay.pack_forget()
         globals.changelog.pack_forget()
         globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
+

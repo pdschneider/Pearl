@@ -1,6 +1,6 @@
 # Utils/hardware.py
 import subprocess, logging, psutil
-from themes import os_name
+from config import os_name
 
 def get_ram_info():
     """Retrieves information about total RAM & active usage."""

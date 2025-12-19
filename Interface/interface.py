@@ -42,7 +42,7 @@ def create_interface(globals):
     create_top_bar(globals)
     create_sidebar(globals)
 
-    # Main frame
+    # Main Frame
     globals.main_frame = ctk.CTkFrame(globals.root)
     globals.main_frame.pack(side="left", fill="both", expand=True)
 
@@ -72,6 +72,7 @@ def create_interface(globals):
         globals.active_voice_var = tk.StringVar(value=globals.active_voice)
         globals.tts_source_var = tk.StringVar(value=globals.tts_source)
         globals.save_chats_var = tk.BooleanVar(value=globals.save_chats)
+        globals.sink_var = tk.StringVar(value=globals.default_sink)
 
         create_chat_tab(globals, globals.chat_page)
         create_settings(globals, globals.settings_overlay)

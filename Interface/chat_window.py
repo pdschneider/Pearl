@@ -2,7 +2,7 @@
 import tkinter as tk
 import customtkinter as ctk
 from Managers.chat_manager import send_message
-import themes
+import Utils.fonts as fonts
 
 def create_chat_tab(globals, chat_tab):
     """
@@ -26,7 +26,7 @@ def create_chat_tab(globals, chat_tab):
     entry_frame.pack(fill="both", padx=10, pady=5)
 
     entrybox = ctk.CTkTextbox(entry_frame,
-              font=themes.body_font,
+              font=fonts.body_font,
               wrap="word",
               fg_color="white",
               state=widget_state,
@@ -35,13 +35,14 @@ def create_chat_tab(globals, chat_tab):
     entrybox.pack(side="left", padx=5, pady=5, fill="x", expand=True)
     entrybox.focus_set()
 
-    ctk.CTkButton(entry_frame, #  Send button
+    send_button = ctk.CTkButton(entry_frame, #  Send button
                text="➤",
                state=widget_state,
                height=50,
                width=40,
                corner_radius=35,
-               command=lambda: send_message(globals, ui_elements)).pack(side="left", padx=5, pady=5)
+               command=lambda: send_message(globals, ui_elements))
+    send_button.pack(side="left", padx=5, pady=5)
 
     # Chat Functions
     def add_bubble(role, text=""):
@@ -65,7 +66,10 @@ def create_chat_tab(globals, chat_tab):
 
     def upon_enter():
         """Triggers send message and prevents additional lines in the entry box upon pressing enter."""
-        send_message(globals, ui_elements)
+        if globals.still_streaming:
+            globals.cancel_event.set() if globals.cancel_event else None
+        else:
+            send_message(globals, ui_elements)
         return "break"
 
     def upon_shift_enter():
@@ -80,4 +84,7 @@ def create_chat_tab(globals, chat_tab):
         "entrybox": entrybox,
         "chat_frame": chat_frame,
         "add_bubble": add_bubble,
+        "send_button": send_button,
         "scroll_to_bottom": lambda: chat_frame._parent_canvas.yview_moveto(1.0)}
+
+    globals.ui_elements = ui_elements

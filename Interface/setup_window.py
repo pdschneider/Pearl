@@ -2,7 +2,7 @@
 import webbrowser
 import customtkinter as ctk
 from tktooltip import ToolTip
-import themes
+import Utils.fonts as fonts
 
 def create_setup_tab(globals, setup_tab):
     """
@@ -21,7 +21,7 @@ def create_setup_tab(globals, setup_tab):
 
     ctk.CTkLabel(ollama_frame, 
                 text="Installation Instructions", 
-                font=themes.title_font,
+                font=fonts.title_font,
                 anchor="center").pack(fill="x", pady=20, padx=10)
 
     ctk.CTkLabel(ollama_frame, 

@@ -16,7 +16,7 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.1.8"
+        self.current_version = "v0.1.9"
 
         # Tkinter Variables
         self.theme_var = None
@@ -25,24 +25,36 @@ class Globals:
         self.active_voice_var = None
         self.tts_source_var = None
         self.save_chats_var = None
+        self.sink_var = None
 
         # UI variables
         self.root = None
+        self.ui_elements = None
+
+        # Pages
+        self.main_frame = None
         self.startup_root = None
         self.chat_page = None
         self.tabview = None
         self.model_tree = None
         self.settings_overlay = None
-        self.sidebar = None
         self.changelog = None
+        self.sidebar = None
+
+        # Miscellaneous
         self.setup_page = None
         self.top_bar = None
         self.hamburger = None
-        self.main_frame = None
         self.assistant_label = None
         self.theme_path = None
         self.theme_dict = None
         self.greeting = "Pearl at your service!"
+        self.sink_list = None
+        self.conversation_history = []
+        self.conversation_id = None
+        self.created_at = None
+
+        # Tooltips
         self.ollama_download_tooltip = None
         self.kokoro_download_tooltip = None
 
@@ -62,9 +74,13 @@ class Globals:
         self.ollama_download_state = None
         self.kokoro_download_state = None
         self.sidebar_open = False
+        self.is_new_conversation = True
+        self.still_streaming = False
 
         # Miscellaneous Variables
         self.icon = None
+        self.cancel_event = None
+        self.current_response_id = None
 
     def refresh_globals(self):
         """Reloads all settings from disk and updates the class."""
@@ -82,6 +98,7 @@ class Globals:
         self.active_theme = settings.get("active_theme", "cosmic_sky")
         self.logging_level = settings.get("logging_level", "INFO")
         self.save_chats = settings.get("save_chats", False)
+        self.default_sink = settings.get("default_sink", "Default")
 
 def get_data_path(direct=None, filename=None):
     """

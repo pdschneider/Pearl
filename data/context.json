@@ -1,6 +1,6 @@
 {
   "Assistant": ["assist", "question", "info", "general", "assistant"],
-  "Therapist": ["feel", "emotion", "stress", "anxiety", "support", "sad", "happy"],
+  "Therapist": ["feel", "emotion", "stress", "anxiety", "support", "sad", "happy", "kill", "kms"],
   "Financial": ["budget", "money", "spend", "save", "invest", "debt", "finance", "finances"],
   "Storyteller": ["story", "tale", "adventure", "imagine", "narrative", "create", "fiction"],
   "Conspiracy": ["conspiracy", "truth", "hidden", "secret", "government", "plot", "theory", "bilderberg"],

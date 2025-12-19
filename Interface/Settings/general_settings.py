@@ -1,9 +1,8 @@
 # Interface/Settings/general_settings.py
-from tkinter import messagebox
+import tkinter as tk
 import customtkinter as ctk
-import logging
-import config
-import themes
+import Utils.fonts as fonts
+from Utils.save_settings import save_all_settings
 
 def create_general_settings_tab(globals, general_frame):
     """
@@ -16,7 +15,7 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkLabel(general_frame, 
              text="General Settings", 
-             font=themes.title_font,
+             font=fonts.title_font,
              anchor="center").pack(fill="x", pady=20, padx=10)
 
     # Options Frame
@@ -36,12 +35,35 @@ def create_general_settings_tab(globals, general_frame):
     theme_frame = ctk.CTkFrame(general_frame, bg_color="transparent", fg_color="transparent")
     theme_frame.pack(fill="x", pady=10, padx=10)
 
+    # Theme List
+    themes_dict = [{"label": "Cosmic Sky", "theme": "cosmic_sky"}, 
+                   {"label": "Pastel Green", "theme": "pastel_green"}, 
+                   {"label": "Blazing Red", "theme": "blazing_red"},
+                   {"label": "Dark Cloud", "theme": "dark_cloud"}, 
+                   {"label": "Soft Light", "theme": "soft_light"}]
+    theme_labels = [entry["label"] for entry in themes_dict]
+    theme_names = [entry["theme"] for entry in themes_dict]
+    label_to_theme = {entry["label"]: entry["theme"] for entry in themes_dict}
+
+    label_var = tk.StringVar()
+
+    def update_theme_var(*args):
+        selected_label = label_var.get()
+        theme_name = label_to_theme.get(selected_label, "Cosmic Sky")
+        globals.theme_var.set(theme_name)
+
+    label_var.trace("w", update_theme_var)
+
+    initial_theme = globals.theme_var.get()
+    initial_label = next((label for label, theme in label_to_theme.items() if theme == initial_theme), "Cosmic Sky")
+    label_var.set(initial_label)
+
     ctk.CTkLabel(theme_frame, 
     text="Theme:").pack(side="left", padx=(0, 12))
 
     ctk.CTkComboBox(theme_frame,
-        variable=globals.theme_var,
-        values=["cosmic_sky", "pastel_green", "blazing_red", "dark_cloud",  "soft_light"],
+        variable=label_var,
+        values=theme_labels,
         state="readonly",
         width=150).pack(side="left")
 
@@ -52,56 +74,3 @@ def create_general_settings_tab(globals, general_frame):
     ctk.CTkButton(save_button_frame, 
                text="Save Settings", 
                command=lambda: save_all_settings(globals)).pack()
-
-def save_all_settings(globals):
-    """
-    Save all settings to JSON files and update globals.
-
-    Args:
-        globals (Globals): The global configuration object containing UI variables and settings.
-    """
-
-    # Load current settings to get saved_logging_level and current dev_mode
-    settings = config.load_settings()
-    current_logging_level = globals.logging_var.get()
-    saved_logging_level = settings.get("saved_logging_level", "INFO")
-    current_active_theme = globals.theme_var.get()
-    current_tts = globals.tts_var.get()
-    current_active_voice = globals.active_voice_var.get()
-    current_tts_source = globals.tts_source_var.get()
-    current_save_chats = globals.save_chats_var.get()
-
-    # Handle logging level based on dev mode change
-    logging_level = current_logging_level
-    saved_logging_level = current_logging_level  # Update saved_logging_level to match
-
-    # Save settings with updated logging levels
-    config.save_settings(
-    logging_level = logging_level,
-    saved_logging_level = saved_logging_level,
-    active_theme = current_active_theme,
-    tts_enabled = current_tts,
-    active_voice = current_active_voice,
-    tts_source = current_tts_source,
-    save_chats = current_save_chats)
-    
-    # Refresh Globals
-    globals.refresh_globals()
-
-    # Reload settings to update globals
-    settings = config.load_settings()
-    globals.logging_var.set(settings["logging_level"])
-    globals.theme_var.set(settings["active_theme"])
-    globals.tts_var.set(settings["tts_enabled"])
-    globals.active_voice_var.set(settings["active_voice"])
-    globals.tts_source_var.set(settings["tts_source"])
-    globals.save_chats_var.set(settings["save_chats"])
-
-    # Update logging
-    logging.root.setLevel(getattr(logging, settings["logging_level"]))
-
-    # Apply new theme
-    config.apply_theme(current_active_theme)
-
-    messagebox.showinfo("Settings Saved", "Settings saved successfully.")
-    logging.info(f"Settings saved successfully.")

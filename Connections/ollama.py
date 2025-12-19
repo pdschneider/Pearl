@@ -71,7 +71,7 @@ def unload_model(model):
         logging.error(f"Failed to unload {model}: {e}")
         return False
 
-def chat_stream(model, messages, out_q):
+def chat_stream(model, messages, out_q, cancel_event):
     """
     Stream response from Ollama using the proper /chat endpoint.
     
@@ -88,6 +88,9 @@ def chat_stream(model, messages, out_q):
             out_q.put(f"Ollama error {response.status_code}: {response.text}\n")
             return
         for line in response.iter_lines():
+            if cancel_event.is_set():
+                logging.debug(f"Cancel event triggered during Ollama chat stream.")
+                break
             if line:
                 try:
                     chunk = json.loads(line.decode("utf-8"))
@@ -105,6 +108,7 @@ def chat_stream(model, messages, out_q):
         out_q.put(f"Error: {e}\n")
     finally:
         out_q.put(None)
+        response.close()
 
 def get_model_info(model):
     """Gets detailed model information for a specific model."""

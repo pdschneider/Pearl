@@ -3,10 +3,11 @@
     "active_voice": "af_heart",
     "active_prompt": "Assistant",
     "tts_enabled": false,
-    "tts_source": "default",
+    "tts_source": "Default",
     "dynamic_mode": false,
-    "logging_level": "DEBUG",
-    "saved_logging_level": "DEBUG",
+    "logging_level": "INFO",
+    "saved_logging_level": "INFO",
     "active_theme": "cosmic_sky",
-    "save_chats": false
+    "save_chats": false,
+    "default_sink": "Default"
 }
