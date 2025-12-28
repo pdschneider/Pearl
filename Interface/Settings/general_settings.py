@@ -2,6 +2,7 @@
 import tkinter as tk
 import customtkinter as ctk
 import Utils.fonts as fonts
+from CTkToolTip import CTkToolTip
 from Utils.save_settings import save_all_settings
 
 def create_general_settings_tab(globals, general_frame):
@@ -22,8 +23,10 @@ def create_general_settings_tab(globals, general_frame):
     options_frame = ctk.CTkFrame(general_frame, bg_color="transparent", fg_color="transparent")
     options_frame.pack(fill="x", padx=10, pady=10)
 
-    ctk.CTkLabel(options_frame,
-              text="Save Chats:").pack(side="left", padx=(0, 12))
+    save_chats_label = ctk.CTkLabel(options_frame,
+              text="Save Chats:")
+    save_chats_label.pack(side="left", padx=(0, 12))
+    CTkToolTip(save_chats_label, message="When on, chats are saved \nand can be accessed via \nchat history", delay=1.0, follow=True, padx=10, pady=5)
 
     ctk.CTkCheckBox(options_frame,
                     variable=globals.save_chats_var,

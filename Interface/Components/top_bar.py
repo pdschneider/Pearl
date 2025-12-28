@@ -1,7 +1,10 @@
 # Interface/Components/top_bar.py
 import customtkinter as ctk
-from tktooltip import ToolTip
+from CTkToolTip import CTkToolTip
 from Interface.Components.sidebar import create_sidebar
+from Managers.chat_history import start_new_conversation
+import sounddevice as sd
+import logging
 
 def create_top_bar(globals):
     """
@@ -31,6 +34,18 @@ def create_top_bar(globals):
             globals.settings_overlay.pack(fill="both", expand=True, padx=10, pady=0)
             globals.settings_overlay.tkraise()
 
+    def reset_to_new_chat():
+        """Resets to a new conversation and clears the chat frame."""
+        sd.stop()
+        start_new_conversation(globals)
+
+        # Clear the current chat bubbles
+        for widget in globals.ui_elements["chat_frame"].winfo_children():
+            widget.destroy()
+        globals.ui_elements["scroll_to_bottom"]()
+        globals.root.update_idletasks()
+        logging.info(f"Started new chat from the top bar button.")
+
     # Main top bar
     top_bar = ctk.CTkFrame(globals.root, height=55, corner_radius=0)
     globals.top_bar = top_bar
@@ -46,9 +61,19 @@ def create_top_bar(globals):
         command=lambda: create_sidebar(globals))
     hamburger.pack(side="left", padx=10, pady=5)
     globals.hamburger = hamburger
-    ToolTip(hamburger, msg="Chat History Coming Soon!", delay=0.3, follow=True, fg="white", bg="gray20", padx=10, pady=5)
+    CTkToolTip(hamburger, message="Chat History", delay=0.6, follow=True, padx=10, pady=5)
 
-    # Title / App name (center)
+    # New Chat Button
+    topbar_new_chat = ctk.CTkButton(
+        top_bar,
+        text="✎",
+        width=45,
+        height=45,
+        command=lambda: reset_to_new_chat())
+    topbar_new_chat.pack(side="left", padx=0, pady=5)
+    CTkToolTip(topbar_new_chat, message="New Chat", delay=0.6, follow=True, padx=10, pady=5)
+
+    # Title (center)
     title = ctk.CTkLabel(
         top_bar,
         text=globals.greeting,
@@ -63,5 +88,6 @@ def create_top_bar(globals):
         height=45)
     settings.pack(side="right", padx=10, pady=0)
     settings.configure(command=toggle_settings)
+    CTkToolTip(settings, message="Settings", delay=0.6, follow=True, padx=10, pady=5)
 
     return top_bar

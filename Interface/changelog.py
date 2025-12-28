@@ -20,6 +20,25 @@ def create_changelog_tab(globals, changelog_tab):
 
     # Main Changelog Sections
 
+    # v0.1.10
+    ctk.CTkLabel(changelog_frame,
+                 text="v0.1.10",
+                 font=fonts.heading_font,
+                 anchor="center").pack(fill="x", pady=20, padx=10)
+    
+    ctk.CTkLabel(changelog_frame,
+                 justify="left",
+                 anchor="center",
+                 wraplength=400,
+                 text="- Supports attachments for filetypes: .txt, .csv, .json, .py, .pyw, .log, .ini, .cfg, .xml, .sh, .bat, .ps1, .md, .tsv, .toml, .yaml, .html, .css, .spec\n" \
+                     "- Added experimental underlying context model choice\n" \
+                     "- Copy button for messages\n" \
+                     "- New chat button to the top bar\n" \
+                     "- Internal logging for each chat message's token count\n" \
+                     "- Separated default settings from development settings for a more consistent default user experience\n" \
+                     "- Added tooltips\n" \
+                     "- Minor bug fixes and improvements").pack(fill="both", expand=True, padx=10, pady=10)
+
     # v0.1.9
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.9",

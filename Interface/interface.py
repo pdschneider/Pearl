@@ -38,6 +38,8 @@ def create_interface(globals):
     # Configure theme
     apply_theme(globals.active_theme)
 
+    globals.root.configure(fg_color=globals.theme_dict["CTkFrame"]["fg_color"])
+
     # Add Navigation
     create_top_bar(globals)
     create_sidebar(globals)

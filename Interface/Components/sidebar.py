@@ -3,6 +3,7 @@ import customtkinter as ctk
 import logging
 from Managers.chat_history import load_conversations, load_specific_conversation, start_new_conversation
 import sounddevice as sd
+from CTkToolTip import CTkToolTip
 
 def create_sidebar(globals):
     """
@@ -21,12 +22,14 @@ def create_sidebar(globals):
     # Create the sidebar frame
     sidebar = ctk.CTkFrame(globals.root, width=sidebar_width, corner_radius=0)
     globals.sidebar = sidebar
+    globals.sidebar.configure(fg_color=globals.theme_dict["CTk"]["fg_color"])
 
     # Initially place off-screen
     sidebar.place(x=-sidebar_width, y=0, relheight=1)
 
     buttons_frame = ctk.CTkFrame(sidebar, width=sidebar_width, corner_radius=0)
     buttons_frame.pack(fill="x")
+    buttons_frame.configure(fg_color=globals.theme_dict["CTk"]["fg_color"])
 
     # Add the hamburger button back so the sidebar can be closed
     sidebar_hamburger = ctk.CTkButton(
@@ -36,6 +39,7 @@ def create_sidebar(globals):
         height=45,
         command=lambda: toggle_sidebar())
     sidebar_hamburger.pack(side="left", padx=10, pady=5)
+    CTkToolTip(sidebar_hamburger, message="Collapse Sidebar", delay=1.0, follow=True, padx=10, pady=5)
 
     # New Chat Button
     sidebar_new_chat = ctk.CTkButton(
@@ -45,6 +49,7 @@ def create_sidebar(globals):
         height=45,
         command=lambda: reset_to_new_chat())
     sidebar_new_chat.pack(side="left", padx=0, pady=5)
+    CTkToolTip(sidebar_new_chat, message="New Chat", delay=1.0, follow=True, padx=10, pady=5)
 
     # Chat History
     title_label = ctk.CTkLabel(
@@ -153,7 +158,8 @@ def create_sidebar(globals):
 
         # Close sidebar after selection
         toggle_sidebar()
-        logging.info(f"DIsplaying conversation: {conv_id}")
+        globals.chat_page.tkraise()
+        logging.info(f"Displaying conversation: {conv_id}")
 
     # Override the hamburger button command in top_bar
     if hasattr(globals, 'hamburger'):

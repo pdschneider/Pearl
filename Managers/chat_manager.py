@@ -26,17 +26,28 @@ def send_message(globals, ui_elements, event=None):
     
     q = queue.Queue()
     model = globals.active_model
-    user_text = ui_elements['entrybox'].get("1.0", "end").strip()
+    clean_text = ui_elements['entrybox'].get("1.0", "end").strip()
 
-    if not user_text:
+    if not clean_text and globals.file_attachment:
+        user_text = f"Refer to the following: {globals.file_attachment}"
+    elif clean_text and globals.file_attachment:
+        user_text = clean_text + f"Refer to the following: {globals.file_attachment}"
+    elif clean_text and not globals.file_attachment:
+        user_text = clean_text
+    else:
         return
+
+    # Re-enables file attachment button
+    globals.file_button.configure(state="normal")
+    globals.attach_tip.configure(message="Attach")
+    globals.file_attachment = None
 
     detect_context(globals, user_text)
 
     if globals.is_new_conversation:
         start_new_conversation(globals)
 
-    ui_elements["add_bubble"]("user", user_text)
+    ui_elements["add_bubble"]("user", clean_text)
     ui_elements['entrybox'].delete("1.0", "end")
 
     messages = globals.conversation_history + [{"role": "user", "content": user_text}]
@@ -46,17 +57,20 @@ def send_message(globals, ui_elements, event=None):
     globals.assistant_message = ""
 
     if globals.save_chats:
-        add_message(globals, "user", user_text)
+        add_message(globals, "user", clean_text)
 
     # Toggle button to stop mode
     ui_elements["send_button"].configure(text="■", command=lambda: globals.cancel_event.set() if globals.cancel_event else None)
+    tokens = 0
 
     def pull_response():
         """Pulls the response from Ollama via the thread-safe queue"""
+        nonlocal tokens
         local_id = globals.current_response_id
         try:
             while True:
                 item = q.get_nowait()
+                tokens += 1
                 if item is None:
                     if globals.current_response_id != local_id:
                         logging.debug(f"Discarding stale response (ID {local_id})")
@@ -70,7 +84,7 @@ def send_message(globals, ui_elements, event=None):
                         default_speak(globals.assistant_message)
                     # Save
                     if globals.save_chats:
-                        add_message(globals, "assistant", globals.assistant_message, model=globals.active_model)
+                        add_message(globals, "assistant", globals.assistant_message, model=globals.active_model, tokens=tokens)
                     save_conversation(globals)
                     globals.still_streaming = False
                     ui_elements["send_button"].configure(text="➤", command=lambda: send_message(globals, ui_elements))

@@ -1,5 +1,6 @@
 # Interface/Settings/sound_settings.py
 import customtkinter as ctk
+from CTkToolTip import CTkToolTip
 from Utils.save_settings import save_all_settings
 from Managers.sound_manager import fetch_tts_models
 from Managers.sound_manager import get_sink_menu
@@ -24,8 +25,10 @@ def create_sound_tab(globals, sound_tab):
     options_frame = ctk.CTkFrame(sound_tab, bg_color="transparent", fg_color="transparent")
     options_frame.pack(fill="both", padx=10, pady=10)
 
-    ctk.CTkLabel(options_frame,
-              text="Enable TTS:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+    enable_tts_button = ctk.CTkLabel(options_frame,
+              text="Enable TTS:")
+    enable_tts_button.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+    CTkToolTip(enable_tts_button, message="Enables TTS", delay=0.6, follow=True, padx=10, pady=5)
 
     ctk.CTkCheckBox(options_frame,
                     variable=globals.tts_var,
@@ -38,8 +41,10 @@ def create_sound_tab(globals, sound_tab):
     if globals.kokoro_active:
         source_options.append("Kokoro")
 
-    ctk.CTkLabel(options_frame,
-              text="TTS Source:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    tts_source_label = ctk.CTkLabel(options_frame,
+              text="TTS Source:")
+    tts_source_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    CTkToolTip(tts_source_label, message="Choose the speech model", delay=0.6, follow=True, padx=10, pady=5)
 
     ctk.CTkComboBox(options_frame,
                  variable=globals.tts_source_var,
@@ -82,8 +87,10 @@ def create_sound_tab(globals, sound_tab):
         initial_label = next((label for label, pulse in label_to_pulse.items() if pulse == initial_pulse), "Default")
         label_var.set(initial_label)
 
-        ctk.CTkLabel(options_frame,
-                text="Sound Output:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        sound_output_label = ctk.CTkLabel(options_frame,
+                text="Sound Output:")
+        sound_output_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        CTkToolTip(sound_output_label, message="Choose the speakers\n tts plays from", delay=0.6, follow=True, padx=10, pady=5)
 
         ctk.CTkComboBox(options_frame,
                     variable=label_var,

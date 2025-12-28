@@ -5,7 +5,7 @@ a = Analysis(
     ['pearl.py'],
     pathex=[],
     binaries=[],
-    datas=[('data', 'data')],
+    datas=[('defaults', 'defaults')],
     hiddenimports=['pygame', 'shutil', 'requests', 'string', 'packaging', 'pkg_resources'],
     hookspath=[],
     hooksconfig={},

@@ -16,7 +16,7 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.1.9"
+        self.current_version = "v0.1.10"
 
         # Tkinter Variables
         self.theme_var = None
@@ -30,6 +30,8 @@ class Globals:
         # UI variables
         self.root = None
         self.ui_elements = None
+        self.file_button = None
+        self.attach_tip = None
 
         # Pages
         self.main_frame = None
@@ -64,6 +66,7 @@ class Globals:
         self.chat_history.append({"role": "system", "content": all_prompts.get(self.active_prompt, {}).get("prompt", "")})
         self.chat_message = None
         self.assistant_message = ""
+        self.file_attachment = None
 
         # Flags
         self.ollama_active = None
@@ -99,6 +102,7 @@ class Globals:
         self.logging_level = settings.get("logging_level", "INFO")
         self.save_chats = settings.get("save_chats", False)
         self.default_sink = settings.get("default_sink", "Default")
+        self.context_model = settings.get("context_model", "llama3.2:3b")
 
 def get_data_path(direct=None, filename=None):
     """
@@ -158,7 +162,7 @@ def get_data_path(direct=None, filename=None):
         except Exception as e:
             logging.error(f"Error creating persistent data directory: {e}")
             raise
-        bundled_dir = os.path.normpath(os.path.join(sys._MEIPASS, "data"))
+        bundled_dir = os.path.normpath(os.path.join(sys._MEIPASS, "defaults"))
         for default_file in default_files:
             bundled_file = os.path.normpath(os.path.join(bundled_dir, default_file))
             persistent_file = os.path.normpath(os.path.join(persistent_dir, default_file))

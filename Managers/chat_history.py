@@ -18,7 +18,7 @@ def start_new_conversation(globals):
     globals.created_at = datetime.now().isoformat()
     logging.debug(f"Started new conversation with ID: {globals.conversation_id}")
 
-def add_message(globals, role, content, model=None, **kwargs):
+def add_message(globals, role, content, model=None, tokens=0, **kwargs):
     """Builds each message to save to chat file"""
     message = {"role": role, "content": content, "message_id": str(uuid.uuid4()), **kwargs}
     if message["role"] == "assistant":
@@ -26,6 +26,8 @@ def add_message(globals, role, content, model=None, **kwargs):
         logging.debug(f"Current message ID: {globals.current_response_id}")
     if model:
         message["model"] = model
+    if tokens and tokens != 0:
+        message["tokens"] = tokens
     try:
         globals.conversation_history.append(message)
     except Exception as e:
