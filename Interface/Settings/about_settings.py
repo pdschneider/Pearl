@@ -1,6 +1,8 @@
 # Interface/Settings/about_settings.py
 import customtkinter as ctk
 import Utils.fonts as fonts
+import webbrowser
+from CTkToolTip import CTkToolTip
 
 def create_about_tab(globals, about_frame):
     """
@@ -45,6 +47,10 @@ def create_about_tab(globals, about_frame):
 
     ctk.CTkButton(buttons_frame, text="View Setup Page", command= lambda: bring_back_setup()).grid(row=0, column=0, padx=5)
     ctk.CTkButton(buttons_frame, text="View Changelog", command= lambda: show_changelog()).grid(row=0, column=1, padx=5)
+
+    github_button = ctk.CTkButton(buttons_frame, text="View Github", command= lambda: webbrowser.open(url="https://github.com/pdschneider/Pearl"))
+    github_button.grid(row=0, column=2, padx=5)
+    CTkToolTip(github_button, message="Opens in default web browser", delay=0.6, follow=True, padx=10, pady=5)
 
     def bring_back_setup():
         """Reinitiates the setup window."""

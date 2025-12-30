@@ -8,6 +8,7 @@ from Interface.setup_window import create_setup_tab
 from Interface.Components.sidebar import create_sidebar
 from Interface.changelog import create_changelog_tab
 from config import apply_theme, get_data_path
+import logging
 
 def create_interface(globals):
     """
@@ -19,11 +20,15 @@ def create_interface(globals):
     # Set up main window
     globals.root = ctk.CTk()
     globals.root.title("Pearl")
-    screen_width = globals.root.winfo_screenwidth()
-    screen_height = globals.root.winfo_screenheight()
-    x = (screen_width - 900) // 2
-    y = (screen_height - 850) // 2
-    globals.root.geometry(f"850x850+{x}+{y}")
+    try:
+        globals.root.geometry(f"{globals.saved_width}x{globals.saved_height}+{globals.saved_horizontal_placement}+{globals.saved_vertical_placement}")
+    except:
+        screen_width = globals.root.winfo_screenwidth()
+        screen_height = globals.root.winfo_screenheight()
+        x = (screen_width - 900) // 2
+        y = (screen_height - 850) // 2
+        globals.root.geometry(f"850x850+{x}+{y}")
+        logging.warning(f"Could not read desired window geometry - resorting to defaults.")
     globals.root.minsize(width=750, height=675)
 
     # Get Icon

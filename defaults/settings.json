@@ -1,7 +1,6 @@
 {
     "active_model": "llama3.2:latest",
     "active_voice": "af_heart",
-    "active_prompt": "Assistant",
     "tts_enabled": false,
     "tts_source": "Default",
     "dynamic_mode": false,
@@ -10,5 +9,9 @@
     "active_theme": "dark_cloud",
     "save_chats": false,
     "default_sink": "Default",
-    "context_model": "llama3.2:latest"
+    "context_model": "llama3.2:latest",
+    "saved_width": "",
+    "saved_height": "",
+    "saved_horizontal_placement": "",
+    "saved_vertical_placement": ""
 }

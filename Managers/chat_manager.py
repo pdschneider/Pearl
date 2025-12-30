@@ -5,6 +5,7 @@ from Connections.ollama import chat_stream
 from Managers.sound_manager import kokoro_speak, default_speak
 from Managers.chat_history import save_conversation, add_message, start_new_conversation
 from Utils.context import detect_context
+from datetime import datetime
 
 # Chat Functions
 def send_message(globals, ui_elements, event=None):
@@ -37,27 +38,33 @@ def send_message(globals, ui_elements, event=None):
     else:
         return
 
-    # Re-enables file attachment button
-    globals.file_button.configure(state="normal")
-    globals.attach_tip.configure(message="Attach")
-    globals.file_attachment = None
-
-    detect_context(globals, user_text)
-
     if globals.is_new_conversation:
+        globals.active_prompt = "Assistant"
         start_new_conversation(globals)
+
+    # inspect for context
+    detect_context(globals, user_text)
 
     ui_elements["add_bubble"]("user", clean_text)
     ui_elements['entrybox'].delete("1.0", "end")
 
     messages = globals.conversation_history + [{"role": "user", "content": user_text}]
-    threading.Thread(target=chat_stream, args=(model, messages, q, globals.cancel_event), daemon=True, name="Chat Stream").start()
+    threading.Thread(target=chat_stream, args=(globals, model, messages, q, globals.cancel_event), daemon=True, name="Chat Stream").start()
 
-    globals.assistant_label = ui_elements["add_bubble"]("assistant", "")
+    current_model = globals.active_model
+    globals.assistant_label = ui_elements["add_bubble"]("assistant", "", model=current_model)
     globals.assistant_message = ""
 
     if globals.save_chats:
         add_message(globals, "user", clean_text)
+
+    globals.message_start_time = datetime.now().isoformat()
+
+    # Re-enables file attachment button
+    globals.file_button.configure(state="normal")
+    globals.attach_tip.configure(message="Attach")
+    globals.file_attachment = None
+    globals.attachment_path = None
 
     # Toggle button to stop mode
     ui_elements["send_button"].configure(text="■", command=lambda: globals.cancel_event.set() if globals.cancel_event else None)

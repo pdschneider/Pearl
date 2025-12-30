@@ -12,11 +12,11 @@ class Globals:
     """Class to store global variables"""
     def __init__(self):
         """Initializes settings variables from refresh_globals."""
-        all_prompts = load_prompts()
+        self.all_prompts = load_prompts()
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.1.10"
+        self.current_version = "v0.1.11"
 
         # Tkinter Variables
         self.theme_var = None
@@ -44,6 +44,7 @@ class Globals:
         self.sidebar = None
 
         # Miscellaneous
+        self.active_prompt = "Assistant"
         self.setup_page = None
         self.top_bar = None
         self.hamburger = None
@@ -55,6 +56,8 @@ class Globals:
         self.conversation_history = []
         self.conversation_id = None
         self.created_at = None
+        self.message_start_time = None
+        self.message_end_time = None
 
         # Tooltips
         self.ollama_download_tooltip = None
@@ -62,11 +65,12 @@ class Globals:
 
         # Chat Variables
         self.chat_history = []
-        self.system_prompt = all_prompts.get(self.active_prompt)
-        self.chat_history.append({"role": "system", "content": all_prompts.get(self.active_prompt, {}).get("prompt", "")})
+        self.system_prompt = self.all_prompts[f"{self.active_prompt}"]["prompt"]
+        self.chat_history.append({"role": "system", "content": self.all_prompts.get(self.active_prompt, {}).get("prompt", "")})
         self.chat_message = None
         self.assistant_message = ""
         self.file_attachment = None
+        self.attachment_path = None
 
         # Flags
         self.ollama_active = None
@@ -94,7 +98,6 @@ class Globals:
         # Variables from settings
         self.active_model = settings.get("active_model", "llama3.2:3b")
         self.active_voice = settings.get("active_voice", "af_heart")
-        self.active_prompt = settings.get("active_prompt", "Assistant")
         self.tts_enabled = settings.get("tts_enabled", False)
         self.tts_source = settings.get("tts_source", "default")
         self.dynamic_mode = settings.get("dynamic_mode", False)
@@ -103,6 +106,10 @@ class Globals:
         self.save_chats = settings.get("save_chats", False)
         self.default_sink = settings.get("default_sink", "Default")
         self.context_model = settings.get("context_model", "llama3.2:3b")
+        self.saved_width = settings.get("saved_width", 850)
+        self.saved_height = settings.get("saved_height", 850)
+        self.saved_horizontal_placement = settings.get("saved_horizontal_placement", -1)
+        self.saved_vertical_placement = settings.get("saved_vertical_placement", -1)
 
 def get_data_path(direct=None, filename=None):
     """

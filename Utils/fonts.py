@@ -9,6 +9,7 @@ if os_name.startswith("Windows"):
     mono_font    = ("DejaVu Sans Mono", 10)
     widget_font  = ("DejaVu Sans", 10)
     message_font = ("DejaVu Sans", 15)
+    model_font   = ("DejaVu Sans", 12, "italic")
 elif os_name.startswith("Linux"):
     title_font   = ("Ubuntu", 18, "bold")
     heading_font = ("Ubuntu", 16, "bold")
@@ -16,6 +17,7 @@ elif os_name.startswith("Linux"):
     mono_font    = ("Ubuntu Mono", 10)
     widget_font  = ("Ubuntu", 10)
     message_font = ("Ubuntu", 15)
+    model_font   = ("Ubuntu", 12, "italic")
 else:  # macOS or anything else
     title_font   = ("Helvetica Neue", 18, "bold")
     heading_font = ("Helvetica Neue", 16, "bold")
@@ -23,3 +25,4 @@ else:  # macOS or anything else
     mono_font    = ("SF Mono", 11)
     widget_font  = ("Helvetica Neue", 10)
     message_font = ("Helvetica Neue", 15)
+    model_font   = ("Helvetica Neue", 12, "italic")

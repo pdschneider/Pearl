@@ -67,7 +67,7 @@ def create_chat_tab(globals, chat_tab):
     globals.attach_tip = attach_tip
 
     # Chat Functions
-    def add_bubble(role, text=""):
+    def add_bubble(role, text="", model=None):
         """Appends messages to the chat box."""
         bubble_frame = ctk.CTkFrame(chat_frame, corner_radius=6)
 
@@ -89,7 +89,8 @@ def create_chat_tab(globals, chat_tab):
         widgets_row = ButtonWidgets(parent=bubble_frame,
                                     globals=globals,
                                  label=label,
-                                 copy_callback=copy_bubble_text)
+                                 copy_callback=copy_bubble_text,
+                                 model=model)
         widgets_row.pack(fill="x")
         widgets_row.hide_buttons()
 
@@ -149,7 +150,7 @@ def create_chat_tab(globals, chat_tab):
 
     globals.ui_elements = ui_elements
 
-    accepted_filetypes = [".txt", ".csv", ".json"
+    accepted_filetypes = [".txt", ".csv", ".json",
                           ".py", ".pyw", ".spec", 
                           ".log", ".ini", ".cfg", ".xml", 
                           ".sh", ".bat", ".ps1", 
@@ -165,6 +166,8 @@ def create_chat_tab(globals, chat_tab):
                                                                         ("Python files", "*.py")))
         if not file:
             return
+        globals.attachment_path = file
+        logging.info(f"Attached file: {file}")
         try:
             for i in accepted_filetypes:
                 if file.endswith(i):

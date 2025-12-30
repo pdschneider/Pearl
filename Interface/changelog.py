@@ -20,6 +20,26 @@ def create_changelog_tab(globals, changelog_tab):
 
     # Main Changelog Sections
 
+    # v0.1.11
+    ctk.CTkLabel(changelog_frame,
+                 text="v0.1.11",
+                 font=fonts.heading_font,
+                 anchor="center").pack(fill="x", pady=20, padx=10)
+    
+    ctk.CTkLabel(changelog_frame,
+                 justify="left",
+                 anchor="center",
+                 wraplength=400,
+                 text="- Dynamic prompt switching with context model enabled\n" \
+                     "- Added model name underneath assistant messages\n" \
+                     "- Added time groups to chat history view\n" \
+                     "- Added start/end times to assistant messages\n" \
+                     "- File attachment paths are logged for each message\n" \
+                     "- Added view logs button to advanced tab\n" \
+                     "- Added github button to about tab\n" \
+                     "- Remembers window placement for more consistent user experience\n" \
+                     "- Minor bug fixes and improvements").pack(fill="both", expand=True, padx=10, pady=10)
+
     # v0.1.10
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.10",

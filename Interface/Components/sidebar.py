@@ -4,6 +4,8 @@ import logging
 from Managers.chat_history import load_conversations, load_specific_conversation, start_new_conversation
 import sounddevice as sd
 from CTkToolTip import CTkToolTip
+from datetime import datetime, timedelta
+import Utils.fonts as fonts
 
 def create_sidebar(globals):
     """
@@ -73,23 +75,76 @@ def create_sidebar(globals):
             no_chats_label.pack(pady=20, padx=5)
             return
 
+        now = datetime.now()
+        today = now.date()
+        yesterday = today - timedelta(days=1)
+        week_ago = today - timedelta(days=7)
+        month_ago = today - timedelta(days=30)
+        year_ago = today - timedelta(days=365)
+
+        groups = {
+            "Today": [],
+            "Yesterday": [],
+            "Last Week": [],
+            "Past Month": [],
+            "Past Year": [],
+            "Older Than a Year": []
+        }
+
         for convo in conversations:
             metadata = convo["metadata"]
             conv_id = metadata["conversation_id"]
             title = metadata.get("title", "Untitled")
-            date_str = metadata.get("created_at", "Unknown")[:10]
+            created_at = metadata.get("created_at")
+            if not created_at:
+                groups["Older Than a Year"].append(convo)
+                continue
+            try:
+                created_dt = datetime.fromisoformat(created_at)
+                created_date = created_dt.date()
+            except:
+                groups["Older Than a Year"].append(convo)
+                continue
 
-            # Create a frame for each chat entry
-            entry_frame = ctk.CTkFrame(history_frame, corner_radius=6)
-            entry_frame.pack(fill="x", pady=5)
+            if created_date == today:
+                groups["Today"].append(convo)
+            elif created_date == yesterday:
+                groups["Yesterday"].append(convo)
+            elif week_ago < created_date <= yesterday:
+                groups["Last Week"].append(convo)
+            elif month_ago < created_date <= week_ago:
+                groups["Past Month"].append(convo)
+            elif year_ago < created_date <= month_ago:
+                groups["Past Year"].append(convo)
+            else:
+                groups["Older Than a Year"].append(convo)
 
-            # Title label
-            title_label = ctk.CTkLabel(entry_frame, text=title, anchor="w", justify="left")
-            title_label.pack(side="left", expand=True, fill="x")
+        for section_name, convos in groups.items():
+            if not convos:
+                continue
 
-            # Make the whole frame clickable
-            entry_frame.bind("<Button-1>", lambda e, cid=conv_id: load_and_display_chat(cid))
-            title_label.bind("<Button-1>", lambda e, cid=conv_id: load_and_display_chat(cid))
+            header = ctk.CTkLabel(history_frame,
+                                    text=section_name,
+                                    font=fonts.heading_font,
+                                    anchor="w")
+            header.pack(fill="x", padx=12, pady=4)
+
+            for convo in convos:
+                metadata = convo["metadata"]
+                conv_id = metadata["conversation_id"]
+                title = metadata.get("title", "Untitled")
+
+                # Create a frame for each chat entry
+                entry_frame = ctk.CTkFrame(history_frame, corner_radius=6)
+                entry_frame.pack(fill="x", pady=5)
+
+                # Title label
+                title_label = ctk.CTkLabel(entry_frame, text=title, anchor="w", justify="left")
+                title_label.pack(side="left", expand=True, fill="x")
+
+                # Make the whole frame clickable
+                entry_frame.bind("<Button-1>", lambda e, cid=conv_id: load_and_display_chat(cid))
+                title_label.bind("<Button-1>", lambda e, cid=conv_id: load_and_display_chat(cid))
     
     def reset_to_new_chat():
         """Resets to a new conversation and clears the chat frame."""
@@ -151,7 +206,8 @@ def create_sidebar(globals):
         for msg in globals.chat_history:
             role = msg["role"]
             content = msg["content"]
-            globals.ui_elements["add_bubble"](role, content)
+            model = msg.get("model")
+            globals.ui_elements["add_bubble"](role, content, model=model)
 
         globals.ui_elements["scroll_to_bottom"]()
         globals.root.update_idletasks()
@@ -163,7 +219,6 @@ def create_sidebar(globals):
 
     # Override the hamburger button command in top_bar
     if hasattr(globals, 'hamburger'):
-        logging.debug(f"Overriding hamburger command.")
         globals.hamburger.configure(command=toggle_sidebar)
     else:
         logging.error(f"No globals.hamburger found.")

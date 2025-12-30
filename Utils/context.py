@@ -1,5 +1,7 @@
 # Utils/context.py
 import logging
+from Connections.ollama import context_query
+from config import save_settings
 
 def detect_context(globals, user_text):
     """
@@ -43,7 +45,14 @@ def detect_context(globals, user_text):
         else:
             best_prompt = top_prompts[0]
         
-        logging.info(f"Detected context: {best_prompt}")
+        logging.debug(f"Detected context: {best_prompt}")
+        if globals.context_model:
+            logging.debug(f"Querying context model...")
+            context_response = context_query(globals.context_model, user_text)
+            logging.debug(f"Context model's response: {context_response}")
+            if context_response == best_prompt:
+                globals.active_prompt = best_prompt
+                logging.info(f"Context switched to {best_prompt}")
         return best_prompt, prompts_dict.get(best_prompt, {})
     
     logging.info("No context detected.")

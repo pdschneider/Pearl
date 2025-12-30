@@ -1,5 +1,6 @@
 # Utils/ollama.py
 import requests, time, json, logging, socket
+from datetime import datetime
 
 def ollama_test():
     """Tests Ollama to set flag for active/inactive."""
@@ -71,12 +72,17 @@ def unload_model(model):
         logging.error(f"Failed to unload {model}: {e}")
         return False
 
-def chat_stream(model, messages, out_q, cancel_event):
+def chat_stream(globals, model, messages, out_q, cancel_event):
     """
     Stream response from Ollama using the proper /chat endpoint.
     
     messages = list of dicts: [{"role": "user"|"assistant"|"system", "content": "..."}, ...]
     """
+    if globals.active_prompt:
+        messages_and_prompt = [{"role": "system", "content": globals.system_prompt}] + messages
+    if messages_and_prompt:
+        messages = messages_and_prompt
+
     url = "http://localhost:11434/api/chat"
     payload = {
         "model": model,
@@ -107,8 +113,23 @@ def chat_stream(model, messages, out_q, cancel_event):
     except Exception as e:
         out_q.put(f"Error: {e}\n")
     finally:
+        globals.message_end_time = datetime.now().isoformat()
         out_q.put(None)
         response.close()
+
+def context_query(model, message):
+    try:
+        response = requests.post("http://localhost:11434/api/generate", json={
+            "model": model,
+            "prompt": f"Based on this list, determine the best context of the message and return ONLY the word. Nothing else: 'Assistant', 'Therapist', 'Financial', 'Storyteller', 'Conspiracy', 'Meditation', 'Motivation'. The message: ' {message}",
+            "stream": False},
+            timeout=5)
+        logging.debug(f"Context model status code: {response.status_code}")
+        if response.status_code == 200:
+            return response.json()["response"]
+    except Exception as e:
+        logging.error(f"Could not query context model due to: {e}")
+        
 
 def get_model_info(model):
     """Gets detailed model information for a specific model."""

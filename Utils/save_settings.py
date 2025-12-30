@@ -1,6 +1,5 @@
 import config
 import logging
-from tkinter import messagebox
 
 def save_all_settings(globals):
     """
@@ -25,6 +24,23 @@ def save_all_settings(globals):
     logging_level = current_logging_level
     saved_logging_level = current_logging_level  # Update saved_logging_level to match
 
+    # Save Window Placement
+    logging.debug(f"Root state: {globals.root.state()}")
+    if globals.root.state() != "zoomed":  # don't save if maximized
+        try:
+            current_width = globals.root.winfo_width()
+            current_height = globals.root.winfo_height()
+            current_horizontal_placement = globals.root.winfo_x()
+            current_vertical_placement = globals.root.winfo_y()
+
+            logging.debug(f"Saving via winfo: {current_width}x{current_height}"
+                        f"+{current_horizontal_placement}+{current_vertical_placement}")
+        except Exception as e:
+            logging.debug(f"Could not save window placement due to {e}")
+            return
+    else:
+        return
+
     # Save settings with updated logging levels
     config.save_settings(
     logging_level = logging_level,
@@ -34,8 +50,12 @@ def save_all_settings(globals):
     active_voice = current_active_voice,
     tts_source = current_tts_source,
     save_chats = current_save_chats,
-    default_sink = current_sink)
-    
+    default_sink = current_sink,
+    saved_width = current_width,
+    saved_height = current_height,
+    saved_horizontal_placement = current_horizontal_placement,
+    saved_vertical_placement = current_vertical_placement)
+
     # Refresh Globals
     globals.refresh_globals()
 
@@ -55,5 +75,4 @@ def save_all_settings(globals):
     # Apply new theme
     config.apply_theme(current_active_theme)
 
-    messagebox.showinfo("Settings Saved", "Settings saved successfully.")
     logging.info(f"Settings saved successfully.")

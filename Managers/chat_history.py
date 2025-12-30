@@ -24,14 +24,25 @@ def add_message(globals, role, content, model=None, tokens=0, **kwargs):
     if message["role"] == "assistant":
         globals.current_response_id = message["message_id"]
         logging.debug(f"Current message ID: {globals.current_response_id}")
+    if globals.message_start_time:
+        message["start_time"] = globals.message_start_time
+    if globals.message_end_time:
+        message["end_time"] = globals.message_end_time
+    if globals.attachment_path:
+        message["attachment"] = globals.attachment_path
     if model:
         message["model"] = model
+    if globals.active_prompt and role == "assistant":
+        message["prompt"] = globals.active_prompt
     if tokens and tokens != 0:
         message["tokens"] = tokens
     try:
         globals.conversation_history.append(message)
     except Exception as e:
         logging.error(f"Could not write message to chat file due to: {e}")
+    
+    globals.message_start_time = None
+    globals.message_end_time = None
 
 def save_conversation(globals):
     """Saves conversation history each message"""
@@ -41,7 +52,6 @@ def save_conversation(globals):
     
     if globals.conversation_id is None:
         globals.conversation_id = str(uuid.uuid4())
-        created_at = datetime.now().isoformat()
 
     filename = os.path.join(chat_dir, f"chat_{globals.conversation_id}.json")
     data = {
