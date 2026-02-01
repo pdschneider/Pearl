@@ -7,7 +7,8 @@ from Interface.Components.top_bar import create_top_bar
 from Interface.setup_window import create_setup_tab
 from Interface.Components.sidebar import create_sidebar
 from Interface.changelog import create_changelog_tab
-from config import apply_theme, get_data_path
+from Utils.load_settings import load_data_path
+from config import apply_theme
 import logging
 
 def create_interface(globals):
@@ -20,19 +21,26 @@ def create_interface(globals):
     # Set up main window
     globals.root = ctk.CTk()
     globals.root.title("Pearl")
-    try:
-        globals.root.geometry(f"{globals.saved_width}x{globals.saved_height}+{globals.saved_horizontal_placement}+{globals.saved_vertical_placement}")
-    except:
+
+    def draw_window():
         screen_width = globals.root.winfo_screenwidth()
         screen_height = globals.root.winfo_screenheight()
         x = (screen_width - 900) // 2
         y = (screen_height - 850) // 2
-        globals.root.geometry(f"850x850+{x}+{y}")
-        logging.warning(f"Could not read desired window geometry - resorting to defaults.")
+        globals.root.geometry(f"900x850+{x}+{y}")
+
+    if globals.saved_width and globals.saved_height and globals.saved_x and globals.saved_y:
+        try:
+            globals.root.geometry(f"{globals.saved_width}x{globals.saved_height}+{globals.saved_x}+{globals.saved_y}")
+        except:
+            draw_window()
+    else:
+        draw_window()
+
     globals.root.minsize(width=750, height=675)
 
     # Get Icon
-    globals.icon = get_data_path("config", "assets/Pearl_Sparkle.png")
+    globals.icon = load_data_path("config", "assets/Pearl_Sparkle.png")
     icon_image = tk.PhotoImage(file=str(globals.icon))
     globals.root.iconphoto(False, icon_image)
 
@@ -42,7 +50,6 @@ def create_interface(globals):
 
     # Configure theme
     apply_theme(globals.active_theme)
-
     globals.root.configure(fg_color=globals.theme_dict["CTkFrame"]["fg_color"])
 
     # Add Navigation

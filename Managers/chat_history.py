@@ -1,9 +1,9 @@
 # Managers/chat_history.py
 import json, uuid, logging, os
 from datetime import datetime
-from config import get_data_path
+from config import load_data_path
 
-chat_dir = os.path.normpath(get_data_path("local", "chats"))
+chat_dir = os.path.normpath(load_data_path("local", "chats"))
 try:
     os.makedirs(chat_dir, exist_ok=True)
 except Exception as e:
@@ -71,7 +71,9 @@ def save_conversation(globals):
 def load_conversations(globals):
     """Loads all saved conversations from the chat dir, sorted by created_at descending."""
     conversations = []
-    chat_dir = os.path.normpath(get_data_path("local", "chats"))
+    if not os.path.isdir(load_data_path("local", "chats")):
+        os.mkdir(load_data_path("local", "chats"))
+    chat_dir = os.path.normpath(load_data_path("local", "chats"))
     for filename in os.listdir(chat_dir):
         if filename.endswith(".json"):
             filepath = os.path.join(chat_dir, filename)
@@ -108,7 +110,7 @@ def load_conversations(globals):
 
 def load_specific_conversation(globals, conversation_id):
     """Loads a specific conversation by ID into globals."""
-    chat_dir = os.path.normpath(get_data_path("local", "chats"))
+    chat_dir = os.path.normpath(load_data_path("local", "chats"))
     filename = os.path.join(chat_dir, f"chat_{conversation_id}.json")
     try:
         with open(filename, 'r') as f:

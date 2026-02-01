@@ -1,5 +1,7 @@
-import config
-import logging
+import logging, os, json
+from Utils.load_settings import load_settings, load_data_path
+from config import apply_theme
+from Utils.toast import show_toast
 
 def save_all_settings(globals):
     """
@@ -9,10 +11,9 @@ def save_all_settings(globals):
         globals (Globals): The global configuration object containing UI variables and settings.
     """
 
-    # Load current settings to get saved_logging_level and current dev_mode
-    settings = config.load_settings()
+    # Load current settings
+    settings = load_settings()
     current_logging_level = globals.logging_var.get()
-    saved_logging_level = settings.get("saved_logging_level", "INFO")
     current_active_theme = globals.theme_var.get()
     current_tts = globals.tts_var.get()
     current_active_voice = globals.active_voice_var.get()
@@ -22,7 +23,6 @@ def save_all_settings(globals):
 
     # Handle logging level based on dev mode change
     logging_level = current_logging_level
-    saved_logging_level = current_logging_level  # Update saved_logging_level to match
 
     # Save Window Placement
     logging.debug(f"Root state: {globals.root.state()}")
@@ -30,11 +30,11 @@ def save_all_settings(globals):
         try:
             current_width = globals.root.winfo_width()
             current_height = globals.root.winfo_height()
-            current_horizontal_placement = globals.root.winfo_x()
-            current_vertical_placement = globals.root.winfo_y()
+            current_x = globals.root.winfo_x()
+            current_y = globals.root.winfo_y()
 
             logging.debug(f"Saving via winfo: {current_width}x{current_height}"
-                        f"+{current_horizontal_placement}+{current_vertical_placement}")
+                        f"+{current_x}+{current_y}")
         except Exception as e:
             logging.debug(f"Could not save window placement due to {e}")
             return
@@ -42,9 +42,8 @@ def save_all_settings(globals):
         return
 
     # Save settings with updated logging levels
-    config.save_settings(
+    save_settings(
     logging_level = logging_level,
-    saved_logging_level = saved_logging_level,
     active_theme = current_active_theme,
     tts_enabled = current_tts,
     active_voice = current_active_voice,
@@ -53,14 +52,14 @@ def save_all_settings(globals):
     default_sink = current_sink,
     saved_width = current_width,
     saved_height = current_height,
-    saved_horizontal_placement = current_horizontal_placement,
-    saved_vertical_placement = current_vertical_placement)
+    saved_x = current_x,
+    saved_y = current_y)
 
     # Refresh Globals
     globals.refresh_globals()
 
     # Reload settings to update globals
-    settings = config.load_settings()
+    settings = load_settings()
     globals.logging_var.set(settings["logging_level"])
     globals.theme_var.set(settings["active_theme"])
     globals.tts_var.set(settings["tts_enabled"])
@@ -73,6 +72,19 @@ def save_all_settings(globals):
     logging.root.setLevel(getattr(logging, settings["logging_level"]))
 
     # Apply new theme
-    config.apply_theme(current_active_theme)
+    apply_theme(current_active_theme)
 
+    show_toast(globals, "Saved!")
     logging.info(f"Settings saved successfully.")
+
+def save_settings(**kwargs):
+    """Save settings to settings.json."""
+    settings = load_settings()
+    settings.update(kwargs)
+    file_path = os.path.normpath(load_data_path("config", "settings.json"))
+    try:
+        with open(file_path, 'w') as f:
+            json.dump(settings, f, indent=4)
+        logging.info(f"Saving settings to: {file_path}")
+    except Exception as e:
+        logging.error(f"Error saving settings to {file_path}: {e}")

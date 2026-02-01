@@ -142,5 +142,15 @@
     },
     "CTkToplevel": {
         "fg_color": "#BBDEFB"
+    },
+    "CTkSlider": {
+        "fg_color": "#FFFFFF",
+        "progress_color": "#42A5F5",
+        "button_color": "#1976D2",
+        "button_hover_color": "#1565C0",
+        "corner_radius": 6,
+        "button_corner_radius": 6,
+        "border_width": 2,
+        "button_length": 30
     }
 }

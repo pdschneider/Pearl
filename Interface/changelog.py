@@ -20,6 +20,29 @@ def create_changelog_tab(globals, changelog_tab):
 
     # Main Changelog Sections
 
+    # v0.1.12
+    ctk.CTkLabel(changelog_frame,
+                 text="v0.1.12",
+                 font=fonts.heading_font,
+                 anchor="center").pack(fill="x", pady=20, padx=10)
+    
+    ctk.CTkLabel(changelog_frame,
+                 justify="left",
+                 anchor="center",
+                 wraplength=400,
+                 text="- Added startup checks which analyze and sanitize corrupted values and files\n" \
+                     "- Moved loading logic to new load_settings.py\n" \
+                     "- Draws window in the center of the screen when opening the program for the first time\n" \
+                     "- Improved logic for opening the logs folder on Windows\n" \
+                     "- Normalized buttons across operating systems with updated icons\n" \
+                     "- Added bug report icon to top bar that opens default email application\n" \
+                     "- Added delete all chats button in settings\n" \
+                     "- Added factory reset option upon GUI failure\n" \
+                     "- Added paperclip icon underneath user messages to indicate a file attachment\n" \
+                     "- Added icons to settings pages\n" \
+                     "- Updated dependencies\n" \
+                     "- General stability & UI improvements").pack(fill="both", expand=True, padx=10, pady=10)
+
     # v0.1.11
     ctk.CTkLabel(changelog_frame,
                  text="v0.1.11",

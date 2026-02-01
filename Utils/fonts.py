@@ -1,5 +1,6 @@
 # Utils/fonts.py
-from config import os_name
+import platform
+os_name = platform.platform()
 
 # Fonts
 if os_name.startswith("Windows"):

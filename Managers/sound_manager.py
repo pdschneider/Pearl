@@ -1,10 +1,11 @@
 # Managers/sound_manager.py
-import os, requests, logging, socket, pyttsx3, threading
+import os, requests, logging, socket, pyttsx3, threading, platform
 import sounddevice as sd
 import soundfile as sf
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 from io import BytesIO
-from config import os_name
+
+os_name = platform.platform()
 
 if os_name.startswith("Linux"):
     import pulsectl

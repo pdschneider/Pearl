@@ -48,6 +48,9 @@ def send_message(globals, ui_elements, event=None):
     ui_elements["add_bubble"]("user", clean_text)
     ui_elements['entrybox'].delete("1.0", "end")
 
+    # Reset file attachment to None
+    globals.file_attachment = None
+
     messages = globals.conversation_history + [{"role": "user", "content": user_text}]
     threading.Thread(target=chat_stream, args=(globals, model, messages, q, globals.cancel_event), daemon=True, name="Chat Stream").start()
 
@@ -67,7 +70,7 @@ def send_message(globals, ui_elements, event=None):
     globals.attachment_path = None
 
     # Toggle button to stop mode
-    ui_elements["send_button"].configure(text="■", command=lambda: globals.cancel_event.set() if globals.cancel_event else None)
+    ui_elements["send_button"].configure(text=None, image=globals.stop_icon, command=lambda: globals.cancel_event.set() if globals.cancel_event else None)
     tokens = 0
 
     def pull_response():
@@ -94,7 +97,7 @@ def send_message(globals, ui_elements, event=None):
                         add_message(globals, "assistant", globals.assistant_message, model=globals.active_model, tokens=tokens)
                     save_conversation(globals)
                     globals.still_streaming = False
-                    ui_elements["send_button"].configure(text="➤", command=lambda: send_message(globals, ui_elements))
+                    ui_elements["send_button"].configure(text=None, image=globals.send_icon, command=lambda: send_message(globals, ui_elements))
                     return
 
                 if globals.current_response_id == local_id:

@@ -1,9 +1,8 @@
 # config.py
 import customtkinter as ctk
-import os, json, sys, logging, platform, shutil
-from logging.handlers import TimedRotatingFileHandler
+import os, json, sys, logging, platform
+from Utils.load_settings import load_prompts, load_settings, load_context, load_data_path
 
-os_name = platform.platform()
 pyinstaller_bundle = getattr(sys, 'frozen', False)
 if pyinstaller_bundle:
     logging.info(f"Application built with Pyinstaller.")
@@ -16,7 +15,7 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.1.11"
+        self.current_version = "v0.1.12"
 
         # Tkinter Variables
         self.theme_var = None
@@ -32,6 +31,27 @@ class Globals:
         self.ui_elements = None
         self.file_button = None
         self.attach_tip = None
+
+        # Icons
+        self.hamburger_icon = None
+        self.settings_icon = None
+        self.new_chat_icon = None
+        self.send_icon = None
+        self.stop_icon = None
+        self.attach_icon = None
+        self.bug_icon = None
+        self.delete_icon = None
+        self.chat_icon = None
+        self.chats_icon = None
+        self.curve_up_icon = None
+        self.location_icon = None
+        self.ollama_icon = None
+        self.phone_icon = None
+        self.sound_high_icon = None
+        self.sound_low_icon = None
+        self.speaker_icon = None
+        self.theme_icon = None
+        self.preferences_icon = None
 
         # Pages
         self.main_frame = None
@@ -88,6 +108,7 @@ class Globals:
         self.icon = None
         self.cancel_event = None
         self.current_response_id = None
+        self.os_name = platform.system()
 
     def refresh_globals(self):
         """Reloads all settings from disk and updates the class."""
@@ -108,136 +129,13 @@ class Globals:
         self.context_model = settings.get("context_model", "llama3.2:3b")
         self.saved_width = settings.get("saved_width", 850)
         self.saved_height = settings.get("saved_height", 850)
-        self.saved_horizontal_placement = settings.get("saved_horizontal_placement", -1)
-        self.saved_vertical_placement = settings.get("saved_vertical_placement", -1)
-
-def get_data_path(direct=None, filename=None):
-    """
-    Get the path to a writable data folder or a specific file, copying bundled files if needed.
-
-            Parameters:
-                    direct = The file type to specify its directory, either configuration, persistent user data, or logs
-                    filename = The file name being accessed
-
-    """
-    if getattr(sys, 'frozen', False):  # Running as bundled executable
-        if direct == "config":
-            if os_name.startswith("Windows"):
-                persistent_dir = os.path.normpath(os.path.join(os.getenv("APPDATA"), "Pearl"))
-            else:
-                persistent_dir = os.path.normpath(os.path.expanduser("~/.config/Pearl"))
-                if not os_name.startswith("Linux"):
-                    logging.warning(f"OS not found. Defaulting to Linux paths.")
-            default_files = ["settings.json", 
-                             "context.json", 
-                             "prompts.json", 
-                             "assets/Pearl.png",
-                             "assets/Pearl_Sparkle.png",
-                             "themes/cosmic_sky.json", 
-                             "themes/pastel_green.json", 
-                             "themes/blazing_red.json", 
-                             "themes/dark_cloud.json", 
-                             "themes/soft_light.json"]
-        elif direct == "local":
-            if os_name.startswith("Windows"):
-                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl"))
-            else:
-                persistent_dir = os.path.normpath(os.path.expanduser("~/.local/share/Pearl"))
-                if not os_name.startswith("Linux"):
-                    logging.warning(f"OS not found. Defaulting to Linux paths.")
-            default_files = []
-        else:
-            if os_name.startswith("Windows"):
-                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl", "Cache"))
-            else:
-                persistent_dir = os.path.normpath(os.path.expanduser("~/.cache/Pearl"))
-                if not os_name.startswith("Linux"):
-                    logging.warning(f"OS not found. Defaulting to Linux paths.")
-            default_files = []
-
-        # Checks if any file has themes/ or assets/ path
-        try:
-            if "themes/" in str(default_files):
-                themes_dir = os.path.join(persistent_dir, "themes")
-                os.makedirs(themes_dir, exist_ok=True)
-            if "assets/" in str(default_files):
-                assets_dir = os.path.join(persistent_dir, "assets")
-                os.makedirs(assets_dir, exist_ok=True)
-            os.makedirs(persistent_dir, exist_ok=True)
-            if not os.access(persistent_dir, os.W_OK):
-                raise PermissionError(f"No write permission for {persistent_dir}")
-        except Exception as e:
-            logging.error(f"Error creating persistent data directory: {e}")
-            raise
-        bundled_dir = os.path.normpath(os.path.join(sys._MEIPASS, "defaults"))
-        for default_file in default_files:
-            bundled_file = os.path.normpath(os.path.join(bundled_dir, default_file))
-            persistent_file = os.path.normpath(os.path.join(persistent_dir, default_file))
-            if os.path.exists(bundled_file) and not os.path.exists(persistent_file):
-                try:
-                    logging.info(f"Copying {default_file} from {bundled_file} to {persistent_file}")
-                    shutil.copy(bundled_file, persistent_file)
-                except Exception as e:
-                    logging.error(f"Error copying {default_file}: {e}")
-        data_dir = persistent_dir
-
-    else:  # Running in development
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.normpath(os.path.join(base_dir, "data"))
-        try:
-            os.makedirs(data_dir, exist_ok=True)
-            if not os.access(data_dir, os.W_OK):
-                raise PermissionError(f"No write permission for {data_dir}")
-        except Exception as e:
-            logging.error(f"Error creating data directory: {e}")
-            raise
-    logging.debug(f"Accessing data directory: {data_dir}")
-    return os.path.normpath(os.path.join(data_dir, filename)) if filename else data_dir
-
-def load_settings():
-    try:
-        with open(get_data_path("config", 'settings.json')) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logging.error(f"Failed to load settings.json due to: {e}.")
-        return {}
-
-def save_settings(**kwargs):
-    """Save settings to settings.json."""
-    settings = load_settings()
-    settings.update(kwargs)
-    file_path = os.path.normpath(get_data_path("config", "settings.json"))
-    try:
-        with open(file_path, 'w') as f:
-            json.dump(settings, f, indent=4)
-        logging.info(f"Saving settings to: {file_path}")
-    except Exception as e:
-        logging.error(f"Error saving settings to {file_path}: {e}")
-
-def load_prompts():
-    """Loads the prompts dictionary."""
-    try:
-        with open(get_data_path("config", 'prompts.json')) as f:
-            logging.debug(f"Successfully loaded prompts dictionary.")
-            return json.load(f)
-    except Exception as e:
-        logging.error(f"Failed to load prompts.json due to: {e}")
-        return {"greeting": "Pearl at your service!"}
-
-def load_context():
-    """Load context keywords from JSON file, return empty dict on failure."""
-    try:
-        with open(get_data_path("config", 'context.json')) as f:
-            logging.debug(f"Successfully loaded context dictionary.")
-            return json.load(f)
-    except Exception as e:
-        logging.error(f"Error loading context.json: {e}")
-        return {}
+        self.saved_x = settings.get("saved_x", -1)
+        self.saved_y = settings.get("saved_y", -1)
 
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ctk widgets."""
     try:
-        globals.theme_path = os.path.normpath(os.path.join(get_data_path(direct="config"), f"themes/{globals.active_theme}.json"))
+        globals.theme_path = os.path.normpath(os.path.join(load_data_path(direct="config"), f"themes/{globals.active_theme}.json"))
         try:
             with open(globals.theme_path, 'r') as f:
                 globals.theme_dict = json.load(f)
@@ -247,25 +145,5 @@ def apply_theme(name: str) -> None:
         logging.debug(f"CTk theme found at: {globals.theme_path}")
     except Exception as e:
         logging.warning(f"Could not retrieve CTk active theme due to: {e}")
-
-def setup_logging():
-    """Sets up logging for both the log file as well as standard console output."""
-    logging.getLogger().handlers.clear()  # Clears output destinations
-    logging.basicConfig(level=logging.INFO, format='%(message)s')
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-
-    logs_dir = os.path.join(get_data_path(direct="cache"), "logs")  # Sets up logs folder
-    os.makedirs(logs_dir, exist_ok=True)  # Creates the logs folder if it doesn't exist
-
-    # Sets up logging to files
-    logfile_handler = TimedRotatingFileHandler(os.path.join(logs_dir, "pearl.log"), when="midnight", backupCount=50)
-    logfile_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
-    logging.getLogger().addHandler(logfile_handler)
-
-    # Loads correct logging level from settings
-    settings = load_settings()
-    logging.root.setLevel(getattr(logging, settings.get("logging_level", "INFO")))
-
-    logging.info(f"File and console logging initialized.")
 
 globals = Globals()

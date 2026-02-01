@@ -5,7 +5,7 @@ import customtkinter as ctk
 from CTkToolTip import CTkToolTip
 from Connections.ollama import get_all_models, get_loaded_models, load_model
 from Utils.hardware import get_ram_info
-from config import save_settings
+from Utils.save_settings import save_settings
 from Interface.Components.selector import Treeview
 
 def create_models_tab(globals, models_frame):

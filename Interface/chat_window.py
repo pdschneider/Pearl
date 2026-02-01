@@ -2,10 +2,13 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import customtkinter as ctk
+from customtkinter import CTkImage
+from PIL import Image
 from CTkToolTip import CTkToolTip
 from Managers.chat_manager import send_message
+from Utils.load_settings import load_data_path
 import Utils.fonts as fonts
-import logging
+import logging, os
 from Interface.Components.widgets import ButtonWidgets
 
 def create_chat_tab(globals, chat_tab):
@@ -22,6 +25,22 @@ def create_chat_tab(globals, chat_tab):
         widget_state = "normal"
     else:
         widget_state = "disabled"
+
+    # Get Icons
+    globals.send_icon = CTkImage(
+    light_image=Image.open(load_data_path("config", "assets/send.png")),
+    dark_image=Image.open(load_data_path("config", "assets/send.png")),
+    size=(35, 35))
+
+    globals.stop_icon = CTkImage(
+    light_image=Image.open(load_data_path("config", "assets/stop-3.png")),
+    dark_image=Image.open(load_data_path("config", "assets/stop-3.png")),
+    size=(35, 35))
+
+    globals.attach_icon = CTkImage(
+    light_image=Image.open(load_data_path("config", "assets/attach-2.png")),
+    dark_image=Image.open(load_data_path("config", "assets/attach-2.png")),
+    size=(35, 35))
 
     # Menu for Bubbles
     right_click_menu = tk.Menu(chat_tab, tearoff=False)
@@ -44,8 +63,9 @@ def create_chat_tab(globals, chat_tab):
     entrybox.pack(side="left", padx=5, pady=5, fill="x", expand=True)
     entrybox.focus_set()
 
-    send_button = ctk.CTkButton(entry_frame,  # Send button
-               text="➤",
+    send_button = ctk.CTkButton(entry_frame,
+               image=globals.send_icon,
+               text=None,
                state=widget_state,
                height=50,
                width=40,
@@ -54,8 +74,9 @@ def create_chat_tab(globals, chat_tab):
     send_button.pack(side="top", padx=5, pady=5)
     CTkToolTip(send_button, message="Send", delay=1.0, follow=True, padx=10, pady=5)
 
-    file_button = ctk.CTkButton(entry_frame,  # Send button
-               text="📎",
+    file_button = ctk.CTkButton(entry_frame,
+               image=globals.attach_icon,
+               text=None,
                state=widget_state,
                height=50,
                width=40,
@@ -67,7 +88,7 @@ def create_chat_tab(globals, chat_tab):
     globals.attach_tip = attach_tip
 
     # Chat Functions
-    def add_bubble(role, text="", model=None):
+    def add_bubble(role, text="", model=None, attachment=None):
         """Appends messages to the chat box."""
         bubble_frame = ctk.CTkFrame(chat_frame, corner_radius=6)
 
@@ -90,7 +111,8 @@ def create_chat_tab(globals, chat_tab):
                                     globals=globals,
                                  label=label,
                                  copy_callback=copy_bubble_text,
-                                 model=model)
+                                 model=model,
+                                 attachment=globals.file_attachment)
         widgets_row.pack(fill="x")
         widgets_row.hide_buttons()
 
@@ -164,7 +186,7 @@ def create_chat_tab(globals, chat_tab):
                                                                         ("Text files", "*.txt"), 
                                                                         ("CSV files", "*.csv"),
                                                                         ("Python files", "*.py")))
-        if not file:
+        if not file or not os.path.isfile(file):
             return
         globals.attachment_path = file
         logging.info(f"Attached file: {file}")

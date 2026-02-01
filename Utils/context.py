@@ -1,7 +1,7 @@
 # Utils/context.py
 import logging
 from Connections.ollama import context_query
-from config import save_settings
+from Utils.save_settings import save_settings
 
 def detect_context(globals, user_text):
     """

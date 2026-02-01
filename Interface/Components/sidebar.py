@@ -1,7 +1,10 @@
 # Interface/Components/sidebar.py
 import customtkinter as ctk
+from customtkinter import CTkImage
+from PIL import Image
 import logging
 from Managers.chat_history import load_conversations, load_specific_conversation, start_new_conversation
+from Utils.load_settings import load_data_path
 import sounddevice as sd
 from CTkToolTip import CTkToolTip
 from datetime import datetime, timedelta
@@ -21,6 +24,17 @@ def create_sidebar(globals):
     animation_step = 20
     animation_delay = 10
 
+    # Get Icons
+    globals.hamburger_icon = CTkImage(
+    light_image=Image.open(load_data_path("config", "assets/hamburger.png")),
+    dark_image=Image.open(load_data_path("config", "assets/hamburger.png")),
+    size=(35, 35))
+
+    globals.new_chat_icon = CTkImage(
+    light_image=Image.open(load_data_path("config", "assets/pencil.png")),
+    dark_image=Image.open(load_data_path("config", "assets/pencil.png")),
+    size=(35, 35))
+
     # Create the sidebar frame
     sidebar = ctk.CTkFrame(globals.root, width=sidebar_width, corner_radius=0)
     globals.sidebar = sidebar
@@ -36,7 +50,8 @@ def create_sidebar(globals):
     # Add the hamburger button back so the sidebar can be closed
     sidebar_hamburger = ctk.CTkButton(
         buttons_frame,
-        text="☰",
+        image=globals.hamburger_icon,
+        text=None,
         width=45,
         height=45,
         command=lambda: toggle_sidebar())
@@ -46,7 +61,8 @@ def create_sidebar(globals):
     # New Chat Button
     sidebar_new_chat = ctk.CTkButton(
         buttons_frame,
-        text="✎",
+        image=globals.new_chat_icon,
+        text=None,
         width=45,
         height=45,
         command=lambda: reset_to_new_chat())
