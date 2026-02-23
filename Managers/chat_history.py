@@ -1,13 +1,18 @@
 # Managers/chat_history.py
-import json, uuid, logging, os
+import json
+import uuid
+import logging
+import os
 from datetime import datetime
 from config import load_data_path
+
 
 chat_dir = os.path.normpath(load_data_path("local", "chats"))
 try:
     os.makedirs(chat_dir, exist_ok=True)
 except Exception as e:
     logging.error(f"Unable to create chats folder due to: {e}")
+
 
 def start_new_conversation(globals):
     """Reverts variables for a new conversation."""
@@ -17,6 +22,7 @@ def start_new_conversation(globals):
     globals.is_new_conversation = True
     globals.created_at = datetime.now().isoformat()
     logging.debug(f"Started new conversation with ID: {globals.conversation_id}")
+
 
 def add_message(globals, role, content, model=None, tokens=0, **kwargs):
     """Builds each message to save to chat file"""
@@ -44,6 +50,7 @@ def add_message(globals, role, content, model=None, tokens=0, **kwargs):
     globals.message_start_time = None
     globals.message_end_time = None
 
+
 def save_conversation(globals):
     """Saves conversation history each message"""
     if not globals.conversation_history:
@@ -59,7 +66,7 @@ def save_conversation(globals):
             "created_at": globals.created_at,
             "title": f"Untitled Chat_{globals.conversation_id}",
             "conversation_id": globals.conversation_id},
-        "history": globals.conversation_history}
+            "history": globals.conversation_history}
     try:
         with open(filename, 'w') as f:
             json.dump(data, f, indent=4)
@@ -68,8 +75,10 @@ def save_conversation(globals):
     except Exception as e:
         logging.error(f"Failed to save conversation to {filename}: {e}")
 
+
 def load_conversations(globals):
-    """Loads all saved conversations from the chat dir, sorted by created_at descending."""
+    """Loads all saved conversations from the chat dir,
+    sorted by created_at descending."""
     conversations = []
     if not os.path.isdir(load_data_path("local", "chats")):
         os.mkdir(load_data_path("local", "chats"))
@@ -93,7 +102,8 @@ def load_conversations(globals):
                                 break
                         if preview == "Untitled":
                             try:
-                                date_obj = datetime.fromisoformat(metadata.get("created_at", ""))
+                                date_obj = datetime.fromisoformat(
+                                    metadata.get("created_at", ""))
                                 preview = date_obj.strftime("%Y-%m-%d %H:%M")
                             except ValueError:
                                 preview = filename.replace(".json", "")
@@ -107,6 +117,7 @@ def load_conversations(globals):
     # Sort by created_at descending
     conversations.sort(key=lambda c: c["metadata"].get("created_at", ""), reverse=True)
     return conversations
+
 
 def load_specific_conversation(globals, conversation_id):
     """Loads a specific conversation by ID into globals."""

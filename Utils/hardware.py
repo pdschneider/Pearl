@@ -1,7 +1,11 @@
 # Utils/hardware.py
-import subprocess, logging, psutil, platform
+import subprocess
+import logging
+import psutil
+import platform
 
 os_name = platform.platform()
+
 
 def get_ram_info():
     """Retrieves information about total RAM & active usage."""
@@ -15,14 +19,18 @@ def get_ram_info():
         try:
             with open('/proc/meminfo') as f:
                 meminfo = f.read()
-            total_ram_gb = int(meminfo.split('MemTotal:')[1].split('kB')[0].strip()) / (1024**2)
-            avail_ram_gb = int(meminfo.split('MemAvailable:')[1].split('kB')[0].strip()) / (1024**2)
-            return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb,}
+            total_ram_gb = int(meminfo.split(
+                'MemTotal:')[1].split('kB')[0].strip()) / (1024**2)
+            avail_ram_gb = int(meminfo.split(
+                'MemAvailable:')[1].split('kB')[0].strip()) / (1024**2)
+            return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb}
         except Exception as e:
-            logging.warning(f"Could not retrieve RAM information from /proc/meminfo: {e}.")
+            logging.warning(
+                f"Could not retrieve RAM information from /proc/meminfo: {e}.")
             return {'avail_ram_gb': None, 'total_ram_gb': None}
     else:
         return {'avail_ram_gb': None, 'total_ram_gb': None}
+
 
 def get_cpu_info():
     """Retrieves the number of CPU threads."""
@@ -38,10 +46,12 @@ def get_cpu_info():
             cpu_threads = cpuinfo.count('processor')
             return {'cpu_threads': cpu_threads}
         except Exception as e:
-            logging.warning(f"Unable to retrieve CPU thread count from /proc/cpuinfo: {e}")
+            logging.warning(
+                f"Unable to retrieve CPU thread count from /proc/cpuinfo: {e}")
             return {'cpu_threads': None}
     else:
         return {'cpu_threads': None}
+
 
 def cpu_temp_info():
     """Retrieves CPU temperature."""
@@ -60,11 +70,18 @@ def cpu_temp_info():
         logging.warning(f"Unable to retrieve CPU temperature data: {e}")
     if os_name == "Linux":
         try:
-            sensors_output = subprocess.check_output(['sensors']).decode('utf-8')  # Uses sensors bash command to pull data from sensors internal Linux file for finding CPU temperature
+            # Uses sensors bash command to pull data from
+            # sensors internal Linux file for finding CPU temperature
+            sensors_output = subprocess.check_output(
+                ['sensors']).decode('utf-8')
             cpu_temp_c = None
-            for line in sensors_output.split('\n'):  # Iterates between each line of temp_output
-                if 'Core' in line or 'Tdie' in line or 'Tctl' in line:  # Checks for the words Core or Tdie in each line (Tdie is a critical overheating condition)
-                    cpu_temp_c = float(line.split(':')[1].split('°C')[0].strip('+'))  # Saves temp as a float, stripping non-numerical characters
+            # Iterates between each line of temp_output
+            for line in sensors_output.split('\n'):
+                # Checks for the words Core or Tdie in each line
+                if 'Core' in line or 'Tdie' in line or 'Tctl' in line:
+                    # Saves temp as a float, stripping non-numerical characters
+                    cpu_temp_c = float(
+                        line.split(':')[1].split('°C')[0].strip('+'))
             return {'cpu_temp_c': cpu_temp_c} if cpu_temp_c is not None else {}
         except Exception as e:
             logging.warning(f"Unable to retrieve CPU temperature: {e}")
@@ -72,11 +89,13 @@ def cpu_temp_info():
     else:
         return {'cpu_temp_c': None}
 
+
 # Currently not functional - needs work
 def get_l3_cache():
     """Fetches the size of the CPU's l3 cache."""
     try:
-        output = subprocess.check_output("lscpu", shell=True).decode('utf-8').strip()
+        output = subprocess.check_output(
+            "lscpu", shell=True).decode('utf-8').strip()
         parts = output.split()
         l3_size_str = parts[1]  # e.g., '64'
         l3_unit = parts[2]  # e.g., 'MiB'
@@ -95,6 +114,7 @@ def get_l3_cache():
         logging.warning(f"Failed to parse L3 cache: {e}, using fallback 8 MiB")
         return {'l3_size': 8}
 
+
 def get_gpu_info():
     has_llm_gpu = False
     gpu_vram_gb = 0
@@ -102,7 +122,10 @@ def get_gpu_info():
 
     # Check for NVIDIA GPU
     try:
-        nvidia_output = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.total', '--format=csv,noheader,nounits']).decode('utf-8').strip()
+        nvidia_output = subprocess.check_output(
+            ['nvidia-smi',
+             '--query-gpu=memory.total',
+             '--format=csv,noheader,nounits']).decode('utf-8').strip()
         if nvidia_output:
             gpu_vram_gb = int(nvidia_output.split('\n')[0]) / 1024
             has_llm_gpu = True
@@ -114,7 +137,8 @@ def get_gpu_info():
     # Check for AMD GPU with ROCm
     if not has_llm_gpu:
         try:
-            rocm_output = subprocess.check_output(['rocm-smi', '--showmeminfo', 'vram']).decode('utf-8')
+            rocm_output = subprocess.check_output(
+                ['rocm-smi', '--showmeminfo', 'vram']).decode('utf-8')
             if 'VRAM Total Memory' in rocm_output:
                 vram_line = [line for line in rocm_output.split('\n') if 'VRAM Total Memory' in line][0]
                 gpu_vram_gb = int(vram_line.split()[-2]) / (1024**3)
@@ -124,6 +148,7 @@ def get_gpu_info():
             logging.warning(f"Unable to retrieve AMD GPU information: {e}.")
             pass
     return {'has_llm_gpu': has_llm_gpu, 'gpu_vram_gb': gpu_vram_gb, 'gpu_type': gpu_type}
+
 
 def get_hardware_stats():
     """Collect system hardware stats (RAM, CPU, GPU)."""

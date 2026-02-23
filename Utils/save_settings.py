@@ -1,14 +1,18 @@
-import logging, os, json
+import logging
+import os
+import json
 from Utils.load_settings import load_settings, load_data_path
 from config import apply_theme
 from Utils.toast import show_toast
+
 
 def save_all_settings(globals):
     """
     Save all settings to JSON files and update globals.
 
     Args:
-        globals (Globals): The global configuration object containing UI variables and settings.
+        globals (Globals): The global configuration object
+                           containing UI variables and settings.
     """
 
     # Load current settings
@@ -34,7 +38,7 @@ def save_all_settings(globals):
             current_y = globals.root.winfo_y()
 
             logging.debug(f"Saving via winfo: {current_width}x{current_height}"
-                        f"+{current_x}+{current_y}")
+                          f"+{current_x}+{current_y}")
         except Exception as e:
             logging.debug(f"Could not save window placement due to {e}")
             return
@@ -43,17 +47,17 @@ def save_all_settings(globals):
 
     # Save settings with updated logging levels
     save_settings(
-    logging_level = logging_level,
-    active_theme = current_active_theme,
-    tts_enabled = current_tts,
-    active_voice = current_active_voice,
-    tts_source = current_tts_source,
-    save_chats = current_save_chats,
-    default_sink = current_sink,
-    saved_width = current_width,
-    saved_height = current_height,
-    saved_x = current_x,
-    saved_y = current_y)
+            logging_level=logging_level,
+            active_theme=current_active_theme,
+            tts_enabled=current_tts,
+            active_voice=current_active_voice,
+            tts_source=current_tts_source,
+            save_chats=current_save_chats,
+            default_sink=current_sink,
+            saved_width=current_width,
+            saved_height=current_height,
+            saved_x=current_x,
+            saved_y=current_y)
 
     # Refresh Globals
     globals.refresh_globals()
@@ -76,6 +80,7 @@ def save_all_settings(globals):
 
     show_toast(globals, "Saved!")
     logging.info(f"Settings saved successfully.")
+
 
 def save_settings(**kwargs):
     """Save settings to settings.json."""

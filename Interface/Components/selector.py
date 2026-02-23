@@ -3,6 +3,7 @@ import logging
 import customtkinter as ctk
 from Connections.ollama import get_all_models, get_loaded_models, unload_model
 
+
 class Treeview:
     def __init__(self, globals_obj, parent, get_dir=None):
         """Initializes class variables."""
@@ -23,16 +24,24 @@ class Treeview:
     def _build_ui(self):
         """Builds the core selection UI."""
         try:
-            self.selection_frame = ctk.CTkScrollableFrame(self.parent, fg_color="transparent")
-            self.selection_frame.pack(fill="both", expand=True, pady=0, padx=10)
+            self.selection_frame = ctk.CTkScrollableFrame(
+                self.parent,
+                fg_color="transparent")
+            self.selection_frame.pack(fill="both",
+                                      expand=True,
+                                      pady=0,
+                                      padx=10)
         except Exception as e:
-            logging.critical(f"Could not create scrollable frame. Aborting treeview: {e}")
+            logging.critical(
+                f"Could not create scrollable frame. Aborting treeview: {e}")
             return
 
         models = self.get_dir()
         loaded = get_loaded_models()
         for idx, model in enumerate(sorted(models)):
-            row = ctk.CTkFrame(self.selection_frame, height=42, corner_radius=8)
+            row = ctk.CTkFrame(self.selection_frame,
+                               height=42,
+                               corner_radius=8)
             row.pack(fill="x", padx=8, pady=3)
 
             label = ctk.CTkLabel(row, text=model, anchor="w")
@@ -82,7 +91,8 @@ class Treeview:
         self._last_idx = None
 
     def refresh(self):
-        """Refreshes the selector UI after an action has changed its contents."""
+        """Refreshes the selector UI after an
+        action has changed its contents."""
         for row, _ in self._rows:
             row.destroy()
         self._rows.clear()
@@ -91,7 +101,9 @@ class Treeview:
         models = get_all_models()
         loaded = get_loaded_models()
         for idx, model in enumerate(sorted(models)):
-            row = ctk.CTkFrame(self.selection_frame, height=42, corner_radius=8)
+            row = ctk.CTkFrame(self.selection_frame,
+                               height=42,
+                               corner_radius=8)
             row.pack(fill="x", padx=8, pady=3)
 
             label = ctk.CTkLabel(row, text=model, anchor="w")

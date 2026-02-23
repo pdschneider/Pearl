@@ -1,14 +1,21 @@
 # Managers/sound_manager.py
-import os, requests, logging, socket, pyttsx3, threading, platform
+import os
+import requests
+import logging
+import socket
+import pyttsx3
+import threading
+import platform
 import sounddevice as sd
 import soundfile as sf
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 from io import BytesIO
 
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 os_name = platform.platform()
 
 if os_name.startswith("Linux"):
     import pulsectl
+
 
 # Kokoro
 def kokoro_test():
@@ -18,8 +25,10 @@ def kokoro_test():
         logging.info(f"Kokokro found!")
         return True
     except Exception as e:
-        logging.error(f"Kokoro not installed. TTS features will be unavailable.")
+        logging.error(
+            f"Kokoro not installed. TTS features will be unavailable.")
         return False
+
 
 def fetch_tts_models(globals):
     """loads possible Kokoro models"""
@@ -28,47 +37,54 @@ def fetch_tts_models(globals):
                 logging.debug(f"Attempting to load Kokoro voice list...")
                 voices = requests.get("http://localhost:8880/v1/audio/voices")
                 if voices.status_code == 200:
-                    logging.info(f"Kokoro voices fetch succeeded. Returning voices dictionary.")
+                    logging.info(
+                        f"Kokoro voices fetch succeeded. Returning voices dictionary.")
                     return voices.json()["voices"]
                 else:
-                    logging.error(f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
+                    logging.error(
+                        f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
                     return {}
         except Exception as e:
-            logging.error(f"Failed to load voices due to {e}. Returning empty dictionary.")
+            logging.error(
+                f"Failed to load voices due to {e}. Returning empty dictionary.")
             return {}
-        
+
+
 def kokoro_speak(globals):
     """Communicates with the Kokoro endpoint for tts"""
     try:
-        response = requests.post("http://localhost:8880/v1/audio/speech", json={
-            "model": "kokoro",
-            "input": globals.assistant_message,
-            "voice": globals.active_voice,
-            "response_format": "wav"})
+        response = requests.post(
+            "http://localhost:8880/v1/audio/speech", json={
+                "model": "kokoro",
+                "input": globals.assistant_message,
+                "voice": globals.active_voice,
+                "response_format": "wav"})
         if response.status_code != 200:
             logging.error(f"TTS API error: {response.status_code}")
             return  # Early exit on error
         logging.debug(f"status code: {response.status_code}. Playing TTS.")
         audio_data = BytesIO(response.content)
         data, samplerate = sf.read(audio_data, dtype='float32')
-        
+
         selected_sink = globals.default_sink
         if selected_sink != "Default":
             os.environ['PULSE_SINK'] = selected_sink
         else:
-            os.environ.pop('PULSE_SINK', None)  # Remove to fall back to system default
-        
-        # Define a function to play in a separate thread to avoid blocking the GUI
+            os.environ.pop('PULSE_SINK', None)  # Fall back to system default
+
+        # Defined to play in a separate thread
         def play_in_thread():
+            """Plays the sound, designed for threading."""
             try:
                 sd.play(data, samplerate, device='pulse')
             except Exception as e:
                 logging.error(f"Playback error: {e}")
-        
+
         # Start the playback thread
         threading.Thread(target=play_in_thread, daemon=True).start()
     except Exception as e:
         logging.error(f"TTS error: {e}")
+
 
 # Default TTS
 def default_speak(text: str):
@@ -81,13 +97,15 @@ def default_speak(text: str):
     except Exception as e:
         logging.error(f"Could not play TTS via default due to: {e}")
 
+
 # Query for speaker outputs
 def get_sink_menu():
     """
     Returns a list of dicts:
         {
             "label":   human readable name for the UI,
-            "pulse_name": exact name Pulse/ PipeWire uses (can be passed to sounddevice)
+            "pulse_name": exact name Pulse/
+            PipeWire uses (can be passed to sounddevice)
         }
     """
     menu = [{"label": "Default", "pulse_name": "Default"}]

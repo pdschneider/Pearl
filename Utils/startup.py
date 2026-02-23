@@ -1,24 +1,29 @@
 # Utils/startup.py
-import logging, threading, os, json, shutil
+import logging
+import threading
+import os
+import json
+import shutil
 from logging.handlers import TimedRotatingFileHandler
 import tkinter as tk
 import customtkinter as ctk
 from Connections.ollama import ollama_test, load_model, get_loaded_models
-from Managers.sound_manager import kokoro_test
 from Utils.hardware import get_hardware_stats
 from Utils.load_settings import load_data_path, load_settings
+
 
 def startup(globals):
     """
     Starts up the program with a progress bar.
-    
+
             Parameters:
                     globals: Global variables
     """
     tasks_done = threading.Event()
 
     def setup_logging():
-        """Sets up logging for both the log file as well as standard console output."""
+        """Sets up logging for both the log file 
+        as well as standard console output."""
         logging.getLogger().handlers.clear()  # Clears output destinations
         logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -112,7 +117,7 @@ def startup(globals):
                 data["saved_y"] = 0
                 changed = True
                 logging.info(f"Added missing 'saved_y' key to settings.json")
-            
+
             # Check to make sure values are the correct type
             if not isinstance(data["active_model"], str):
                 logging.warning(f"Current type of value for active_model: {type(data["active_model"])}")
@@ -202,9 +207,9 @@ def startup(globals):
                 with open(settings, 'w', encoding='utf-8') as f:
                     json.dump(data, f, indent=4)
 
-        # Sanitiza on exceptions
+        # Sanitize on exceptions
         except json.JSONDecodeError as e:
-            logging.error(f"Invalid json synatax {e}. Replacing corrupted file with default.")
+            logging.error(f"Invalid json syntax {e}. Replacing corrupted file with default.")
             os.remove(settings)
             load_data_path("config", "settings.json")
         except TypeError as e:
@@ -254,7 +259,7 @@ def startup(globals):
                         return
             logging.debug(f"Successfully loaded themes: {total_themes}")
         except json.JSONDecodeError as e:
-            logging.error(f"Invalid json synatax: {e} | Replacing corrupted theme files with defaults.")
+            logging.error(f"Invalid json syntax: {e} | Replacing corrupted theme files with defaults.")
             if os.path.isdir(theme_directory):
                 logging.debug(f"Removing theme directory.")
                 shutil.rmtree(theme_directory)
@@ -277,11 +282,67 @@ def startup(globals):
         except Exception as e:
             logging.error(f"Unable to load themes due to {e}")
 
+    def setup_context():
+        """Makes sure the context file is usable."""
+        try:
+            context = load_data_path("config", "context.json")
+            with open(context, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            changed = False
+
+            if "Assistant" not in data or not isinstance(data["Assistant"], list):
+                    data["Assistant"] = ["assist", "question", "info", "general", "assistant"]
+                    changed = True
+                    logging.info(f"Added missing or nonconforming 'Assistant' key to context.json")
+            if "Therapist" not in data or not isinstance(data["Therapist"], list):
+                    data["Therapist"] = ["feel", "emotion", "stress", "anxiety", "support", "sad", "happy", "kill", "kms"]
+                    changed = True
+                    logging.info(f"Added missing or nonconforming 'Therapist' key to context.json")
+            if "Financial" not in data or not isinstance(data["Financial"], list):
+                    data["Financial"] = ["budget", "money", "spend", "save", "invest", "debt", "finance", "finances"]
+                    changed = True
+                    logging.info(f"Added missing or nonconforming 'Financial' key to context.json")
+            if "Storyteller" not in data or not isinstance(data["Storyteller"], list):
+                    data["Storyteller"] = ["story", "tale", "adventure", "imagine", "narrative", "create", "fiction"]
+                    changed = True
+                    logging.info(f"Added missing or nonconforming 'Storyteller' key to context.json")
+            if "Conspiracy" not in data or not isinstance(data["Conspiracy"], list):
+                    data["Conspiracy"] = ["conspiracy", "truth", "hidden", "secret", "government", "plot", "theory", "bilderberg", "chemtrails"]
+                    changed = True
+                    logging.info(f"Added missing or nonconforming 'Conspiracy' key to context.json")
+            if "Meditation" not in data or not isinstance(data["Meditation"], list):
+                    data["Meditation"] = ["calm", "relax", "peace", "meditate", "breathe", "mindful", "zen", "mindfulness"]
+                    changed = True
+                    logging.info(f"Added missing or nonconforming 'Meditation' key to context.json")
+            if "Motivation" not in data or not isinstance(data["Motivation"], list):
+                    data["Motivation"] = ["motivate", "inspire", "encourage", "goal", "success", "push", "achieve", "motivation", "inspiration"]
+                    changed = True
+                    logging.info(f"Added missing or nonconforming 'Motivation' key to context.json")
+
+            # Write to file
+            if changed:
+                with open(context, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=4)
+
+        # Sanitize on exceptions
+        except json.JSONDecodeError as e:
+            logging.error(f"Invalid json syntax {e}. Replacing corrupted file with default.")
+            os.remove(context)
+            load_data_path("config", "context.json")
+        except TypeError as e:
+            logging.error(f"Invalid json structure: {e} | Replacing corrupted settings file with default.")
+            os.remove(context)
+            load_data_path("config", "context.json")
+        except Exception as e:
+            logging.error(f"Unable to load context due to {e}")
+
     def startup_tasks(globals, tasks_done):
         """Tests dependencies and sets flags."""
         setup_logging()
         setup_settings()
         setup_themes()
+        setup_context()
         try:
             ollama_success = ollama_test()
             if ollama_success:
@@ -290,11 +351,8 @@ def startup(globals):
                 if globals.active_model not in loaded_models:
                     logging.debug(f"Attempting to load initial model....")
                     load_model(globals.active_model)  # Loads the active model before startup
-            kokoro_success = kokoro_test()
-            if kokoro_success:
-                globals.kokoro_active = True
         except:
-            logging.error(f"Initial Ollama/Kokoro setup failed.")
+            logging.error(f"Initial Ollama setup failed.")
 
         # Query for hardware stats
         try:
@@ -344,4 +402,4 @@ def startup(globals):
     try:
         globals.startup_root.mainloop()
     except tk.TclError:
-        pass  #  Ignores callback errors
+        pass #  Ignores callback errors

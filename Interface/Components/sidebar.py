@@ -3,12 +3,15 @@ import customtkinter as ctk
 from customtkinter import CTkImage
 from PIL import Image
 import logging
-from Managers.chat_history import load_conversations, load_specific_conversation, start_new_conversation
+from Managers.chat_history import (load_conversations,
+                                   load_specific_conversation,
+                                   start_new_conversation)
 from Utils.load_settings import load_data_path
 import sounddevice as sd
 from CTkToolTip import CTkToolTip
 from datetime import datetime, timedelta
 import Utils.fonts as fonts
+
 
 def create_sidebar(globals):
     """
@@ -26,14 +29,14 @@ def create_sidebar(globals):
 
     # Get Icons
     globals.hamburger_icon = CTkImage(
-    light_image=Image.open(load_data_path("config", "assets/hamburger.png")),
-    dark_image=Image.open(load_data_path("config", "assets/hamburger.png")),
-    size=(35, 35))
+        light_image=Image.open(load_data_path("config", "assets/hamburger.png")),
+        dark_image=Image.open(load_data_path("config", "assets/hamburger.png")),
+        size=(35, 35))
 
     globals.new_chat_icon = CTkImage(
-    light_image=Image.open(load_data_path("config", "assets/pencil.png")),
-    dark_image=Image.open(load_data_path("config", "assets/pencil.png")),
-    size=(35, 35))
+        light_image=Image.open(load_data_path("config", "assets/pencil.png")),
+        dark_image=Image.open(load_data_path("config", "assets/pencil.png")),
+        size=(35, 35))
 
     # Create the sidebar frame
     sidebar = ctk.CTkFrame(globals.root, width=sidebar_width, corner_radius=0)
@@ -56,7 +59,12 @@ def create_sidebar(globals):
         height=45,
         command=lambda: toggle_sidebar())
     sidebar_hamburger.pack(side="left", padx=10, pady=5)
-    CTkToolTip(sidebar_hamburger, message="Collapse Sidebar", delay=1.0, follow=True, padx=10, pady=5)
+    CTkToolTip(sidebar_hamburger,
+               message="Collapse Sidebar",
+               delay=1.0,
+               follow=True,
+               padx=10,
+               pady=5)
 
     # New Chat Button
     sidebar_new_chat = ctk.CTkButton(
@@ -67,7 +75,12 @@ def create_sidebar(globals):
         height=45,
         command=lambda: reset_to_new_chat())
     sidebar_new_chat.pack(side="left", padx=0, pady=5)
-    CTkToolTip(sidebar_new_chat, message="New Chat", delay=1.0, follow=True, padx=10, pady=5)
+    CTkToolTip(sidebar_new_chat,
+               message="New Chat",
+               delay=1.0,
+               follow=True,
+               padx=10,
+               pady=5)
 
     # Chat History
     title_label = ctk.CTkLabel(
@@ -140,9 +153,9 @@ def create_sidebar(globals):
                 continue
 
             header = ctk.CTkLabel(history_frame,
-                                    text=section_name,
-                                    font=fonts.heading_font,
-                                    anchor="w")
+                                  text=section_name,
+                                  font=fonts.heading_font,
+                                  anchor="w")
             header.pack(fill="x", padx=12, pady=4)
 
             for convo in convos:
@@ -155,13 +168,16 @@ def create_sidebar(globals):
                 entry_frame.pack(fill="x", pady=5)
 
                 # Title label
-                title_label = ctk.CTkLabel(entry_frame, text=title, anchor="w", justify="left")
+                title_label = ctk.CTkLabel(entry_frame,
+                                           text=title,
+                                           anchor="w",
+                                           justify="left")
                 title_label.pack(side="left", expand=True, fill="x")
 
                 # Make the whole frame clickable
                 entry_frame.bind("<Button-1>", lambda e, cid=conv_id: load_and_display_chat(cid))
                 title_label.bind("<Button-1>", lambda e, cid=conv_id: load_and_display_chat(cid))
-    
+
     def reset_to_new_chat():
         """Resets to a new conversation and clears the chat frame."""
         sd.stop()
@@ -199,7 +215,7 @@ def create_sidebar(globals):
     def toggle_sidebar():
         """Calls the sidebar to be slid in or out."""
         logging.debug(f"Sidebar toggle called.")
-        sidebar.tkraise()  #  Bring to front
+        sidebar.tkraise()
         logging.debug(f"Current sidebar x position: {sidebar.winfo_x()}")
         if globals.sidebar_open:
             logging.debug(f"Closing sidebar.")
@@ -217,8 +233,8 @@ def create_sidebar(globals):
         # Clear current chat bubbles
         for widget in globals.ui_elements["chat_frame"].winfo_children():
             widget.destroy()
-        
-        #Add new bubbles from loaded chat
+
+        # Add new bubbles from loaded chat
         for msg in globals.chat_history:
             role = msg["role"]
             content = msg["content"]

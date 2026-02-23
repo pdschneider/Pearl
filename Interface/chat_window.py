@@ -8,8 +8,10 @@ from CTkToolTip import CTkToolTip
 from Managers.chat_manager import send_message
 from Utils.load_settings import load_data_path
 import Utils.fonts as fonts
-import logging, os
+import logging
+import os
 from Interface.Components.widgets import ButtonWidgets
+
 
 def create_chat_tab(globals, chat_tab):
     """
@@ -28,23 +30,25 @@ def create_chat_tab(globals, chat_tab):
 
     # Get Icons
     globals.send_icon = CTkImage(
-    light_image=Image.open(load_data_path("config", "assets/send.png")),
-    dark_image=Image.open(load_data_path("config", "assets/send.png")),
-    size=(35, 35))
+        light_image=Image.open(load_data_path("config", "assets/send.png")),
+        dark_image=Image.open(load_data_path("config", "assets/send.png")),
+        size=(35, 35))
 
     globals.stop_icon = CTkImage(
-    light_image=Image.open(load_data_path("config", "assets/stop-3.png")),
-    dark_image=Image.open(load_data_path("config", "assets/stop-3.png")),
-    size=(35, 35))
+        light_image=Image.open(load_data_path("config", "assets/stop-3.png")),
+        dark_image=Image.open(load_data_path("config", "assets/stop-3.png")),
+        size=(35, 35))
 
     globals.attach_icon = CTkImage(
-    light_image=Image.open(load_data_path("config", "assets/attach-2.png")),
-    dark_image=Image.open(load_data_path("config", "assets/attach-2.png")),
-    size=(35, 35))
+        light_image=Image.open(load_data_path("config", "assets/attach-2.png")),
+        dark_image=Image.open(load_data_path("config", "assets/attach-2.png")),
+        size=(35, 35))
 
     # Menu for Bubbles
     right_click_menu = tk.Menu(chat_tab, tearoff=False)
-    right_click_menu.add_command(label="Copy", command=lambda: copy_bubble_text(current_label[0]))
+    right_click_menu.add_command(
+        label="Copy",
+        command=lambda: copy_bubble_text(current_label[0]))
 
     current_label = [None]
 
@@ -55,36 +59,46 @@ def create_chat_tab(globals, chat_tab):
     entry_frame.pack(fill="both", padx=10, pady=5)
 
     entrybox = ctk.CTkTextbox(entry_frame,
-              font=fonts.body_font,
-              wrap="word",
-              state=widget_state,
-              corner_radius=16,
-              height=100)
+                              font=fonts.body_font,
+                              wrap="word",
+                              state=widget_state,
+                              corner_radius=16,
+                              height=100)
     entrybox.pack(side="left", padx=5, pady=5, fill="x", expand=True)
     entrybox.focus_set()
 
     send_button = ctk.CTkButton(entry_frame,
-               image=globals.send_icon,
-               text=None,
-               state=widget_state,
-               height=50,
-               width=40,
-               corner_radius=35,
-               command=lambda: send_message(globals, ui_elements))
+                                image=globals.send_icon,
+                                text=None,
+                                state=widget_state,
+                                height=50,
+                                width=40,
+                                corner_radius=35,
+                                command=lambda: send_message(globals, ui_elements))
     send_button.pack(side="top", padx=5, pady=5)
-    CTkToolTip(send_button, message="Send", delay=1.0, follow=True, padx=10, pady=5)
+    CTkToolTip(send_button,
+               message="Send",
+               delay=1.0,
+               follow=True,
+               padx=10,
+               pady=5)
 
     file_button = ctk.CTkButton(entry_frame,
-               image=globals.attach_icon,
-               text=None,
-               state=widget_state,
-               height=50,
-               width=40,
-               corner_radius=35,
-               command=lambda: attach_file())
+                                image=globals.attach_icon,
+                                text=None,
+                                state=widget_state,
+                                height=50,
+                                width=40,
+                                corner_radius=35,
+                                command=lambda: attach_file())
     globals.file_button = file_button
     globals.file_button.pack(side="bottom", padx=5, pady=5)
-    attach_tip = CTkToolTip(file_button, message="Attach", delay=1.0, follow=True, padx=10, pady=5)
+    attach_tip = CTkToolTip(file_button,
+                            message="Attach",
+                            delay=1.0,
+                            follow=True,
+                            padx=10,
+                            pady=5)
     globals.attach_tip = attach_tip
 
     # Chat Functions
@@ -93,26 +107,40 @@ def create_chat_tab(globals, chat_tab):
         bubble_frame = ctk.CTkFrame(chat_frame, corner_radius=6)
 
         if role == "user":
-            bubble_frame.configure(fg_color=globals.theme_dict["CTk"]["fg_color"],
-                                corner_radius=6)
+            bubble_frame.configure(
+                fg_color=globals.theme_dict["CTk"]["fg_color"],
+                corner_radius=6)
         else:
-            bubble_frame.configure(fg_color=globals.theme_dict["CTk"]["fg_color"],
-                                   corner_radius=6)
-            name_label = ctk.CTkLabel(chat_frame, text="Pearl", font=fonts.heading_font)
-            name_label.pack(side="top",anchor="w", padx=20, pady=0)
-        bubble_frame.pack(side="top", anchor="e" if role == "user" else "w", padx=20, pady=0)
+            bubble_frame.configure(
+                fg_color=globals.theme_dict["CTk"]["fg_color"],
+                corner_radius=6)
+            name_label = ctk.CTkLabel(chat_frame,
+                                      text="Pearl",
+                                      font=fonts.heading_font)
+            name_label.pack(side="top",
+                            anchor="w",
+                            padx=20,
+                            pady=0)
+        bubble_frame.pack(side="top",
+                          anchor="e" if role == "user" else "w", padx=20, pady=0)
 
-        label = ctk.CTkLabel(bubble_frame, text=text, wraplength=600, font=fonts.message_font, justify="right" if role == "user" else "left",
-                             padx=15, pady=10, anchor="w" if role != "user" else "e")
+        label = ctk.CTkLabel(bubble_frame,
+                             text=text,
+                             wraplength=600,
+                             font=fonts.message_font,
+                             justify="right" if role == "user" else "left",
+                             padx=15,
+                             pady=10,
+                             anchor="w" if role != "user" else "e")
         label.pack(fill="both", expand=True)
 
         # Pack widgets underneath messages
         widgets_row = ButtonWidgets(parent=bubble_frame,
                                     globals=globals,
-                                 label=label,
-                                 copy_callback=copy_bubble_text,
-                                 model=model,
-                                 attachment=globals.file_attachment)
+                                    label=label,
+                                    copy_callback=copy_bubble_text,
+                                    model=model,
+                                    attachment=globals.file_attachment)
         widgets_row.pack(fill="x")
         widgets_row.hide_buttons()
 
@@ -126,15 +154,19 @@ def create_chat_tab(globals, chat_tab):
             current_label[0] = lbl
             right_click_menu.tk_popup(event.x_root, event.y_root)
 
-        label.bind("<Enter>", on_enter) #  Shows the widget buttons on mouse hover
+        # Shows the widget buttons on mouse hover
+        label.bind("<Enter>", on_enter)
 
         widgets_row.bind("<Enter>", on_enter)
 
         bubble_frame.bind("<Enter>", on_enter)
 
-        label.bind("<Button-3>", on_right_click) #  Shows menu on right click
+        # Shows menu on right click
+        label.bind("<Button-3>", on_right_click)
 
-        chat_frame._parent_canvas.after(100, lambda: chat_frame._parent_canvas.yview_moveto(1.0))
+        chat_frame._parent_canvas.after(
+            100,
+            lambda: chat_frame._parent_canvas.yview_moveto(1.0))
 
         return label
 
@@ -148,7 +180,8 @@ def create_chat_tab(globals, chat_tab):
         chat_tab.update()
 
     def upon_enter():
-        """Triggers send message and prevents additional lines in the entry box upon pressing enter."""
+        """Triggers send message and prevents additional
+        lines in the entry box upon pressing enter."""
         if globals.still_streaming:
             globals.cancel_event.set() if globals.cancel_event else None
         else:
@@ -156,7 +189,8 @@ def create_chat_tab(globals, chat_tab):
         return "break"
 
     def upon_shift_enter():
-        """Ensures Shift+Enter creates a new line in the entry box and nothing more."""
+        """Ensures Shift+Enter creates a new line
+        in the entry box and nothing more."""
         entrybox.insert(tk.INSERT, "\n")
         return "break"
 
@@ -173,19 +207,19 @@ def create_chat_tab(globals, chat_tab):
     globals.ui_elements = ui_elements
 
     accepted_filetypes = [".txt", ".csv", ".json",
-                          ".py", ".pyw", ".spec", 
-                          ".log", ".ini", ".cfg", ".xml", 
-                          ".sh", ".bat", ".ps1", 
-                          ".md", ".tsv", ".toml", ".yaml", 
+                          ".py", ".pyw", ".spec",
+                          ".log", ".ini", ".cfg", ".xml",
+                          ".sh", ".bat", ".ps1",
+                          ".md", ".tsv", ".toml", ".yaml",
                           ".html", ".css"]
 
     def attach_file():
-        file = filedialog.askopenfilename(parent=globals.file_button, 
-                                                             title="Select Attachment", 
-                                                             filetypes=(("All files", "*.*"), 
-                                                                        ("Text files", "*.txt"), 
-                                                                        ("CSV files", "*.csv"),
-                                                                        ("Python files", "*.py")))
+        file = filedialog.askopenfilename(parent=globals.file_button,
+                                          title="Select Attachment",
+                                          filetypes=(("All files", "*.*"),
+                                                     ("Text files", "*.txt"),
+                                                     ("CSV files", "*.csv"),
+                                                     ("Python files", "*.py")))
         if not file or not os.path.isfile(file):
             return
         globals.attachment_path = file
@@ -197,11 +231,17 @@ def create_chat_tab(globals, chat_tab):
                         globals.file_attachment = f.read()
             if not globals.file_attachment:
                 logging.warning(f"File type not supported: {file}")
-                messagebox.showwarning(parent=file_button, title="Unsupported File Type", message=f"File type not supported: {file}")
+                messagebox.showwarning(
+                    parent=file_button,
+                    title="Unsupported File Type",
+                    message=f"File type not supported: {file}")
                 return
         except Exception as e:
             logging.warning(f"Could not attach file due to: {e}")
-            messagebox.showwarning(parent=file_button, title="Attachment Not Supported", message=f"Could not attach file due to: {e}. Likely an unsupported file type with the wrong extension.")
+            messagebox.showwarning(
+                parent=file_button,
+                title="Attachment Not Supported",
+                message=f"Could not attach file due to: {e}. Likely an unsupported file type with the wrong extension.")
             return
         if globals.file_attachment:
             file_button.configure(state="disabled")

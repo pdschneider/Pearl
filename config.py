@@ -1,11 +1,17 @@
 # config.py
 import customtkinter as ctk
-import os, json, sys, logging, platform
-from Utils.load_settings import load_prompts, load_settings, load_context, load_data_path
+import os
+import json
+import sys
+import logging
+import platform
+from Utils.load_settings import (load_prompts,
+                                 load_settings, load_context, load_data_path)
 
 pyinstaller_bundle = getattr(sys, 'frozen', False)
 if pyinstaller_bundle:
     logging.info(f"Application built with Pyinstaller.")
+
 
 class Globals:
     """Class to store global variables"""
@@ -15,7 +21,7 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.1.12"
+        self.current_version = "v0.2.0"
 
         # Tkinter Variables
         self.theme_var = None
@@ -86,7 +92,10 @@ class Globals:
         # Chat Variables
         self.chat_history = []
         self.system_prompt = self.all_prompts[f"{self.active_prompt}"]["prompt"]
-        self.chat_history.append({"role": "system", "content": self.all_prompts.get(self.active_prompt, {}).get("prompt", "")})
+        self.chat_history.append({"role": "system",
+                                  "content":
+                                  self.all_prompts.get(self.active_prompt,
+                                                       {}).get("prompt", "")})
         self.chat_message = None
         self.assistant_message = ""
         self.file_attachment = None
@@ -103,6 +112,7 @@ class Globals:
         self.sidebar_open = False
         self.is_new_conversation = True
         self.still_streaming = False
+        self.new_chat = True
 
         # Miscellaneous Variables
         self.icon = None
@@ -132,10 +142,13 @@ class Globals:
         self.saved_x = settings.get("saved_x", -1)
         self.saved_y = settings.get("saved_y", -1)
 
+
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ctk widgets."""
     try:
-        globals.theme_path = os.path.normpath(os.path.join(load_data_path(direct="config"), f"themes/{globals.active_theme}.json"))
+        globals.theme_path = os.path.normpath(
+            os.path.join(load_data_path(direct="config"),
+                         f"themes/{globals.active_theme}.json"))
         try:
             with open(globals.theme_path, 'r') as f:
                 globals.theme_dict = json.load(f)

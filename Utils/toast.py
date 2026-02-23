@@ -3,6 +3,7 @@ import tkinter as tk
 import Utils.fonts as fonts
 import logging
 
+
 def _place_toast(root, toast):
     """Re‑position toast at the bottom‑right of *root*."""
     root.update_idletasks()
@@ -10,8 +11,9 @@ def _place_toast(root, toast):
     y = root.winfo_y() + root.winfo_height() - toast.winfo_reqheight() - 20
     toast.geometry(f"+{x}+{y}")
 
+
 def show_toast(globals, message, duration=3000):
-    """Shows a toast notification at the bottom right of the screen. Replaces some messagebox's"""
+    """Shows a toast notification at the bottom right of the screen."""
     # Create the toast window
     toast = tk.Toplevel(globals.root)
     toast.overrideredirect(True)

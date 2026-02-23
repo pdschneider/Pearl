@@ -6,13 +6,15 @@ from Interface.Settings.sound_settings import create_sound_tab
 from Interface.Settings.about_settings import create_about_tab
 from Interface.Settings.advanced_settings import create_advanced_tab
 
+
 def create_settings(globals, settings_frame):
     """
     Creates the settings tab and initializes widgets.
 
             Parameters:
                     globals: Global variables
-                    settings_frame: The main frame which holds the settings Tabview
+                    settings_frame: The main frame which
+                    holds the settings Tabview
     """
 
     # Notebook tabs for settings

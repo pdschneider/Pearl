@@ -1,6 +1,76 @@
 # Interface/changelog.py
 import customtkinter as ctk
 import Utils.fonts as fonts
+import pathlib
+import re
+
+changelog_path = pathlib.Path(__file__).parent.parent / "CHANGELOG.md"
+current_version = re.compile(
+    r"^##\s*\[(?P<ver>[^]]+)]\s*-\s*(?P<date>[\d-]*)", re.MULTILINE)
+
+
+def parse_changelog() -> list[dict]:
+    """
+    Returns a list of dicts:
+        {
+            "version": "0.2.0",
+            "date":    "2026-02-15",
+            "body_md": "...markdown for this block..."
+        }
+    """
+    raw = changelog_path.read_text(encoding="utf-8")
+    matches = list(current_version.finditer(raw))
+
+    entries = []
+    for i, m in enumerate(matches):
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(raw)
+
+        body_md = raw[start:end].strip()
+        entries.append(
+            {
+                "version": m.group("ver").strip(),
+                "date": m.group("date").strip(),
+                "body_md": body_md,
+            }
+        )
+    return entries
+
+
+def markdown_to_plain(md: str) -> list[tuple[str, tuple]]:
+    """
+    Convert a markdown block into a list of (text, font) pairs.
+    * ### headings → use fonts.heading_font (already bold)
+    * - list items → bullet with fonts.body_font
+    * plain paragraphs → fonts.body_font
+    """
+    lines_out: list[tuple[str, tuple]] = []
+
+    for raw in md.splitlines():
+        line = raw.rstrip()
+
+        # Section headings (### Added, ### Changed, …)
+        if line.startswith("###"):
+            heading = line.lstrip("#").strip()
+            lines_out.append((heading, fonts.heading_font))
+            continue
+
+        # Unordered list items
+        if line.startswith("- "):
+            bullet = "• " + line[2:].strip()
+            lines_out.append((bullet, fonts.body_font))
+            continue
+
+        # Blank line – keep spacing
+        if line == "":
+            lines_out.append(("", fonts.body_font))
+            continue
+
+        # Anything else – treat as normal paragraph
+        lines_out.append((line, fonts.body_font))
+
+    return lines_out
+
 
 def create_changelog_tab(globals, changelog_tab):
     """
@@ -10,260 +80,54 @@ def create_changelog_tab(globals, changelog_tab):
                     globals: Global variables
                     setup_tab: The main frame of the setup window
     """
-    ctk.CTkLabel(changelog_tab, 
-                text="Changelog",
-                font=fonts.title_font,
-                anchor="center").pack(fill="x", pady=20, padx=10)
+    ctk.CTkLabel(changelog_tab,
+                 text="Changelog",
+                 font=fonts.title_font,
+                 anchor="center").pack(fill="x", pady=20, padx=10)
 
     changelog_frame = ctk.CTkScrollableFrame(changelog_tab)
     changelog_frame.pack(fill="both", expand=True, padx=10, pady=0)
 
-    # Main Changelog Sections
+    inner_width = 460
+    inner_container = ctk.CTkFrame(
+        changelog_frame,
+        width=inner_width,
+        fg_color="transparent")
+    inner_container.pack(anchor="center", pady=5)
 
-    # v0.1.12
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.12",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Added startup checks which analyze and sanitize corrupted values and files\n" \
-                     "- Moved loading logic to new load_settings.py\n" \
-                     "- Draws window in the center of the screen when opening the program for the first time\n" \
-                     "- Improved logic for opening the logs folder on Windows\n" \
-                     "- Normalized buttons across operating systems with updated icons\n" \
-                     "- Added bug report icon to top bar that opens default email application\n" \
-                     "- Added delete all chats button in settings\n" \
-                     "- Added factory reset option upon GUI failure\n" \
-                     "- Added paperclip icon underneath user messages to indicate a file attachment\n" \
-                     "- Added icons to settings pages\n" \
-                     "- Updated dependencies\n" \
-                     "- General stability & UI improvements").pack(fill="both", expand=True, padx=10, pady=10)
+    # Main Changelog Section
+    for entry in parse_changelog():
+        # version + date (centered)
+        header = f"{entry['version']}\u2003–\u2003{entry['date']}"
+        ctk.CTkLabel(
+            inner_container,
+            text=header,
+            font=fonts.heading_font,
+            anchor="center",          # centre the text inside its own label
+        ).pack(fill="x", pady=8, padx=5)
 
-    # v0.1.11
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.11",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Dynamic prompt switching with context model enabled\n" \
-                     "- Added model name underneath assistant messages\n" \
-                     "- Added time groups to chat history view\n" \
-                     "- Added start/end times to assistant messages\n" \
-                     "- File attachment paths are logged for each message\n" \
-                     "- Added view logs button to advanced tab\n" \
-                     "- Added github button to about tab\n" \
-                     "- Remembers window placement for more consistent user experience\n" \
-                     "- Minor bug fixes and improvements").pack(fill="both", expand=True, padx=10, pady=10)
+        # body: each line left‑aligned
+        for txt, fnt in markdown_to_plain(entry["body_md"]):
+            ctk.CTkLabel(
+                inner_container,
+                text=txt,
+                font=fnt,
+                justify="left",          # text wraps left‑aligned
+                wraplength=inner_width - 20,   # leave a tiny side padding
+                anchor="w",              # align the label itself to the left
+            ).pack(fill="x", padx=10, pady=2)
 
-    # v0.1.10
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.10",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Supports attachments for filetypes: .txt, .csv, .json, .py, .pyw, .log, .ini, .cfg, .xml, .sh, .bat, .ps1, .md, .tsv, .toml, .yaml, .html, .css, .spec\n" \
-                     "- Added experimental underlying context model choice\n" \
-                     "- Copy button for messages\n" \
-                     "- New chat button to the top bar\n" \
-                     "- Internal logging for each chat message's token count\n" \
-                     "- Separated default settings from development settings for a more consistent default user experience\n" \
-                     "- Added tooltips\n" \
-                     "- Minor bug fixes and improvements").pack(fill="both", expand=True, padx=10, pady=10)
+    # Back button
+    btn_frame = ctk.CTkFrame(changelog_tab, fg_color="transparent")
+    btn_frame.pack(fill="x", pady=10, padx=10)
 
-    # v0.1.9
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.9",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Functional chat history introduced\n" \
-                        "- Added audio output selection (Linux Only)\n" \
-                        "- Minor bug fixes and improvements").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.8
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.8",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Ships as AppImage for Linux users\n" \
-                        "- Added progress bar for slow startup scenarios\n" \
-                        "- Added program icon\n" \
-                        "- Added sidebar for later chat history implementation\n" \
-                        "- Added changelog page\n" \
-                        "- Moved startup logic to new script\n" \
-                        "- Added context detection logging\n" \
-                        "- Minor bug fixes and improvements").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.7
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.7",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Total overhaul of main chat UI\n" \
-                        "- Total overhaul of setup page\n" \
-                        "- Added about page\n" \
-                        "- Minor bug fixes and improvements\n" \
-                        "- Brought closer to PEP8 compliance\n\n" \
-                        "- Downgraded: Lost markdown text").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.6
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.6",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Major UI overhaul\n" \
-                        "- Converted entire GUI to Custom Tkinter\n" \
-                        "- Added 3 new themes\n" \
-                        "- Improved folder path detection on Windows systems\n" \
-                        "- Improved logging").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.5
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.5",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Added threading for more responsive UI during chats\n" \
-                        "- Added initial greeting\n" \
-                        "- Added model and hardware checks for later implementation\n" \
-                        "- Optional save chats toggle").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.4
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.4",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Added universal cross-platform default TTS\n" \
-                        "- UI improvements\n" \
-                        "- Queries and logs CPU/RAM/GPU data for logging & error handling\n" \
-                        "- General error handling improvements").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.3
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.3",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Updated fonts for Windows users\n" \
-                        "- Removed unused query_ollama function\n" \
-                        "- Added support for markdown italics, bold, and strikethrough\n" \
-                        "- Improved TTS by removing italics, bold, and strikethrough markdown from speech").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.2
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.2",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Skips initial Ollama API requests when Ollama is not found.\n" \
-                        "- Added TTS (requires Kokoro)\n" \
-                        "- Suppressed requests debug log messages\n" \
-                        "- Added dynamic settings updates").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.1
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.1",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Added requirements.txt\n" \
-                        "- Added rotating log files\n" \
-                        "- Improved error handling\n" \
-                        "- Added setup instructions for users without Ollama installed").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # v0.1.0
-    ctk.CTkLabel(changelog_frame,
-                 text="v0.1.0",
-                 font=fonts.heading_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
-    
-    ctk.CTkLabel(changelog_frame,
-                 justify="left",
-                 anchor="center",
-                 wraplength=400,
-                 text="- Created wireframe\n" \
-                        "- Added Cosmic Sky theme\n" \
-                        "- Added Pastel Green theme\n" \
-                        "- Ollama functions for model fetching, unloading, and chat\n" \
-                        "- Budget script for later implementation\n" \
-                        "- TTS script for later implementation\n" \
-                        "- Hardware checking script for later implementation\n" \
-                        "- Chat page, models page, and settings page\n" \
-                        "- Context script for later implementation\n" \
-                        "- Added models list treeview\n" \
-                        "- Added load and unload buttons to models treeview\n" \
-                        "- Added logging\n" \
-                        "- Added docstrings to most functions\n" \
-                        "- Added logging level setting\n" \
-                        "- Corrected file paths for Windows or Linux\n" \
-                        "- Added load/unload models buttons\n" \
-                        "- Added button for selecting active model\n" \
-                        "- Added persistent chat history\n" \
-                        "- Added changelog").pack(fill="both", expand=True, padx=10, pady=10)
-
-    # Buttons Frame
-    buttons_frame = ctk.CTkFrame(changelog_tab, fg_color="transparent")
-    buttons_frame.pack(fill="x", padx=10, pady=10)
-
-    ctk.CTkButton(buttons_frame, 
-                text="Back", 
-                command= lambda: continue_to_chat()).pack(padx=5, pady=5)
+    ctk.CTkButton(
+        btn_frame,
+        text="Back",
+        command=lambda: continue_to_chat(),
+    ).pack(side="top", padx=5)
 
     def continue_to_chat():
-        """Forgets setup and settings pages to return the user to a clean chat page"""
         globals.settings_overlay.pack_forget()
         globals.changelog.pack_forget()
         globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
-

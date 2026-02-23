@@ -9,7 +9,7 @@ from Interface.Components.sidebar import create_sidebar
 from Interface.changelog import create_changelog_tab
 from Utils.load_settings import load_data_path
 from config import apply_theme
-import logging
+
 
 def create_interface(globals):
     """
@@ -31,7 +31,8 @@ def create_interface(globals):
 
     if globals.saved_width and globals.saved_height and globals.saved_x and globals.saved_y:
         try:
-            globals.root.geometry(f"{globals.saved_width}x{globals.saved_height}+{globals.saved_x}+{globals.saved_y}")
+            globals.root.geometry(
+                f"{globals.saved_width}x{globals.saved_height}+{globals.saved_x}+{globals.saved_y}")
         except:
             draw_window()
     else:
