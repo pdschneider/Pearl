@@ -22,11 +22,7 @@ def create_chat_tab(globals, chat_tab):
                     chat_tab: The main frame of the chat window
     """
     # Sets tkinter widgets to inactive status if Ollama isn't found
-    widget_state = None
-    if globals.ollama_active:
-        widget_state = "normal"
-    else:
-        widget_state = "disabled"
+    widget_state = "normal" if globals.ollama_active else "disabled"
 
     # Get Icons
     globals.send_icon = CTkImage(
@@ -58,16 +54,16 @@ def create_chat_tab(globals, chat_tab):
     entry_frame = ctk.CTkFrame(chat_tab, fg_color="transparent")
     entry_frame.pack(fill="both", padx=10, pady=5)
 
-    entrybox = ctk.CTkTextbox(entry_frame,
+    globals.entry_box = ctk.CTkTextbox(entry_frame,
                               font=fonts.body_font,
                               wrap="word",
                               state=widget_state,
                               corner_radius=16,
                               height=100)
-    entrybox.pack(side="left", padx=5, pady=5, fill="x", expand=True)
-    entrybox.focus_set()
+    globals.entry_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
+    globals.entry_box.focus_set()
 
-    send_button = ctk.CTkButton(entry_frame,
+    globals.send_button = ctk.CTkButton(entry_frame,
                                 image=globals.send_icon,
                                 text=None,
                                 state=widget_state,
@@ -75,8 +71,8 @@ def create_chat_tab(globals, chat_tab):
                                 width=40,
                                 corner_radius=35,
                                 command=lambda: send_message(globals, ui_elements))
-    send_button.pack(side="top", padx=5, pady=5)
-    CTkToolTip(send_button,
+    globals.send_button.pack(side="top", padx=5, pady=5)
+    CTkToolTip(globals.send_button,
                message="Send",
                delay=1.0,
                follow=True,
@@ -191,17 +187,17 @@ def create_chat_tab(globals, chat_tab):
     def upon_shift_enter():
         """Ensures Shift+Enter creates a new line
         in the entry box and nothing more."""
-        entrybox.insert(tk.INSERT, "\n")
+        globals.entry_box.insert(tk.INSERT, "\n")
         return "break"
 
-    entrybox.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
-    entrybox.bind("<Shift-Return>", lambda e: upon_shift_enter())
+    globals.entry_box.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
+    globals.entry_box.bind("<Shift-Return>", lambda e: upon_shift_enter())
 
     ui_elements = {
-        "entrybox": entrybox,
+        "entrybox": globals.entry_box,
         "chat_frame": chat_frame,
         "add_bubble": add_bubble,
-        "send_button": send_button,
+        "send_button": globals.send_button,
         "scroll_to_bottom": lambda: chat_frame._parent_canvas.yview_moveto(1.0)}
 
     globals.ui_elements = ui_elements

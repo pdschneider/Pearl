@@ -21,9 +21,9 @@ def create_models_tab(globals, models_frame):
 
     model_selector = Treeview(globals,
                               models_frame,
-                              get_dir=lambda: get_all_models())
+                              get_dir=lambda: get_all_models(globals))
 
-    def load_selected():
+    def load_selected(globals):
         """Loads selected model into memory"""
         logging.debug(f"Initiating model load...")
         available_ram = get_ram_info()
@@ -41,9 +41,9 @@ def create_models_tab(globals, models_frame):
                     parent=models_frame,)
                 return
             model_name = sel[0]
-            if model_name not in get_loaded_models():
+            if model_name not in get_loaded_models(globals):
                 logging.debug(f"Attempting to load {model_name}...")
-                load_model(model_name)
+                load_model(globals, model_name)
                 time.sleep(2)
                 refresh_tree()
             else:
@@ -59,7 +59,7 @@ def create_models_tab(globals, models_frame):
         available_ram = get_ram_info()
         model_name = sel[0]
         if available_ram != {}:
-            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models():
+            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globals):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 messagebox.showerror(title="Not Enough RAM",
@@ -69,7 +69,7 @@ def create_models_tab(globals, models_frame):
         if globals.active_model != model_name:
             globals.active_model = model_name
             save_settings(active_model=model_name)
-            if model_name not in get_loaded_models():
+            if model_name not in get_loaded_models(globals):
                 load_selected()
                 time.sleep(2)
                 refresh_tree()
@@ -77,7 +77,7 @@ def create_models_tab(globals, models_frame):
             logging.debug(
                 f"{globals.active_model} is already the selected model.")
 
-    def set_context():
+    def set_context(globals):
         """Sets the context model for context detection and more."""
         logging.debug(f"Attempting to select context model...")
         sel = model_selector.selection()
@@ -87,7 +87,7 @@ def create_models_tab(globals, models_frame):
         available_ram = get_ram_info()
         model_name = sel[0]
         if available_ram != {}:
-            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models():
+            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globals):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 messagebox.showerror(title="Not Enough RAM",
@@ -97,8 +97,8 @@ def create_models_tab(globals, models_frame):
         if globals.context_model != model_name:
             globals.context_model = model_name
             save_settings(context_model=model_name)
-            if model_name not in get_loaded_models():
-                load_selected()
+            if model_name not in get_loaded_models(globals):
+                load_selected(globals)
                 time.sleep(2)
                 refresh_tree()
         else:
@@ -113,7 +113,7 @@ def create_models_tab(globals, models_frame):
 
     load_button = ctk.CTkButton(buttons_frame,
                                 text="Load",
-                                command=load_selected)
+                                command=lambda: load_selected(globals))
     load_button.grid(row=0, column=0, padx=5)
     CTkToolTip(load_button,
                message="Loads a model\n into memory",
@@ -133,7 +133,7 @@ def create_models_tab(globals, models_frame):
                pady=5)
     context_button = ctk.CTkButton(buttons_frame,
                                    text="Set Context Model",
-                                   command=set_context)
+                                   command=lambda: set_context(globals))
     context_button.grid(row=0, column=2, padx=5)
     CTkToolTip(context_button,
                message="Selects the context model\n which is used for dynamic\n prompt switching and more",

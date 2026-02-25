@@ -4,24 +4,154 @@ import time
 import json
 import logging
 import socket
+import subprocess
 from datetime import datetime
+from Utils.hardware import get_disk_space
+from Utils.toast import show_toast
+from tkinter import messagebox
 
 
-def ollama_test():
-    """Tests Ollama to set flag for active/inactive."""
+def ollama_version_test(globals):
+    """Tests Ollama only to see if it is installed."""
     try:
-        socket.create_connection(("localhost", 11434), timeout=1).close()
-        logging.info(f"Ollama found!")
-        return True
+        # Set if Ollama version has already been displayed
+        print_version = True if not globals.ollama_active else False
+
+        # Run ollama --version in terminal
+        version_test = subprocess.run("ollama --version", shell=True, capture_output=True, timeout=4)
+        if version_test.returncode == 0:
+            globals.ollama_version = version_test.stdout.decode('utf-8').strip().split()[3]
+            if print_version:
+                logging.info(f"Ollama Version: {globals.ollama_version}")
+            return True
+        else:
+            globals.ollama_active = False
+            return False
+
+    # Gracefully return false on exceptions
     except Exception as e:
         logging.error(
-            f"Ollama not installed. Chat features unavailable. Error: {e}")
+            f"Ollama not installed or not active. Chat features unavailable. Error: {e}")
+        globals.ollama_active = False
         return False
 
 
-def get_all_models():
+def ollama_test(globals):
+    """Tests Ollama to set flag for active/inactive."""
+    try:
+        # Simple version test to start
+        version = ollama_version_test(globals)
+        if not version:
+            logging.warning(f"Ollama not installed. Chat features unavailable.")
+            return False
+
+        # If Ollama is installed, test if active
+        basic_test = subprocess.run("ollama ps", shell=True, capture_output=True, timeout=4)
+        if basic_test.returncode == 0:
+            socket.create_connection(("localhost", 11434), timeout=1).close()
+            globals.ollama_active = True
+            logging.info(f"Ollama is ready to roll!")
+            return True
+        else:
+            logging.warning(f"Ollama is installed but not running. Chat features unavailable.")
+            return False
+
+    # Gracefully return false on exceptions
+    except Exception as e:
+        logging.error(
+            f"Ollama not installed or not active. Chat features unavailable. Error: {e}")
+        return False
+
+
+def ollama_installation(globals):
+    """Install Ollama and any desired models."""
+    # Do an initial check to see if Ollama is already installed.
+    test = ollama_version_test(globals)
+    if test:
+        logging.warning(f"Ollama is already active and running. No need to install.")
+        messagebox.showinfo("Ollama Already Installed", message="Ollama is already active and running. No need to install!")
+        return
+
+    # Check disk space to ensure at least 8GB
+    free_space = get_disk_space()['free_disk']
+    print(f"Free disk space: {free_space}")
+    if free_space < 8:
+        logging.warning(f"Free disk space must be at least 8GB to install Ollama.")
+        show_toast(globals, message="Must have 8GB of free disk space to install Ollama", _type="error")
+
+    # Install Ollama on Linux
+    if globals.os_name.startswith("Linux"):
+        install_cmd = "curl -fsSL https://ollama.com/install.sh | sh"
+        subprocess.Popen([
+            "gnome-terminal",
+            "--",
+            "bash", "-c",
+            f"{globals.ollama_sh}"
+        ])
+
+    # Install on Windows
+    elif globals.os_name.startswith("Windows"):
+        ps_command = (
+    # Download + install Ollama
+    "irm https://ollama.com/install.ps1 | iex; "
+
+    # Small pause so output settles
+    "Start-Sleep -Milliseconds 1500; "
+
+    # Check if ollama works (basic smoke test)
+    "if (Get-Command ollama -ErrorAction SilentlyContinue) { "
+    "    Write-Host 'Ollama is installed and in PATH.' -ForegroundColor Green; "
+    "} else { "
+    "    Write-Host 'Warning: ollama command not found yet. Try reopening terminal.' -ForegroundColor Yellow; "
+    "}; "
+
+    # Ask about model (Y/n like bash)
+    "$choice = Read-Host 'Install recommended model llama3.2:latest? [Y/n]'; "
+    "if ($choice -eq '' -or $choice -match '^[Yy]') { "
+    "    Write-Host 'Pulling llama3.2:latest ... (may take a few minutes)' -ForegroundColor Cyan; "
+    "    ollama pull llama3.2:latest; "
+    "    Write-Host 'Model installed!' -ForegroundColor Green; "
+    "} else { "
+    "    Write-Host 'Skipping model download.' -ForegroundColor Yellow; "
+    "}; "
+
+    # Final message
+    "Write-Host ''; "
+    "Write-Host 'All done! Press Enter to close this window...'; "
+    "Read-Host"
+)
+
+        cmd_line = (
+            'start "" powershell.exe '
+            '-NoProfile '
+            '-ExecutionPolicy Bypass '
+            # '-NoExit ' would prevent the window from closing on Enter
+            f'-Command "{ps_command}"'
+        )
+
+        subprocess.Popen(cmd_line, shell=True)
+    else:
+        logging.warning(f"Only Windows and Linux are supported for interactive install.")
+        messagebox.showinfo("OS Not Supported", message="Only Windows and Linux are supported for interactive install. Use the web installer instead.")
+    
+    # Test again to see if it worked
+    test = ollama_version_test(globals)
+    if test:
+        logging.info(f"Ollama was successfully installed!")
+    else:
+        logging.warning(f"Ollama does not appear to be installed.")
+
+
+def get_all_models(globals):
     """Fetch list of available model names from Ollama API"""
     try:
+        # Test that Ollama is installed first
+        test = ollama_version_test(globals)
+        if not test or not globals.ollama_active:
+            logging.warning(f"Unable to retrieve models - Ollama not installed.")
+            return []
+
+        # Query Ollama for current models
         response = requests.get("http://localhost:11434/api/tags")
         if response.status_code == 200:
             data = response.json()
@@ -32,9 +162,16 @@ def get_all_models():
         return []
 
 
-def get_loaded_models():
+def get_loaded_models(globals):
     """Fetch list of currently loaded models from Ollama API"""
     try:
+        # Test that Ollama is installed first
+        test = ollama_version_test(globals)
+        if not test or not globals.ollama_active:
+            logging.warning(f"Unable to retrieve models - Ollama not installed.")
+            return []
+
+        # Query Ollama for loaded models
         response = requests.get("http://localhost:11434/api/ps")
         if response.status_code == 200:
             data = response.json()
@@ -45,7 +182,7 @@ def get_loaded_models():
         return []
 
 
-def load_model(model):
+def load_model(globals, model):
     """Load a model into memory with a 30-minute keep-alive"""
     payload = {"model": model,
                "prompt": "",
@@ -59,7 +196,7 @@ def load_model(model):
         if response.status_code == 200:
             start_time = time.time()
             while time.time() - start_time < 30:
-                if model in get_loaded_models():
+                if model in get_loaded_models(globals):
                     return True
                 time.sleep(1)
             logging.info(f"Timeout loading {model}")

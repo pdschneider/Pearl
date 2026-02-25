@@ -7,7 +7,6 @@ from Utils.save_settings import save_all_settings
 from Managers.sound_manager import fetch_tts_models
 from Managers.sound_manager import get_sink_menu
 from Utils.load_settings import load_data_path
-from Managers.sound_manager import kokoro_test
 import Utils.fonts as fonts
 
 
@@ -75,11 +74,6 @@ def create_sound_tab(globals, sound_tab):
                                fg_color="transparent")
     sound_frame.pack(fill="both", padx=10, pady=10)
 
-    # Text Kokoro before adding to widgets
-    kokoro_success = kokoro_test()
-    if kokoro_success:
-        globals.kokoro_active = True
-
     # Dynamically build the source list
     source_options = ["Default"]
     if globals.kokoro_active:
@@ -128,9 +122,10 @@ def create_sound_tab(globals, sound_tab):
                                   fg_color="transparent")
     speakers_frame.pack(fill="both", padx=10, pady=10)
 
-    ctk.CTkLabel(speakers_frame,
-                 text=None,
-                 image=globals.speaker_icon).pack(side="left", padx=6, pady=0)
+    if globals.kokoro_active and globals.os_name.startswith("Linux"):
+        ctk.CTkLabel(speakers_frame,
+                    text=None,
+                    image=globals.speaker_icon).pack(side="left", padx=6, pady=0)
 
     # Default Speakers
     if globals.os_name.startswith("Linux"):

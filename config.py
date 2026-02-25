@@ -6,7 +6,8 @@ import sys
 import logging
 import platform
 from Utils.load_settings import (load_prompts,
-                                 load_settings, load_context, load_data_path)
+                                 load_settings, load_context,
+                                 load_data_path, load_ollama_sh)
 
 pyinstaller_bundle = getattr(sys, 'frozen', False)
 if pyinstaller_bundle:
@@ -18,10 +19,13 @@ class Globals:
     def __init__(self):
         """Initializes settings variables from refresh_globals."""
         self.all_prompts = load_prompts()
+        self.ollama_sh = load_ollama_sh()
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.2.0"
+        self.current_version = "v0.2.1"
+        self.ollama_version = None
+        self.docker_version = None
 
         # Tkinter Variables
         self.theme_var = None
@@ -32,10 +36,14 @@ class Globals:
         self.save_chats_var = None
         self.sink_var = None
 
+        # Widgets
+        self.send_button = None
+        self.file_button = None
+        self.entry_box = None
+
         # UI variables
         self.root = None
         self.ui_elements = None
-        self.file_button = None
         self.attach_tip = None
 
         # Icons
@@ -58,6 +66,8 @@ class Globals:
         self.speaker_icon = None
         self.theme_icon = None
         self.preferences_icon = None
+        self.chats_icon = None
+        self.config_icon = None
 
         # Pages
         self.main_frame = None
@@ -86,7 +96,9 @@ class Globals:
         self.message_end_time = None
 
         # Tooltips
-        self.ollama_download_tooltip = None
+        self.ollama_web_download_tooltip = None
+        self.ollama_interactive_download_tooltip = None
+        self.docker_download_tooltip = None
         self.kokoro_download_tooltip = None
 
         # Chat Variables
@@ -107,8 +119,6 @@ class Globals:
         self.ram_found = None
         self.cpu_found = None
         self.gpu_found = None
-        self.ollama_download_state = None
-        self.kokoro_download_state = None
         self.sidebar_open = False
         self.is_new_conversation = True
         self.still_streaming = False

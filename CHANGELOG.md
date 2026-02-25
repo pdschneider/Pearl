@@ -2,10 +2,32 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.2.1] - 2026-02-25
+
+### Added
+- Added interactive install for Ollama, greatly speeding up initial setup
+- Added Docker check on startup, bypassing slow API calls to Kokoro and greatly speeding up application start
+- Added disk space check to ensure storage requirements are met
+- Added open chats & open config buttons in advanced settings
+
+### Changed
+- Improved startup logic for testing connection to Ollama, speeding up application start time
+- Improved build instructions in the README
+- Updated dependencies
+- About page now wrapped in a scrollable frame for better readability
+
+### Fixed
+- Initial hardware check now correctly parses L3 cache on Windows and Linux
+- GPU checks made more robust, no longer fill logs on failure
+- CPU temp check skips on Windows, speeding up application start
+- Settings images correctly display only when a feature is available
+- Setup page buttons correctly disable when dependencies are already installed
+- Fixed major error where essential files didn't copy to their correct location
+
 ## [0.2.0] - 2026-02-22
 
 ### Added
-- Pearl is now compiled to C, greatly improving speed and performance
+- Pearl is now compiled to C, greatly improving speed and performance (Linux Only)
 - CHANGELOG.md file added to better document changes
 - Added startup check to sanitize context detection rules when values are missing or nonconforming
 
@@ -17,7 +39,7 @@ All notable changes to **Pearl** will be located in this file.
 - Updated README
 
 ### Deprecated
-- Removed old spec files used for pyinstaller builds
+- Removed old spec file used for building via Pyinstaller on Linux
 
 ## [0.1.12] - 2026-02-01
 

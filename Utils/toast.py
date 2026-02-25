@@ -12,7 +12,7 @@ def _place_toast(root, toast):
     toast.geometry(f"+{x}+{y}")
 
 
-def show_toast(globals, message, duration=3000):
+def show_toast(globals, message, duration=3000, _type=None):
     """Shows a toast notification at the bottom right of the screen."""
     # Create the toast window
     toast = tk.Toplevel(globals.root)
@@ -20,7 +20,10 @@ def show_toast(globals, message, duration=3000):
 
     # Styling
     try:
-        background = globals.theme_dict["CTkFrame"]["text_color"]
+        if _type == "error":
+            background = "#8B0000"
+        else:
+            background = globals.theme_dict["CTkFrame"]["text_color"]
     except Exception:
         logging.warning("Theme lookup failed - using dark background")
         background = "#333333"

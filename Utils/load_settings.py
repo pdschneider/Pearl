@@ -6,21 +6,27 @@ import json
 import platform
 
 
+import os
+import platform
+import logging
+import shutil
+import sys
+
 def load_data_path(direct=None, filename=None):
     """
     Get the path to a writable data folder or a specific file,
     copying bundled files if needed.
 
-            Parameters:
-                    direct = The file type to specify its directory,
-                    either configuration, persistent user data, or logs
-                    filename = The file name being accessed
-
+    Parameters:
+        direct = The file type to specify its directory,
+        either configuration, persistent user data, or logs
+        filename = The file name being accessed
     """
     os_name = platform.platform()
     default_files = ["settings.json",
                      "context.json",
                      "prompts.json",
+                     "ollama_install.sh",
                      "assets/Pearl.png",
                      "assets/Pearl_Sparkle.png",
                      "assets/attach-1.png",
@@ -79,10 +85,10 @@ def load_data_path(direct=None, filename=None):
         # Checks if any file has themes/ or assets/ path
         try:
             os.makedirs(data_dir, exist_ok=True)
-            if "themes/" in str(default_files):
+            if any("themes/" in f for f in default_files):
                 themes_dir = os.path.join(data_dir, "themes")
                 os.makedirs(themes_dir, exist_ok=True)
-            if "assets/" in str(default_files):
+            if any("assets/" in f for f in default_files):
                 assets_dir = os.path.join(data_dir, "assets")
                 os.makedirs(assets_dir, exist_ok=True)
             if not os.access(data_dir, os.W_OK):
@@ -93,60 +99,74 @@ def load_data_path(direct=None, filename=None):
 
     # Running as bundled executable
     else:
+        # Determine bundle root
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            # PyInstaller
+            bundle_root = sys._MEIPASS
+        else:
+            # Nuitka or other - assume similar to dev, go up from base_dir
+            bundle_root = os.path.dirname(base_dir)  # Adjust this if deeper nesting (e.g., add another dirname)
+
+            # Safety check: climb up until we find a likely root (e.g., where 'defaults' might be)
+            max_climb = 5  # Prevent infinite loop
+            climb_count = 0
+            while not os.path.exists(os.path.join(bundle_root, "defaults")) and climb_count < max_climb:
+                bundle_root = os.path.dirname(bundle_root)
+                climb_count += 1
+            if climb_count == max_climb:
+                logging.warning("Could not find bundle root automatically - defaults may not copy.")
+
+        bundled_dir = os.path.normpath(os.path.join(bundle_root, "defaults"))
+
+        # Set persistent_dir based on direct
         if direct == "config":
             if os_name.startswith("Windows"):
-                persistent_dir = os.path.normpath(
-                    os.path.join(os.getenv("APPDATA"), "Pearl"))
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("APPDATA"), "Pearl"))
             else:
-                persistent_dir = os.path.normpath(
-                    os.path.expanduser("~/.config/Pearl"))
+                persistent_dir = os.path.normpath(os.path.expanduser("~/.config/Pearl"))
                 if not os_name.startswith("Linux"):
-                    logging.warning(f"OS not found. Defaulting to Linux paths.")
+                    logging.warning("OS not found. Defaulting to Linux paths.")
         elif direct == "local":
             if os_name.startswith("Windows"):
-                persistent_dir = os.path.normpath(
-                    os.path.join(os.getenv("LOCALAPPDATA"), "Pearl"))
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl"))
             else:
-                persistent_dir = os.path.normpath(
-                    os.path.expanduser("~/.local/share/Pearl"))
+                persistent_dir = os.path.normpath(os.path.expanduser("~/.local/share/Pearl"))
                 if not os_name.startswith("Linux"):
-                    logging.warning(f"OS not found. Defaulting to Linux paths.")
-            default_files = []
-        else:
+                    logging.warning("OS not found. Defaulting to Linux paths.")
+            default_files = []  # No defaults for local?
+        else:  # cache
             if os_name.startswith("Windows"):
-                persistent_dir = os.path.normpath(
-                    os.path.join(os.getenv("LOCALAPPDATA"), "Pearl", "Cache"))
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl", "Cache"))
             else:
-                persistent_dir = os.path.normpath(
-                    os.path.expanduser("~/.cache/Pearl"))
+                persistent_dir = os.path.normpath(os.path.expanduser("~/.cache/Pearl"))
                 if not os_name.startswith("Linux"):
-                    logging.warning(f"OS not found. Defaulting to Linux paths.")
-            default_files = []
+                    logging.warning("OS not found. Defaulting to Linux paths.")
+            default_files = []  # No defaults for cache?
 
-        # Checks if any file has themes/ or assets/ path
+        # Create persistent dir and subdirs
         try:
-            if "themes/" in str(default_files):
+            os.makedirs(persistent_dir, exist_ok=True)
+            if any("themes/" in f for f in default_files):
                 themes_dir = os.path.join(persistent_dir, "themes")
                 os.makedirs(themes_dir, exist_ok=True)
-            if "assets/" in str(default_files):
+            if any("assets/" in f for f in default_files):
                 assets_dir = os.path.join(persistent_dir, "assets")
                 os.makedirs(assets_dir, exist_ok=True)
-            os.makedirs(persistent_dir, exist_ok=True)
             if not os.access(persistent_dir, os.W_OK):
                 raise PermissionError(f"No write permission for {persistent_dir}")
         except Exception as e:
             logging.error(f"Error creating persistent data directory: {e}")
             raise
 
-        bundled_dir = os.path.normpath(os.path.join(base_dir, "defaults"))
         data_dir = persistent_dir
 
-    # Copy defaults (common to both)
+    # Copy defaults (common to both dev and bundled)
     for default_file in default_files:
         bundled_file = os.path.normpath(os.path.join(bundled_dir, default_file))
         persistent_file = os.path.normpath(os.path.join(data_dir, default_file))
         if os.path.exists(bundled_file) and not os.path.exists(persistent_file):
             try:
+                os.makedirs(os.path.dirname(persistent_file), exist_ok=True)  # Ensure subdirs like assets/themes
                 logging.info(f"Copying {default_file} from {bundled_file} to {persistent_file}")
                 shutil.copy(bundled_file, persistent_file)
             except Exception as e:
@@ -183,4 +203,13 @@ def load_context():
             return json.load(f)
     except Exception as e:
         logging.error(f"Error loading context.json: {e}")
+        return {}
+
+def load_ollama_sh():
+    """Loads the ollama install bash script for Linux users."""
+    try:
+        with open(load_data_path("config", "ollama_install.sh")) as f:
+            logging.debug(f"Successfully loaded ollama Linux install file.")
+            return f.read()
+    except:
         return {}

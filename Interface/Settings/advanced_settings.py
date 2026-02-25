@@ -30,6 +30,16 @@ def create_advanced_tab(globals, advanced_frame):
         light_image=Image.open(load_data_path("config", "assets/note.png")),
         dark_image=Image.open(load_data_path("config", "assets/note.png")),
         size=(40, 40))
+    
+    globals.chats_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/chats.png")),
+        dark_image=Image.open(load_data_path("config", "assets/chats.png")),
+        size=(40, 40))
+    
+    globals.config_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/settings-2.png")),
+        dark_image=Image.open(load_data_path("config", "assets/settings-2.png")),
+        size=(40, 40))
 
     ctk.CTkLabel(advanced_frame,
                  text="Advanced Settings",
@@ -82,6 +92,26 @@ def create_advanced_tab(globals, advanced_frame):
             logging.debug(f"Opening logs folder on Linux...")
             subprocess.run(
                 ['xdg-open', load_data_path("cache", "logs")], check=True)
+    
+    def open_chats():
+        """Opens the chats folder."""
+        if globals.os_name.startswith("Windows"):
+            logging.debug(f"Opening chats folder on Windows...")
+            os.startfile(load_data_path("local", "chats"))
+        else:
+            logging.debug(f"Opening chats folder on Linux...")
+            subprocess.run(
+                ['xdg-open', load_data_path("local", "chats")], check=True)
+    
+    def open_config():
+        """Opens the settings folder."""
+        if globals.os_name.startswith("Windows"):
+            logging.debug(f"Opening settings folder on Windows...")
+            os.startfile(load_data_path("config"))
+        else:
+            logging.debug(f"Opening settings folder on Linux...")
+            subprocess.run(
+                ['xdg-open', load_data_path("config")], check=True)
 
     ctk.CTkLabel(logs_frame,
                  text=None,
@@ -96,6 +126,34 @@ def create_advanced_tab(globals, advanced_frame):
                                 width=20,
                                 command=lambda: open_logs())
     logs_button.pack(side="left", padx=(0, 12))
+
+    ctk.CTkLabel(logs_frame,
+                 text=None,
+                 image=globals.chats_icon).pack(side="left", padx=6, pady=0)
+
+    ctk.CTkLabel(logs_frame,
+                 text="Open Chats",
+                 font=fonts.heading_font).pack(side="left", padx=(0, 12))
+    
+    open_chats_button = ctk.CTkButton(logs_frame,
+                                text="Chats",
+                                width=20,
+                                command=lambda: open_chats())
+    open_chats_button.pack(side="left", padx=(0, 12))
+
+    ctk.CTkLabel(logs_frame,
+                 text=None,
+                 image=globals.config_icon).pack(side="left", padx=6, pady=0)
+
+    ctk.CTkLabel(logs_frame,
+                 text="Open Config",
+                 font=fonts.heading_font).pack(side="left", padx=(0, 12))
+    
+    open_config_button = ctk.CTkButton(logs_frame,
+                                text="Config",
+                                width=20,
+                                command=lambda: open_config())
+    open_config_button.pack(side="left", padx=(0, 12))
 
     # Save Button Frame
     save_button_frame = ctk.CTkFrame(advanced_frame,

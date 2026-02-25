@@ -19,8 +19,11 @@ def create_about_tab(globals, about_frame):
                  font=fonts.title_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
 
+    readme_frame = ctk.CTkScrollableFrame(about_frame, fg_color="transparent")
+    readme_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
     ctk.CTkLabel(
-        about_frame,
+        readme_frame,
         justify="left",
         text=f"Personal Everything Assistant Running Locally\n\n"
         f"Pearl is your assistant.\n\n"

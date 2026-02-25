@@ -4,12 +4,15 @@ import threading
 import os
 import json
 import shutil
+import hashlib
 from logging.handlers import TimedRotatingFileHandler
 import tkinter as tk
 import customtkinter as ctk
 from Connections.ollama import ollama_test, load_model, get_loaded_models
 from Utils.hardware import get_hardware_stats
 from Utils.load_settings import load_data_path, load_settings
+from Connections.docker import docker_check
+from Managers.sound_manager import kokoro_test
 
 
 def startup(globals):
@@ -337,6 +340,7 @@ def startup(globals):
         except Exception as e:
             logging.error(f"Unable to load context due to {e}")
 
+
     def startup_tasks(globals, tasks_done):
         """Tests dependencies and sets flags."""
         setup_logging()
@@ -344,13 +348,21 @@ def startup(globals):
         setup_themes()
         setup_context()
         try:
-            ollama_success = ollama_test()
+            # Test for Ollama
+            ollama_success = ollama_test(globals)
             if ollama_success:
                 globals.ollama_active = True
-                loaded_models = get_loaded_models()
+                loaded_models = get_loaded_models(globals)
                 if globals.active_model not in loaded_models:
                     logging.debug(f"Attempting to load initial model....")
                     load_model(globals.active_model)  # Loads the active model before startup
+
+            # Test for Docker & Kokoro
+            docker_success = docker_check(globals)
+            if docker_success:
+                kokoro_success = kokoro_test()
+                if kokoro_success:
+                    globals.kokoro_active = True
         except:
             logging.error(f"Initial Ollama setup failed.")
 

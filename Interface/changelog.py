@@ -103,7 +103,7 @@ def create_changelog_tab(globals, changelog_tab):
             inner_container,
             text=header,
             font=fonts.heading_font,
-            anchor="center",          # centre the text inside its own label
+            anchor="center",          # center the text inside its own label
         ).pack(fill="x", pady=8, padx=5)
 
         # body: each line left‑aligned
