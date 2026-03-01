@@ -17,6 +17,7 @@ def send_message(globals, ui_elements, event=None):
     """Sends queries to the LLM."""
     # Stops any currently playing audio
     sd.stop()
+    globals.is_speaking = False
 
     # Prevents sending a message if LLM is currently streaming
     if globals.still_streaming:
@@ -71,8 +72,8 @@ def send_message(globals, ui_elements, event=None):
     globals.assistant_label = ui_elements["add_bubble"]("assistant", "", model=current_model)
     globals.assistant_message = ""
 
-    if globals.save_chats:
-        add_message(globals, "user", clean_text)
+    # Append message to conversation history
+    add_message(globals, "user", clean_text)
 
     globals.message_start_time = datetime.now().isoformat()
 
@@ -102,26 +103,26 @@ def send_message(globals, ui_elements, event=None):
                         logging.debug(f"Discarding stale response (ID {local_id})")
                         globals.still_streaming = False
                         return
+                    
+                    # Scrub markdown elements from response (for TTS)
+                    for component in globals.markdown_components:
+                        globals.assistant_message.replace(component, "")
+
                     # TTS
-                    globals.assistant_message = globals.assistant_message.replace(
-                        "***", "").replace(
-                            "___", "").replace(
-                                "**", "").replace(
-                                    "__", "").replace(
-                                        "*", "").replace(
-                                            "_", "").replace("~~", "")
                     if globals.kokoro_active and globals.tts_enabled == True and globals.tts_source == "Kokoro":
                         kokoro_speak(globals)
                     elif globals.tts_enabled == True and globals.tts_source == "Default":
-                        default_speak(globals.assistant_message)
-                    # Save
+                        default_speak(globals, globals.assistant_message)
+
+                    add_message(globals,
+                                "assistant",
+                                globals.assistant_message,
+                                model=globals.active_model,
+                                tokens=tokens)
+                    globals.is_new_conversation = False
+                    # Only save to file if save_chats is on
                     if globals.save_chats:
-                        add_message(globals,
-                                    "assistant",
-                                    globals.assistant_message,
-                                    model=globals.active_model,
-                                    tokens=tokens)
-                    save_conversation(globals)
+                        save_conversation(globals)
                     globals.still_streaming = False
                     ui_elements["send_button"].configure(text=None,
                                                          image=globals.send_icon,
@@ -129,13 +130,18 @@ def send_message(globals, ui_elements, event=None):
                     return
 
                 if globals.current_response_id == local_id:
+                    # Scrub markdown while text is streaming
                     globals.assistant_message += item.replace(
                         "***", "").replace(
                             "___", "").replace(
                                 "**", "").replace(
                                     "__", "").replace(
                                         "*", "").replace(
-                                            "_", "").replace("~~", "")
+                                            "_", "").replace(
+                                                "~~", "").replace(
+                                                    "#####", "").replace(
+                                                        "####", "").replace(
+                                                            "###", "")
                     if globals.assistant_label:
                         globals.assistant_label.configure(
                             text=globals.assistant_message)

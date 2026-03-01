@@ -6,8 +6,9 @@ import logging
 import socket
 import subprocess
 from datetime import datetime
-from Utils.hardware import get_disk_space
+from Utils.hardware import get_disk_space, get_ram_info
 from Utils.toast import show_toast
+from Utils.save_settings import save_settings
 from tkinter import messagebox
 
 
@@ -50,7 +51,6 @@ def ollama_test(globals):
         if basic_test.returncode == 0:
             socket.create_connection(("localhost", 11434), timeout=1).close()
             globals.ollama_active = True
-            logging.info(f"Ollama is ready to roll!")
             return True
         else:
             logging.warning(f"Ollama is installed but not running. Chat features unavailable.")
@@ -63,6 +63,99 @@ def ollama_test(globals):
         return False
 
 
+def pull_model(globals):
+    """Downloads the default model if not present."""
+    test = ollama_test(globals)
+
+    # If Ollama is not installed, offer to install it.
+    if not test:
+        logging.warning(f"Ollama must be installed before downloading a model.")
+        download = messagebox.askyesno(
+            parent=globals.root,
+            title="Ollama Not Installed",
+            message="Ollama does not appear to be installed. Would you like to install Ollama and the default model (llama3.2:latest)?")
+        if download:
+            ollama_installation(globals)
+            return
+
+    # If Ollama is installed, prompt to download llama3.2:latest
+    else:
+        # Ask user if they would like to download llama3.2:latest
+        download = messagebox.askyesno(
+            parent=globals.root,
+            title="Model Not Installed",
+            message="The selected model is not installed. Would you like to install the default model (llama3.2:latest)?")
+
+        # Exit if user chooses no
+        if not download:
+            logging.warning(f"User chose not to install llama3.2:latest.")
+            return
+
+        # Check disk space to ensure at least 4GB
+        free_space = get_disk_space()['free_disk']
+        logging.debug(f"Free disk space: {free_space}")
+        if free_space < 4:
+            logging.warning(f"Free disk space must be at least 4GB to install llama3.2.")
+            show_toast(globals, message="Must have 4GB of free disk space to install Ollama", _type="error")
+            return
+
+        # Check available RAM to ensure at least 4GB
+        free_ram = get_ram_info()['avail_ram_gb']
+        if free_ram < 4:
+            logging.warning(f"Available RAM must be at least 4GB to install llama3.2.")
+            show_toast(globals, message="Must have 4GB of available RAM to install llama3.2", _type="error")
+            return
+
+        # Download llama3.2:latest on Linux
+        if globals.os_name.startswith("Linux"):
+            download_cmd = """
+            #!/bin/bash
+
+            set -euo pipefail
+
+            read -p "Install recommended model (llama3.2:latest)? [Y/n] " choice
+            if [[ "$choice" =~ ^[Yy]?$ ]]; then
+                ollama pull llama3.2:latest
+                echo "llama3.2:latest was installed!"
+                echo ""
+                echo 'Install finished! Press Enter to close this terminal and return to Pearl...';
+                read -r dummy
+                exit 0
+            else
+                echo "Skipping model install."
+                echo ""
+                read -r dummy
+                exit 0
+            fi
+            """
+            subprocess.Popen([
+                "gnome-terminal",
+                "--",
+                "bash", "-c",
+                f"{download_cmd}"
+            ])
+        elif globals.os_name.startswith("Windows"):
+            download_cmd = (
+                # Ask about model (Y/n like bash)
+                "$choice = Read-Host 'Install recommended model llama3.2:latest? [Y/n]'; "
+                "if ($choice -eq '' -or $choice -match '^[Yy]') { "
+                "    Write-Host 'Pulling llama3.2:latest ... (may take a few minutes)' -ForegroundColor Cyan; "
+                "    ollama pull llama3.2:latest; "
+                "    Write-Host 'Model installed!' -ForegroundColor Green; "
+                "} else { "
+                "    Write-Host 'Skipping model download.' -ForegroundColor Yellow; "
+                "}; "
+
+                # Final message
+                "Write-Host ''; "
+                "Write-Host 'All done! Press Enter to close this window...'; "
+                "Read-Host"
+                )
+        else:
+            logging.warning(f"Only Windows and Linux are supported for model downloads.")
+            messagebox.showinfo("OS Not Supported", message="Only Windows and Linux are supported for model downloads. Install models on Ollama.com instead.")
+
+
 def ollama_installation(globals):
     """Install Ollama and any desired models."""
     # Do an initial check to see if Ollama is already installed.
@@ -72,16 +165,16 @@ def ollama_installation(globals):
         messagebox.showinfo("Ollama Already Installed", message="Ollama is already active and running. No need to install!")
         return
 
-    # Check disk space to ensure at least 8GB
+    # Check disk space to ensure at least 10GB
     free_space = get_disk_space()['free_disk']
-    print(f"Free disk space: {free_space}")
-    if free_space < 8:
-        logging.warning(f"Free disk space must be at least 8GB to install Ollama.")
-        show_toast(globals, message="Must have 8GB of free disk space to install Ollama", _type="error")
+    logging.debug(f"Free disk space: {free_space}")
+    if free_space < 10:
+        logging.warning(f"Free disk space must be at least 10GB to install Ollama.")
+        show_toast(globals, message="Must have 10GB of free disk space to install Ollama", _type="error")
+        return
 
     # Install Ollama on Linux
     if globals.os_name.startswith("Linux"):
-        install_cmd = "curl -fsSL https://ollama.com/install.sh | sh"
         subprocess.Popen([
             "gnome-terminal",
             "--",
@@ -140,6 +233,46 @@ def ollama_installation(globals):
         logging.info(f"Ollama was successfully installed!")
     else:
         logging.warning(f"Ollama does not appear to be installed.")
+
+
+def uninstall_ollama(globals):
+    """Fully uninstalls Ollama."""
+    # Test if Ollama is actually installed
+    ollama_installed = ollama_version_test(globals)
+
+    # If Ollama is not installed, skip
+    if not ollama_installed:
+        logging.warning(f"Ollama not installed — no need to uninstall.")
+        show_toast(globals, message="Ollama not installed — no need to uninstall")
+        return
+
+    if globals.os_name.startswith("Linux"):
+        uninstall_cmd = (
+            """
+            echo "Uninstalling Ollama..."
+            sudo systemctl stop ollama 2>/dev/null
+            sudo systemctl disable ollama 2>/dev/null
+            sudo rm -f /etc/systemd/system/ollama.service
+            sudo systemctl daemon-reload
+            sudo rm $(which ollama) 2>/dev/null
+            sudo rm -r $(which ollama | tr 'bin' 'lib') 2>/dev/null || true
+            sudo rm -rf /usr/share/ollama
+            echo "Ollama uninstalled! Press Enter to close this terminal and return to Pearl..."
+            read -r dummy
+            exit 0
+            """)
+        subprocess.Popen([
+            "gnome-terminal",
+            "--",
+            "bash", "-c",
+            f"{uninstall_cmd}"
+        ])
+    elif globals.os_name.startswith("Windows"):
+        logging.debug(f"Opening Windows uninstall program window...")
+        subprocess.run("Start-Process appwiz.cpl", shell=True)
+    else:
+        logging.warning(f"Uninstall only supported on Linux and Windows.")
+        show_toast(globals, message="Uninstall only supported on Linux and Windows.", _type="error")
 
 
 def get_all_models(globals):
@@ -245,11 +378,45 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
         "messages": messages,
         "stream": True}
     try:
+        # Test Ollama first
+        ollama_installed = ollama_version_test(globals)
+
+        # Exit gracefully if Ollama is not installed
+        if not ollama_installed:
+            logging.warning(f"Ollama must be installed to use Pearl's chat feature.")
+            out_q.put(
+                    f"Ollama must be installed to use Pearl's chat feature.")
+            got_response = False
+            return
+
+        # Query the Ollama API if Ollama is installed, set flag
         response = requests.post(url, json=payload, stream=True, timeout=30)
+        if response:
+            got_response = True
+
+        # Prompt to download default model on 404
+        if response.status_code == 404:
+            logging.error(f"Error: {response.text}")
+            absent_model = response.text.split()[1].replace("'", "")
+            if absent_model == "llama3.2:latest":
+                pull_model(globals)
+                out_q.put(
+                    f"At least one model must be installed to use Pearl's chat feature.")
+                return
+            else:
+                out_q.put(
+                    f"{absent_model} not found. Defaulting to llama3.2:latest.")
+                globals.active_model = "llama3.2:latest"
+                save_settings(active_model="llama3.2:latest")
+                return
+
+        # Gracefully return if status code is not 200
         if response.status_code != 200:
             out_q.put(
                 f"Ollama error {response.status_code}: {response.text}\n")
             return
+
+        # Output text in a stream
         for line in response.iter_lines():
             if cancel_event.is_set():
                 logging.debug(
@@ -273,7 +440,9 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     finally:
         globals.message_end_time = datetime.now().isoformat()
         out_q.put(None)
-        response.close()
+        # Close only if response was given
+        if got_response:
+            response.close()
 
 
 def context_query(model, message):

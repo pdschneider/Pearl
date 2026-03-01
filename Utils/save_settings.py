@@ -6,7 +6,7 @@ from config import apply_theme
 from Utils.toast import show_toast
 
 
-def save_all_settings(globals):
+def save_all_settings(globals, reject_toast=False):
     """
     Save all settings to JSON files and update globals.
 
@@ -24,6 +24,7 @@ def save_all_settings(globals):
     current_tts_source = globals.tts_source_var.get()
     current_save_chats = globals.save_chats_var.get()
     current_sink = globals.sink_var.get()
+    current_github_check = globals.github_check_var.get()
 
     # Handle logging level based on dev mode change
     logging_level = current_logging_level
@@ -57,7 +58,8 @@ def save_all_settings(globals):
             saved_width=current_width,
             saved_height=current_height,
             saved_x=current_x,
-            saved_y=current_y)
+            saved_y=current_y,
+            github_check=current_github_check)
 
     # Refresh Globals
     globals.refresh_globals()
@@ -71,6 +73,7 @@ def save_all_settings(globals):
     globals.tts_source_var.set(settings["tts_source"])
     globals.save_chats_var.set(settings["save_chats"])
     globals.sink_var.set(settings["default_sink"])
+    globals.github_check_var.set(settings["github_check"])
 
     # Update logging
     logging.root.setLevel(getattr(logging, settings["logging_level"]))
@@ -78,7 +81,8 @@ def save_all_settings(globals):
     # Apply new theme
     apply_theme(current_active_theme)
 
-    show_toast(globals, "Saved!")
+    if not reject_toast:
+        show_toast(globals, "Saved!")
     logging.info(f"Settings saved successfully.")
 
 
@@ -90,6 +94,6 @@ def save_settings(**kwargs):
     try:
         with open(file_path, 'w') as f:
             json.dump(settings, f, indent=4)
-        logging.info(f"Saving settings to: {file_path}")
+        logging.debug(f"Saving settings to: {file_path}")
     except Exception as e:
         logging.error(f"Error saving settings to {file_path}: {e}")

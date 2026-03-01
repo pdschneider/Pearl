@@ -47,6 +47,16 @@ class ButtonWidgets(ctk.CTkFrame):
             light_image=Image.open(load_data_path("config", "assets/attach-2.png")),
             dark_image=Image.open(load_data_path("config", "assets/attach-2.png")),
             size=(10, 10))
+        
+        self.sound_high_icon = CTkImage(
+            light_image=Image.open(load_data_path("config", "assets/sound_high.png")),
+            dark_image=Image.open(load_data_path("config", "assets/sound_high.png")),
+            size=(10, 10))
+        
+        self.sound_low_icon = CTkImage(
+            light_image=Image.open(load_data_path("config", "assets/sound_low.png")),
+            dark_image=Image.open(load_data_path("config", "assets/sound_low.png")),
+            size=(10, 10))
 
         # Copy button
         self.copy_button = ctk.CTkButton(self,

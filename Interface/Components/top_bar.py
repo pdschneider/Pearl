@@ -5,6 +5,7 @@ from CTkToolTip import CTkToolTip
 from Interface.Components.sidebar import create_sidebar
 from Managers.chat_history import start_new_conversation
 from Utils.load_settings import load_data_path
+from Connections.ollama import ollama_version_test
 import sounddevice as sd
 from PIL import Image
 import logging
@@ -25,6 +26,9 @@ def create_top_bar(globals):
     """
     def toggle_settings():
         """Shows and hides the settings window when the button is clicked."""
+        # Ensure Ollama is active
+        ollama_version_test(globals)
+
         try:
             if globals.setup_page.winfo_ismapped() or globals.changelog.winfo_ismapped():
                 globals.greeting = "Welcome!"
@@ -33,8 +37,10 @@ def create_top_bar(globals):
             pass
         if globals.chat_page.winfo_ismapped():
             globals.chat_page.pack_forget()
+            globals.settings_overlay.tkraise()
         else:
             globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
+            globals.chat_page.tkraise()
         if globals.settings_overlay.winfo_ismapped():
             globals.settings_overlay.pack_forget()
         else:
@@ -43,8 +49,11 @@ def create_top_bar(globals):
 
     def reset_to_new_chat():
         """Resets to a new conversation and clears the chat frame."""
+        # Stop sound, trigger flags, test for Ollama, and raise chat page
         sd.stop()
         start_new_conversation(globals)
+        ollama_version_test(globals)
+        globals.chat_page.tkraise()
 
         # Clear the current chat bubbles
         for widget in globals.ui_elements["chat_frame"].winfo_children():
@@ -54,6 +63,7 @@ def create_top_bar(globals):
         logging.info(f"Started new chat from the top bar button.")
 
     def report_bug():
+        """Opens the default mail application to report a bug."""
         to = "bugs@phillipplays.com"
         subject = "Bug Report for Pearl"
         raw_body = """Thank you very much for making a report!
@@ -125,11 +135,11 @@ def create_top_bar(globals):
                pady=5)
 
     # Title (center)
-    title = ctk.CTkLabel(
+    globals.app_title = ctk.CTkLabel(
         top_bar,
         text=globals.greeting,
         font=ctk.CTkFont(size=20, weight="bold"))
-    title.pack(side="left", expand=True)
+    globals.app_title.pack(side="left", expand=True)
 
     # Settings Gear (right)
     settings = ctk.CTkButton(

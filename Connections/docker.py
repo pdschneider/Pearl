@@ -25,7 +25,6 @@ def docker_check(globals):
                                         capture_output=True,
                                         timeout=4)
             if basic_test.returncode == 0:
-                logging.info(f"Docker is up and running!")
                 return True
             else:
                 logging.warning(

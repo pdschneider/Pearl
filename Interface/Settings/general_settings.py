@@ -37,6 +37,11 @@ def create_general_settings_tab(globals, general_frame):
         light_image=Image.open(load_data_path("config", "assets/cancel.png")),
         dark_image=Image.open(load_data_path("config", "assets/cancel.png")),
         size=(40, 40))
+    
+    globals.notification_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/notification-1.png")),
+        dark_image=Image.open(load_data_path("config", "assets/notification-1.png")),
+        size=(40, 40))
 
     ctk.CTkLabel(general_frame,
                  text="General Settings",
@@ -49,6 +54,7 @@ def create_general_settings_tab(globals, general_frame):
                                  fg_color="transparent")
     options_frame.pack(fill="x", padx=10, pady=10)
 
+    # Save Chats
     ctk.CTkLabel(options_frame,
                  text=None,
                  image=globals.chat_icon).pack(side="left", padx=6, pady=0)
@@ -113,6 +119,33 @@ def create_general_settings_tab(globals, general_frame):
                     values=theme_labels,
                     state="readonly",
                     width=150).pack(side="left")
+
+    # Version Check
+    version_frame = ctk.CTkFrame(general_frame,
+                                  bg_color="transparent",
+                                  fg_color="transparent")
+    version_frame.pack(fill="x", pady=10, padx=10)
+
+    ctk.CTkLabel(version_frame,
+                 text=None,
+                 image=globals.notification_icon).pack(side="left", padx=6, pady=0)
+
+    version_check_label = ctk.CTkLabel(version_frame,
+                                    text="Check for Updates",
+                                    font=fonts.heading_font)
+    version_check_label.pack(side="left", padx=(0, 12))
+    CTkToolTip(version_check_label,
+               message="When on, pings github for the\nthe latest version of Pearl\non startup",
+               delay=0.8,
+               follow=True,
+               padx=10,
+               pady=5)
+
+    ctk.CTkCheckBox(version_frame,
+                    variable=globals.github_check_var,
+                    onvalue=True,
+                    text=None,
+                    offvalue=False).pack(side="left", padx=5)
 
     # Deletion Frame
     deletion_frame = ctk.CTkFrame(general_frame,

@@ -23,7 +23,8 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "v0.2.1"
+        self.current_version = "0.2.2"
+        self.latest_version = None
         self.ollama_version = None
         self.docker_version = None
 
@@ -35,6 +36,7 @@ class Globals:
         self.tts_source_var = None
         self.save_chats_var = None
         self.sink_var = None
+        self.github_check_var = None
 
         # Widgets
         self.send_button = None
@@ -45,6 +47,7 @@ class Globals:
         self.root = None
         self.ui_elements = None
         self.attach_tip = None
+        self.app_title = "Pearl at your service!"
 
         # Icons
         self.hamburger_icon = None
@@ -68,6 +71,7 @@ class Globals:
         self.preferences_icon = None
         self.chats_icon = None
         self.config_icon = None
+        self.notification_icon = None
 
         # Pages
         self.main_frame = None
@@ -112,6 +116,7 @@ class Globals:
         self.assistant_message = ""
         self.file_attachment = None
         self.attachment_path = None
+        self.markdown_components = ["***", "___", "**", "__", "~~", "#####", "####", "###"]
 
         # Flags
         self.ollama_active = None
@@ -122,6 +127,7 @@ class Globals:
         self.sidebar_open = False
         self.is_new_conversation = True
         self.still_streaming = False
+        self.is_speaking = False
         self.new_chat = True
 
         # Miscellaneous Variables
@@ -151,6 +157,7 @@ class Globals:
         self.saved_height = settings.get("saved_height", 850)
         self.saved_x = settings.get("saved_x", -1)
         self.saved_y = settings.get("saved_y", -1)
+        self.github_check = settings.get("github_check", False)
 
 
 def apply_theme(name: str) -> None:

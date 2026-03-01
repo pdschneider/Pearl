@@ -13,6 +13,7 @@ from Utils.hardware import get_hardware_stats
 from Utils.load_settings import load_data_path, load_settings
 from Connections.docker import docker_check
 from Managers.sound_manager import kokoro_test
+from Connections.github import version_check
 
 
 def startup(globals):
@@ -52,7 +53,7 @@ def startup(globals):
             settings = load_settings()
             logging.root.setLevel(getattr(logging, settings.get("logging_level", "INFO")))
 
-        logging.info(f"File and console logging initialized.")
+        logging.debug(f"File and console logging initialized successfully.")
 
     def setup_settings():
         try:
@@ -347,6 +348,7 @@ def startup(globals):
         setup_settings()
         setup_themes()
         setup_context()
+        logging.info(f"Pearl Version: {globals.current_version}")
         try:
             # Test for Ollama
             ollama_success = ollama_test(globals)
@@ -355,16 +357,20 @@ def startup(globals):
                 loaded_models = get_loaded_models(globals)
                 if globals.active_model not in loaded_models:
                     logging.debug(f"Attempting to load initial model....")
-                    load_model(globals.active_model)  # Loads the active model before startup
+                    # Loads the active model before startup
+                    load_model(globals, globals.active_model)
+        except Exception as e:
+            logging.error(f"Initial Ollama setup failed due to: {e}")
 
+        try:
             # Test for Docker & Kokoro
             docker_success = docker_check(globals)
             if docker_success:
                 kokoro_success = kokoro_test()
                 if kokoro_success:
                     globals.kokoro_active = True
-        except:
-            logging.error(f"Initial Ollama setup failed.")
+        except Exception as e:
+            logging.error(f"Initial Docker + Kokoro setup failed due to {e}")
 
         # Query for hardware stats
         try:
@@ -377,6 +383,10 @@ def startup(globals):
     # Perform startup tasks
     thread = threading.Thread(target=startup_tasks, args=(globals, tasks_done), daemon=True)
     thread.start()
+
+    # Check is version is most recent
+    if globals.github_check:
+        version_check(globals)
 
     # Wait up to 1 second for quick completion
     thread.join(1.0)

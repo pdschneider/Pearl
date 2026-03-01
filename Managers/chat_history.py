@@ -70,7 +70,7 @@ def save_conversation(globals):
     try:
         with open(filename, 'w') as f:
             json.dump(data, f, indent=4)
-        logging.info(f"Conversation saved/updated to {filename}")
+        logging.debug(f"Conversation saved/updated to {filename}")
         globals.is_new_conversation = False
     except Exception as e:
         logging.error(f"Failed to save conversation to {filename}: {e}")

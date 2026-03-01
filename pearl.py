@@ -1,5 +1,4 @@
 # pearl.py
-
 from config import globals
 from Utils.startup import startup
 from Interface.interface import create_interface
@@ -16,7 +15,7 @@ startup(globals)
 def on_closing():
     """Saves all settings before closing the program."""
     try:
-        save_all_settings(globals)
+        save_all_settings(globals, reject_toast=True)
     except Exception as e:
         logging.error(f"Error occurred when saving settings: {e}")
     globals.root.destroy()

@@ -88,6 +88,7 @@ def create_interface(globals):
         globals.tts_source_var = tk.StringVar(value=globals.tts_source)
         globals.save_chats_var = tk.BooleanVar(value=globals.save_chats)
         globals.sink_var = tk.StringVar(value=globals.default_sink)
+        globals.github_check_var = tk.BooleanVar(value=globals.github_check)
 
         create_chat_tab(globals, globals.chat_page)
         create_settings(globals, globals.settings_overlay)

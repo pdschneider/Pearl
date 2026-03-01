@@ -2,6 +2,24 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.2.2] - 2026-02-28
+
+### Added
+- Optional update check, prompts to download most recent version from GitHub if enabled
+- Prompts to download default model if not found (optional)
+- Added Ollama Uninstall button in Advanced Settings
+
+### Changed
+- Defaults to llama3.2:latest if chosen model is not found
+- TTS now plays fully in a separate thread, freeing the GUI during chats
+- Improved markdown scrubbing from assistant responses
+- Updated README
+
+### Fixed
+- Fixed major bug where each message was treated as a new conversation when save chats was toggled off
+- Fixed broken default TTS on Linux
+- Cleaned up logs 
+
 ## [0.2.1] - 2026-02-25
 
 ### Added

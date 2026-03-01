@@ -6,6 +6,7 @@ from Utils.save_settings import save_all_settings
 import Utils.fonts as fonts
 from CTkToolTip import CTkToolTip
 from Utils.save_settings import load_data_path
+from Connections.ollama import uninstall_ollama
 import subprocess
 import os
 import logging
@@ -39,6 +40,11 @@ def create_advanced_tab(globals, advanced_frame):
     globals.config_icon = CTkImage(
         light_image=Image.open(load_data_path("config", "assets/settings-2.png")),
         dark_image=Image.open(load_data_path("config", "assets/settings-2.png")),
+        size=(40, 40))
+    
+    globals.ollama_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/ollama.png")),
+        dark_image=Image.open(load_data_path("config", "assets/ollama.png")),
         size=(40, 40))
 
     ctk.CTkLabel(advanced_frame,
@@ -154,6 +160,34 @@ def create_advanced_tab(globals, advanced_frame):
                                 width=20,
                                 command=lambda: open_config())
     open_config_button.pack(side="left", padx=(0, 12))
+
+    # Deletion
+
+    ctk.CTkLabel(advanced_frame,
+                 text="DANGER ZONE",
+                 font=fonts.title_font,
+                 fg_color="#d62828",
+                 anchor="center").pack(fill="x", pady=20, padx=10)
+
+    deletion_frame = ctk.CTkFrame(advanced_frame,
+                              bg_color="transparent",
+                              fg_color="transparent")
+    deletion_frame.pack(anchor="w", pady=5)
+
+    ctk.CTkLabel(deletion_frame,
+                 text=None,
+                 image=globals.ollama_icon).pack(side="left", padx=6, pady=0)
+
+    ctk.CTkLabel(deletion_frame,
+                 text="Uninstall Ollama",
+                 font=fonts.heading_font).pack(side="left", padx=(0, 12))
+    
+    uninstall_ollama_button = ctk.CTkButton(deletion_frame,
+                                text="Uninstall",
+                                width=20,
+                                command=lambda: uninstall_ollama(globals))
+    uninstall_ollama_button.pack(side="left", padx=(0, 12))
+    uninstall_ollama_button.configure(fg_color="#d62828", hover_color="#ff3b30")
 
     # Save Button Frame
     save_button_frame = ctk.CTkFrame(advanced_frame,

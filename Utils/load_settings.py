@@ -205,6 +205,7 @@ def load_context():
         logging.error(f"Error loading context.json: {e}")
         return {}
 
+
 def load_ollama_sh():
     """Loads the ollama install bash script for Linux users."""
     try:

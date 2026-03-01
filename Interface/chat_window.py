@@ -31,8 +31,8 @@ def create_chat_tab(globals, chat_tab):
         size=(35, 35))
 
     globals.stop_icon = CTkImage(
-        light_image=Image.open(load_data_path("config", "assets/stop-3.png")),
-        dark_image=Image.open(load_data_path("config", "assets/stop-3.png")),
+        light_image=Image.open(load_data_path("config", "assets/stop-2.png")),
+        dark_image=Image.open(load_data_path("config", "assets/stop-2.png")),
         size=(35, 35))
 
     globals.attach_icon = CTkImage(
@@ -63,6 +63,7 @@ def create_chat_tab(globals, chat_tab):
     globals.entry_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
     globals.entry_box.focus_set()
 
+    # Send button
     globals.send_button = ctk.CTkButton(entry_frame,
                                 image=globals.send_icon,
                                 text=None,

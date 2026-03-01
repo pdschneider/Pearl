@@ -37,8 +37,6 @@ def fetch_tts_models(globals):
                 logging.debug(f"Attempting to load Kokoro voice list...")
                 voices = requests.get("http://localhost:8880/v1/audio/voices")
                 if voices.status_code == 200:
-                    logging.info(
-                        f"Kokoro voices fetch succeeded. Returning voices dictionary.")
                     return voices.json()["voices"]
                 else:
                     logging.error(
@@ -53,49 +51,65 @@ def fetch_tts_models(globals):
 def kokoro_speak(globals):
     """Communicates with the Kokoro endpoint for tts"""
     try:
-        response = requests.post(
+        # Defined to play in a separate thread
+        def _play_in_thread():
+            """Queries Kokoro API and plays TTS in a thread."""
+            try:
+                response = requests.post(
             "http://localhost:8880/v1/audio/speech", json={
                 "model": "kokoro",
                 "input": globals.assistant_message,
                 "voice": globals.active_voice,
                 "response_format": "wav"})
-        if response.status_code != 200:
-            logging.error(f"TTS API error: {response.status_code}")
-            return  # Early exit on error
-        logging.debug(f"status code: {response.status_code}. Playing TTS.")
-        audio_data = BytesIO(response.content)
-        data, samplerate = sf.read(audio_data, dtype='float32')
+                if response.status_code != 200:
+                    logging.error(f"TTS API error: {response.status_code}")
+                    return  # Early exit on error
+                logging.debug(f"status code: {response.status_code}. Playing TTS.")
+                audio_data = BytesIO(response.content)
+                data, samplerate = sf.read(audio_data, dtype='float32')
 
-        selected_sink = globals.default_sink
-        if selected_sink != "Default":
-            os.environ['PULSE_SINK'] = selected_sink
-        else:
-            os.environ.pop('PULSE_SINK', None)  # Fall back to system default
+                selected_sink = globals.default_sink
+                if selected_sink != "Default":
+                    os.environ['PULSE_SINK'] = selected_sink
+                else:
+                    # Fall back to system default
+                    os.environ.pop('PULSE_SINK', None)
 
-        # Defined to play in a separate thread
-        def play_in_thread():
-            """Plays the sound, designed for threading."""
-            try:
+                # Set flag and play audio
+                globals.is_speaking = True
                 sd.play(data, samplerate, device='pulse')
+                globals.is_speaking = False
             except Exception as e:
                 logging.error(f"Playback error: {e}")
+                globals.is_speaking = False
 
         # Start the playback thread
-        threading.Thread(target=play_in_thread, daemon=True).start()
+        threading.Thread(target=_play_in_thread, daemon=True).start()
     except Exception as e:
         logging.error(f"TTS error: {e}")
+        globals.is_speaking = False
 
 
 # Default TTS
-def default_speak(text: str):
+def default_speak(globals, text):
     """Plays TTS from the computers default TTS source."""
+    def _play_in_thread():
+        """Plays default TTS in a thread."""
+        try:
+            globals.is_speaking = True
+            engine = pyttsx3.init()
+            engine.say(text)
+            engine.runAndWait()
+            engine.stop()
+            globals.is_speaking = False
+        except Exception as e:
+            logging.error(f"Could not play TTS via default due to: {e}")
+            globals.is_speaking = False
+    
     try:
-        engine = pyttsx3.init()
-        engine.say(text)
-        engine.runAndWait()
-        engine.stop()
+        threading.Thread(target=_play_in_thread, daemon=True).start()
     except Exception as e:
-        logging.error(f"Could not play TTS via default due to: {e}")
+        logging.error(f"Could not play default TTS due to: {e}")
 
 
 # Query for speaker outputs
