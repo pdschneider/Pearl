@@ -42,24 +42,29 @@ def create_general_settings_tab(globals, general_frame):
         light_image=Image.open(load_data_path("config", "assets/notification-1.png")),
         dark_image=Image.open(load_data_path("config", "assets/notification-1.png")),
         size=(40, 40))
+    
+    globals.en_language_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/en-language.png")),
+        dark_image=Image.open(load_data_path("config", "assets/en-language.png")),
+        size=(40, 40))
 
     ctk.CTkLabel(general_frame,
                  text="General Settings",
                  font=fonts.title_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
 
-    # Options Frame
-    options_frame = ctk.CTkFrame(general_frame,
+    # Save_Chats Frame
+    save_chats_frame = ctk.CTkFrame(general_frame,
                                  bg_color="transparent",
                                  fg_color="transparent")
-    options_frame.pack(fill="x", padx=10, pady=10)
+    save_chats_frame.pack(fill="x", padx=10, pady=10)
 
     # Save Chats
-    ctk.CTkLabel(options_frame,
+    ctk.CTkLabel(save_chats_frame,
                  text=None,
                  image=globals.chat_icon).pack(side="left", padx=6, pady=0)
 
-    save_chats_label = ctk.CTkLabel(options_frame,
+    save_chats_label = ctk.CTkLabel(save_chats_frame,
                                     text="Save Chats",
                                     font=fonts.heading_font)
     save_chats_label.pack(side="left", padx=(0, 12))
@@ -70,11 +75,38 @@ def create_general_settings_tab(globals, general_frame):
                padx=10,
                pady=5)
 
-    ctk.CTkCheckBox(options_frame,
+    ctk.CTkCheckBox(save_chats_frame,
                     variable=globals.save_chats_var,
                     onvalue=True,
                     text=None,
                     offvalue=False).pack(side="left", padx=5)
+
+    # Language
+    language_frame = ctk.CTkFrame(general_frame,
+                                  bg_color="transparent",
+                                  fg_color="transparent")
+    language_frame.pack(fill="x", pady=10, padx=10)
+
+    ctk.CTkLabel(language_frame,
+                 text=None,
+                 image=globals.en_language_icon).pack(side="left", padx=6, pady=0)
+
+    language_label = ctk.CTkLabel(language_frame,
+                                    text="Language",
+                                    font=fonts.heading_font)
+    language_label.pack(side="left", padx=(0, 12))
+    CTkToolTip(language_label,
+               message="Choose your language",
+               delay=0.8,
+               follow=True,
+               padx=10,
+               pady=5)
+
+    ctk.CTkComboBox(language_frame,
+                    variable=globals.language_var,
+                    values=["English"],
+                    state="readonly",
+                    width=150).pack(side="left")
 
     # Theme Frame
     theme_frame = ctk.CTkFrame(general_frame,

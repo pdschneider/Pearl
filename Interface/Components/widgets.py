@@ -18,8 +18,8 @@ class ButtonWidgets(ctk.CTkFrame):
                  attachment=False):
         super().__init__(parent,
                          fg_color=None,
-                         bg_color=globals.theme_dict["CTkScrollableFrame"]["bg_color"],
-                         border_color=globals.theme_dict["CTkScrollableFrame"]["bg_color"],
+                         bg_color=globals.theme_dict["CTkScrollableFrame"]["fg_color"],
+                         border_color=globals.theme_dict["CTkScrollableFrame"]["fg_color"],
                          border_width=0,
                          corner_radius=0,
                          height=32,
@@ -114,15 +114,11 @@ class ButtonWidgets(ctk.CTkFrame):
                 self.attach_icon_widget.grid(row=0, column=1, padx=2, pady=2)
             self.model_label.grid(row=0, column=2, padx=2, pady=2)
             self.is_shown = True
-            self.after(600, lambda: self.copy_button.grid_forget())
-            self.after(600, lambda: self.attach_icon_widget.grid_forget())
-            self.after(600, lambda: self.model_label.grid_forget())
-            self.is_shown = False
 
     def hide_buttons(self):
         """Hides the widget buttons."""
         if self.is_shown:
-            self.after(600, lambda: self.copy_button.grid_forget())
-            self.after(600, lambda: self.attach_icon_widget.grid_forget())
-            self.after(600, lambda: self.model_label.grid_forget())
+            self.copy_button.grid_remove()
+            self.attach_icon_widget.grid_remove()
+            self.model_label.grid_remove()
             self.is_shown = False

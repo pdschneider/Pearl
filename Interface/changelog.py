@@ -80,10 +80,6 @@ def create_changelog_tab(globals, changelog_tab):
                     globals: Global variables
                     setup_tab: The main frame of the setup window
     """
-    ctk.CTkLabel(changelog_tab,
-                 text="Changelog",
-                 font=fonts.title_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
 
     changelog_frame = ctk.CTkScrollableFrame(changelog_tab)
     changelog_frame.pack(fill="both", expand=True, padx=10, pady=0)
@@ -128,6 +124,7 @@ def create_changelog_tab(globals, changelog_tab):
     ).pack(side="top", padx=5)
 
     def continue_to_chat():
+        globals.app_title.configure(text="Pearl at your service!")
         globals.settings_overlay.pack_forget()
         globals.changelog.pack_forget()
         globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)

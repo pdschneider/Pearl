@@ -3,6 +3,7 @@ import customtkinter as ctk
 import Utils.fonts as fonts
 import webbrowser
 from CTkToolTip import CTkToolTip
+from Utils.refresher import refresh_gui
 
 
 def create_about_tab(globals, about_frame):
@@ -59,11 +60,11 @@ def create_about_tab(globals, about_frame):
 
     ctk.CTkButton(buttons_frame,
                   text="View Setup Page",
-                  command=lambda: bring_back_setup()).grid(
+                  command=lambda: bring_back_setup(globals)).grid(
                       row=0, column=0, padx=5)
     ctk.CTkButton(buttons_frame,
                   text="View Changelog",
-                  command=lambda: show_changelog()).grid(
+                  command=lambda: show_changelog(globals)).grid(
                       row=0, column=1, padx=5)
 
     github_button = ctk.CTkButton(buttons_frame,
@@ -78,13 +79,17 @@ def create_about_tab(globals, about_frame):
                padx=10,
                pady=5)
 
-    def bring_back_setup():
+    def bring_back_setup(globals):
         """Reinitiates the setup window."""
+        refresh_gui(globals)
+        globals.app_title.configure(text="Welcome to Pearl!")
         globals.settings_overlay.pack_forget()
         globals.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
 
-    def show_changelog():
+    def show_changelog(globals):
         """Brings up the changelog window."""
+        refresh_gui(globals)
+        globals.app_title.configure(text="Changelog")
         globals.settings_overlay.pack_forget()
         globals.chat_page.pack_forget()
         globals.changelog.pack(fill="both", expand=True, padx=10, pady=0)

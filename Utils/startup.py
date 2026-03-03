@@ -5,6 +5,7 @@ import os
 import json
 import shutil
 import hashlib
+import sys
 from logging.handlers import TimedRotatingFileHandler
 import tkinter as tk
 import customtkinter as ctk
@@ -121,6 +122,14 @@ def startup(globals):
                 data["saved_y"] = 0
                 changed = True
                 logging.info(f"Added missing 'saved_y' key to settings.json")
+            if "github_check" not in data:
+                data["github_check"] = False
+                changed = True
+                logging.info(f"Added missing key 'github_check' to settings.json")
+            if "language" not in data:
+                data["language"] = "English"
+                changed = True
+                logging.info(f"Added missing key 'language' to settings.json")
 
             # Check to make sure values are the correct type
             if not isinstance(data["active_model"], str):
@@ -189,14 +198,25 @@ def startup(globals):
                 changed = True
                 logging.info(f"Sanitizing incorrect type 'saved_x'")
             if not isinstance(data["saved_y"], int):
-                logging.warning(f"Current type of value for aved_y: {type(data["saved_y"])}")
+                logging.warning(f"Current type of value for saved_y: {type(data["saved_y"])}")
                 data["saved_y"] = 0
                 changed = True
                 logging.info(f"Sanitizing incorrect type 'saved_y'")
+            if not isinstance(data["github_check"], bool):
+                logging.warning(f"Current value type for 'github_check': {type(data["github_check"])}")
+                data["github_check"] = False
+                changed = True
+                logging.info(f"Sanitizing incorrect type 'github_check'")
+            if not isinstance(data["language"], str):
+                logging.warning(f"Current value type for 'language': {type(data["language"])}")
+                data["language"] = "English"
+                changed = True
+                logging.info(f"Sanitizing incorrect type 'language'")
 
             # Check to make sure logging level and theme are acceptable values
             accepted_logging_values = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
             accepted_themes = ["cosmic_sky", "pastel_green", "blazing_red", "dark_cloud", "soft_light"]
+            accepted_languages = ["English", "Spanish", "French", "Russian"]
             if data["logging_level"] not in accepted_logging_values:
                 data["logging_level"] = "INFO"
                 changed = True
@@ -204,7 +224,11 @@ def startup(globals):
             if data["active_theme"] not in accepted_themes:
                 data["active_theme"] = "cosmic_sky"
                 changed = True
-                logging.info(f"Adding missing 'active_theme' key to settings.json")
+                logging.info(f"Fixed nonconforming 'active_theme' key to settings.json")
+            if data["language"] not in accepted_languages:
+                data["language"] = "English"
+                changed = True
+                logging.info(f"Fixed nonconforming 'language' key to settings.json")
             
             # Write to file
             if changed:
@@ -286,6 +310,117 @@ def startup(globals):
         except Exception as e:
             logging.error(f"Unable to load themes due to {e}")
 
+    def ollama_install_check():
+        """Checks if bundled ollama_install.sh is different from user's ollama_install.sh, change if so."""
+        try:
+            # Read the contents of the default path and hash it
+            default_ollama_path = load_data_path("config", "ollama_install.sh", default=True)
+            with open(default_ollama_path, 'r') as f:
+                default_ollama_file = f.read()
+            hashed_default_ollama_sh = hashlib.md5(default_ollama_file.encode()).hexdigest()
+            if not hashed_default_ollama_sh:
+                logging.warning(f"No hash for default ollama_install.sh found.")
+
+            # Read the contents of the current user's path and hash it
+            user_ollama_path = load_data_path("config", "ollama_install.sh")
+            with open(user_ollama_path, 'r') as f:
+                user_ollama_file = f.read()
+            hashed_user_ollama_sh = hashlib.md5(user_ollama_file.encode()).hexdigest()
+            if not hashed_user_ollama_sh:
+                logging.warning(f"No has for user's ollama_install.sh found.")
+
+        except Exception as e:
+            logging.warning(f"Unable to hash ollama_install.sh due to: {e}")
+            return
+
+        # Compare hashes, remove and replace old file if different
+        if hashed_default_ollama_sh != hashed_user_ollama_sh:
+            try:
+                if os.path.isfile(load_data_path("config", "ollama_install.sh")):
+                    logging.debug(f"Removing old ollama_install.sh...")
+                    os.remove(load_data_path("config", "ollama_install.sh"))
+                logging.info(f"Updating ollama_install.sh...")
+                load_data_path("config", "ollama_install.sh", default=True)
+
+            except Exception as e:
+                logging.warning(f"Unable to update company map due to: {e}")
+        else:
+            logging.debug(f"ollama_install.sh already at current version.")
+
+    def docker_debian_check():
+        """Checks if bundled docker_debian.sh is different from user's docker_debian.sh, change if so."""
+        try:
+            # Read the contents of the default path and hash it
+            default_docker_debian_path = load_data_path("config", "docker_debian.sh", default=True)
+            with open(default_docker_debian_path, 'r', encoding='utf-8') as f:
+                default_docker_debian_file = f.read()
+            hashed_default_docker_debian_sh = hashlib.md5(default_docker_debian_file.encode()).hexdigest()
+            if not hashed_default_docker_debian_sh:
+                logging.warning(f"No hash for default docker_debian.sh found.")
+
+            # Read the contents of the current user's path and hash it
+            user_docker_debian_path = load_data_path("config", "docker_debian.sh")
+            with open(user_docker_debian_path, 'r', encoding='utf-8') as f:
+                user_docker_debian_file = f.read()
+            hashed_user_docker_debian_sh = hashlib.md5(user_docker_debian_file.encode()).hexdigest()
+            if not hashed_user_docker_debian_sh:
+                logging.warning(f"No has for user's docker_debian.sh found.")
+
+        except Exception as e:
+            logging.warning(f"Unable to hash docker_debian.sh due to: {e}")
+            return
+
+        # Compare hashes, remove and replace old file if different
+        if hashed_default_docker_debian_sh != hashed_user_docker_debian_sh:
+            try:
+                if os.path.isfile(load_data_path("config", "docker_debian.sh")):
+                    logging.debug(f"Hash mismatch. Removing old docker_debian.sh...")
+                    os.remove(load_data_path("config", "docker_debian.sh"))
+                logging.info(f"Updating docker_debian.sh...")
+                load_data_path("config", "docker_debian.sh", default=True)
+
+            except Exception as e:
+                logging.warning(f"Unable to update docker_debian.sh due to: {e}")
+        else:
+            logging.debug(f"docker_debian.sh already at current version.")
+
+    def docker_ubuntu_check():
+        """Checks if bundled docker_ubuntu.sh is different from user's docker_ubuntu.sh, change if so."""
+        try:
+            # Read the contents of the default path and hash it
+            default_docker_ubuntu_path = load_data_path("config", "docker_ubuntu.sh", default=True)
+            with open(default_docker_ubuntu_path, 'r', encoding='utf-8') as f:
+                default_docker_ubuntu_file = f.read()
+            hashed_default_docker_ubuntu_sh = hashlib.md5(default_docker_ubuntu_file.encode()).hexdigest()
+            if not hashed_default_docker_ubuntu_sh:
+                logging.warning(f"No hash for default docker_ubuntu.sh found.")
+
+            # Read the contents of the current user's path and hash it
+            user_docker_ubuntu_path = load_data_path("config", "docker_ubuntu.sh")
+            with open(user_docker_ubuntu_path, 'r', encoding='utf-8') as f:
+                user_docker_ubuntu_file = f.read()
+            hashed_user_docker_ubuntu_sh = hashlib.md5(user_docker_ubuntu_file.encode()).hexdigest()
+            if not hashed_user_docker_ubuntu_sh:
+                logging.warning(f"No has for user's docker_ubuntu.sh found.")
+
+        except Exception as e:
+            logging.warning(f"Unable to hash docker_ubuntu.sh due to: {e}")
+            return
+
+        # Compare hashes, remove and replace old file if different
+        if hashed_default_docker_ubuntu_sh != hashed_user_docker_ubuntu_sh:
+            try:
+                if os.path.isfile(load_data_path("config", "docker_ubuntu.sh")):
+                    logging.debug(f"Hash mismatch. Removing old docker_ubuntu.sh...")
+                    os.remove(load_data_path("config", "docker_ubuntu.sh"))
+                logging.info(f"Updating docker_ubuntu.sh...")
+                load_data_path("config", "docker_ubuntu.sh", default=True)
+
+            except Exception as e:
+                logging.warning(f"Unable to update docker_ubuntu.sh due to: {e}")
+        else:
+            logging.debug(f"docker_ubuntu.sh already at current version.")
+
     def setup_context():
         """Makes sure the context file is usable."""
         try:
@@ -348,27 +483,28 @@ def startup(globals):
         setup_settings()
         setup_themes()
         setup_context()
+        ollama_install_check()
+        docker_debian_check()
+        docker_ubuntu_check()
+        logging.info(f"Python Version: {sys.version}")
         logging.info(f"Pearl Version: {globals.current_version}")
         try:
             # Test for Ollama
             ollama_success = ollama_test(globals)
             if ollama_success:
-                globals.ollama_active = True
                 loaded_models = get_loaded_models(globals)
                 if globals.active_model not in loaded_models:
                     logging.debug(f"Attempting to load initial model....")
-                    # Loads the active model before startup
+                    # Loads the active model before GUI is built
                     load_model(globals, globals.active_model)
         except Exception as e:
             logging.error(f"Initial Ollama setup failed due to: {e}")
 
+        # Test for Docker & Kokoro
         try:
-            # Test for Docker & Kokoro
             docker_success = docker_check(globals)
             if docker_success:
-                kokoro_success = kokoro_test()
-                if kokoro_success:
-                    globals.kokoro_active = True
+                kokoro_test(globals)
         except Exception as e:
             logging.error(f"Initial Docker + Kokoro setup failed due to {e}")
 
@@ -407,7 +543,8 @@ def startup(globals):
     def close_startup_window():
         """Closes the progress bar window."""
         progress_bar.stop()
-        globals.startup_root.destroy()
+        if globals.startup_root:
+            globals.startup_root.destroy()
         globals.startup_root = None
 
     def check_if_done():
@@ -415,10 +552,12 @@ def startup(globals):
         if tasks_done.is_set():
             close_startup_window()
         else:
-            globals.startup_root.after(100, check_if_done)
+            if globals.startup_root:
+                globals.startup_root.after(100, check_if_done)
 
     # Set up polling loop
-    globals.startup_root.after(100, check_if_done)
+    if globals.startup_root:
+        globals.startup_root.after(100, check_if_done)
 
     # Destroy loading screen
     try:

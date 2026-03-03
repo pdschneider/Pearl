@@ -5,6 +5,42 @@ import psutil
 import platform
 
 os_name = platform.platform()
+if os_name.startswith("Windows"):
+    import wmi
+else:
+    logging.debug(f"Skipping wmi import for non-Windows PC.")
+
+
+def get_os_info():
+    """Gets granular information about the OS."""
+    components = ["ID=", "NAME=", "UBUNTU_CODENAME=", "PRETTY_NAME=", "ID_LIKE="]
+    os_parts = {'NAME': None, 'ID': None, 'ID_LIKE': None, 'PRETTY_NAME': None, 'UBUNTU_CODENAME': None}
+    if os_name.startswith("Windows"):
+        return os_parts
+    elif os_name.startswith("Linux"):
+        try:
+            # Extract text from the os-release file
+            with open("/etc/os-release", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    for component in components:
+                        # Add present values to os_parts
+                        if line.startswith(component):
+                            value = line.strip().replace(component, '').replace('"', '')
+                            new_component = component.replace("=", "")
+                            os_parts[f'{new_component}'] = value
+                # Add keys for missing values
+                for component in components:
+                    component = component.replace("=", "")
+                    if component not in os_parts:
+                        os_parts[component] = None
+            return os_parts
+        except Exception as e:
+            logging.warning(f"Unable to locate /etc/os-release.")
+            return os_parts
+    else:
+        logging.warning(f"Only Windows and Linux are officially supported.")
+        return os_parts
 
 
 def get_ram_info():
@@ -55,29 +91,30 @@ def get_cpu_info():
 
 def cpu_temp_info():
     """Retrieves CPU temperature."""
+    # Initial check for Linux
     if os_name.startswith("Linux"):
         try:
-                temp_output = psutil.sensors_temperatures()
-                # AMD:
-                if 'k10temp' in temp_output:
-                    return {'cpu_temp_c': temp_output['k10temp'][0].current}
-                # Intel:
-                elif 'coretemp' in temp_output:
-                    for entry in temp_output['coretemp']:
-                        if 'Package' in entry.label or 'Core 0' in entry.label:
-                            return {'cpu_temp_c': entry.current}
-                    return {'cpu_temp_c': temp_output['coretemp'][0].current}
-                else:
-                    logging.warning(f"Initial CPU temp failed. Falling back to sensors command...")
+            temp_output = psutil.sensors_temperatures()
+            # AMD:
+            if 'k10temp' in temp_output:
+                return {'cpu_temp_c': temp_output['k10temp'][0].current}
+            # Intel:
+            elif 'coretemp' in temp_output:
+                for entry in temp_output['coretemp']:
+                    if 'Package' in entry.label or 'Core 0' in entry.label:
+                        return {'cpu_temp_c': entry.current}
+                return {'cpu_temp_c': temp_output['coretemp'][0].current}
+            else:
+                logging.warning(f"Initial CPU temp failed. Falling back to sensors command...")
         except Exception as e:
             logging.warning(f"Unable to retrieve CPU temperature data: {e}")
             logging.warning(f"Falling back to sensors command...")
+
+    # Fall back to parsing the 'sensors' bash command if psutil fails
     if os_name.startswith("Linux"):
         try:
-            # Fallback: Uses sensors bash command to pull data from
-            # sensors internal Linux file for finding CPU temperature
             sensors_output = subprocess.check_output(
-                ['sensors']).decode('utf-8')
+                ['sensors'], timeout=5).decode('utf-8')
             cpu_temp_c = None
             # Iterates between each line of temp_output
             for line in sensors_output.split('\n'):
@@ -90,6 +127,20 @@ def cpu_temp_info():
         except Exception as e:
             logging.warning(f"Unable to retrieve CPU temperature: {e}")
             return {'cpu_temp_c': None}
+
+    # Poll for CPU temp on Windows
+    elif os_name.startswith("Windows"):
+        try:
+            w = wmi.WMI(namespace="root\\OpenHardwareMonitor")
+            sensors = w.Sensor()
+            temps = [s.Value for s in sensors
+                     if s.SensorType == 'Temperature' and 'CPU' in s.Name]
+            logging.debug(f"CPU Temps: {temps if temps else None}")
+            return {'cpu_temp_c': None}
+            
+        except Exception as e:
+            logging.debug(f"Could not parse CPU temp on Windows due to: {e}")
+            return {'cpu_temp_c': None}
     else:
         return {'cpu_temp_c': None}
 
@@ -99,7 +150,7 @@ def get_l3_cache():
     if os_name.startswith("Linux"):
         try:
             output = subprocess.check_output(
-                "lscpu | grep L3", shell=True).decode('utf-8').strip()
+                "lscpu | grep L3", shell=True, timeout=5).decode('utf-8').strip()
             parts = output.split()
             l3_size_str = parts[2]  # '64'
             l3_unit = parts[3]  # 'MiB'
@@ -112,7 +163,7 @@ def get_l3_cache():
                 l3_size_mb = l3_size * 1024
             else:
                 l3_size_mb = 32  # Fallback
-            logging.debug(f"Parsed L3 cache size: {l3_size_mb:.1f} MiB")
+                logging.debug(f"L3 Cache not obtained. Defaulting to 32MiB.")
             return {'l3_size': l3_size_mb}
         except Exception as e:
             logging.warning(f"Failed to parse L3 cache: {e}, using fallback 8 MiB")
@@ -153,7 +204,7 @@ def get_gpu_info():
             nvidia_output = subprocess.check_output(
                 ['nvidia-smi',
                 '--query-gpu=memory.total',
-                '--format=csv,noheader,nounits']).decode('utf-8').strip()
+                '--format=csv,noheader,nounits'], timeout=5).decode('utf-8').strip()
             if nvidia_output:
                 gpu_vram_gb = int(nvidia_output.split('\n')[0]) / 1024
                 has_llm_gpu = True
@@ -181,7 +232,7 @@ def get_gpu_info():
 
                 # If still successful, query for more detailed info
                 rocm_output = subprocess.check_output(
-                    ['rocm-smi', '--showmeminfo', 'vram']).decode('utf-8')
+                    ['rocm-smi', '--showmeminfo', 'vram'], timeout=5).decode('utf-8')
                 if 'VRAM Total Memory' in rocm_output:
                     vram_line = [line for line in rocm_output.split('\n') if 'VRAM Total Memory' in line][0]
                     gpu_vram_gb = int(vram_line.split()[-2]) / (1024**3)
@@ -208,6 +259,7 @@ def get_disk_space():
 
 def get_hardware_stats():
     """Collect system hardware stats (RAM, CPU, GPU)."""
+    os = get_os_info()
     ram = get_ram_info()
     cpu = get_cpu_info()
     cput = cpu_temp_info()
@@ -215,22 +267,22 @@ def get_hardware_stats():
     gpu = get_gpu_info()
     disk = get_disk_space()
 
-    stats = {**ram, **cpu, **cput, **l3c, **gpu, **disk}
+    stats = {**ram, **cpu, **cput, **l3c, **gpu, **disk, **os}
 
     try:
         logging.info("\nDetected Hardware:")
         logging.info(f"  - OS: {os_name}")
+        if os_name.startswith("Linux"):
+            logging.info(f"        {stats['PRETTY_NAME']}")
         logging.info(f"  - RAM: {stats['avail_ram_gb']:.1f}GB available / {stats['total_ram_gb']:.1f}GB total")
         logging.info(f"  - CPU Threads: {stats['cpu_threads']}")
         logging.info(f"  - CPU Temperature: {stats['cpu_temp_c']}°C")
-        try:
-            logging.info(f"  - L3 Cache Size: {stats['l3_size']}MiB")
-            logging.info(f"  - DISK: {stats['free_disk']}GB free / {stats['total_disk']} total / {stats['used_disk']} used")
-        except:
-            logging.info(f"Unable to parse L3 cache")
+        logging.info(f"  - L3 Cache Size: {stats['l3_size']}MiB")
+        logging.info(f"  - DISK: {stats['free_disk']}GB free / {stats['total_disk']} total / {stats['used_disk']} used")
         logging.info(f"  - LLM-capable GPU: {'Yes' if stats['has_llm_gpu'] else 'No'} ({stats['gpu_type']}, {stats['gpu_vram_gb']:.1f}GB VRAM)\n")
 
     except:
+        logging.warning(f"Unable to parse one or more hardware statistics.")
         pass
 
     return stats

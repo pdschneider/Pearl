@@ -8,6 +8,7 @@ from Managers.chat_history import (load_conversations,
                                    start_new_conversation)
 from Utils.load_settings import load_data_path
 from Connections.ollama import ollama_version_test
+from Utils.refresher import refresh_gui
 import sounddevice as sd
 from CTkToolTip import CTkToolTip
 from datetime import datetime, timedelta
@@ -182,7 +183,7 @@ def create_sidebar(globals):
     def reset_to_new_chat():
         """Resets to a new conversation and clears the chat frame."""
         sd.stop()
-        ollama_version_test(globals)
+        refresh_gui(globals)
         start_new_conversation(globals)
 
         # Clear the current chat bubbles
@@ -220,8 +221,8 @@ def create_sidebar(globals):
         sidebar.tkraise()
         logging.debug(f"Current sidebar x position: {sidebar.winfo_x()}")
 
-        # Ensure Ollama is running
-        ollama_version_test(globals)
+        # Health check
+        refresh_gui(globals)
 
         if globals.sidebar_open:
             logging.debug(f"Closing sidebar.")

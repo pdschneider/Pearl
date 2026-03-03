@@ -7,6 +7,9 @@ import Utils.fonts as fonts
 from CTkToolTip import CTkToolTip
 from Utils.save_settings import load_data_path
 from Connections.ollama import uninstall_ollama
+from Connections.docker import uninstall_docker
+from Connections.kokoro import uninstall_kokoro
+from Utils.factory_reset import total_factory_reset
 import subprocess
 import os
 import logging
@@ -45,6 +48,21 @@ def create_advanced_tab(globals, advanced_frame):
     globals.ollama_icon = CTkImage(
         light_image=Image.open(load_data_path("config", "assets/ollama.png")),
         dark_image=Image.open(load_data_path("config", "assets/ollama.png")),
+        size=(40, 40))
+    
+    globals.docker_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/docker.png")),
+        dark_image=Image.open(load_data_path("config", "assets/docker.png")),
+        size=(40, 40))
+
+    globals.kokoro_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/fastapi.png")),
+        dark_image=Image.open(load_data_path("config", "assets/fastapi.png")),
+        size=(40, 40))
+    
+    globals.pearl_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/Pearl.png")),
+        dark_image=Image.open(load_data_path("config", "assets/Pearl.png")),
         size=(40, 40))
 
     ctk.CTkLabel(advanced_frame,
@@ -162,32 +180,84 @@ def create_advanced_tab(globals, advanced_frame):
     open_config_button.pack(side="left", padx=(0, 12))
 
     # Deletion
-
     ctk.CTkLabel(advanced_frame,
-                 text="DANGER ZONE",
-                 font=fonts.title_font,
-                 fg_color="#d62828",
-                 anchor="center").pack(fill="x", pady=20, padx=10)
+                text="DANGER ZONE",
+                font=fonts.title_font,
+                fg_color="#d62828",
+                anchor="center").pack(fill="x", pady=20, padx=10)
 
-    deletion_frame = ctk.CTkFrame(advanced_frame,
-                              bg_color="transparent",
-                              fg_color="transparent")
-    deletion_frame.pack(anchor="w", pady=5)
+    top_deletion_frame = ctk.CTkFrame(advanced_frame,
+                            bg_color="transparent",
+                            fg_color="transparent")
+    top_deletion_frame.pack(anchor="w", pady=5)
 
-    ctk.CTkLabel(deletion_frame,
-                 text=None,
-                 image=globals.ollama_icon).pack(side="left", padx=6, pady=0)
+    ctk.CTkLabel(top_deletion_frame,
+                text=None,
+                image=globals.pearl_icon).pack(side="left", padx=6, pady=0)
 
-    ctk.CTkLabel(deletion_frame,
-                 text="Uninstall Ollama",
-                 font=fonts.heading_font).pack(side="left", padx=(0, 12))
+    ctk.CTkLabel(top_deletion_frame,
+                text="Factory Reset",
+                font=fonts.heading_font).pack(side="left", padx=(0, 12))
     
-    uninstall_ollama_button = ctk.CTkButton(deletion_frame,
-                                text="Uninstall",
+    reset_pearl_button = ctk.CTkButton(top_deletion_frame,
+                                text="Reset",
                                 width=20,
-                                command=lambda: uninstall_ollama(globals))
-    uninstall_ollama_button.pack(side="left", padx=(0, 12))
-    uninstall_ollama_button.configure(fg_color="#d62828", hover_color="#ff3b30")
+                                command=lambda: total_factory_reset(globals))
+    reset_pearl_button.pack(side="left", padx=(0, 12))
+    reset_pearl_button.configure(fg_color="#d62828", hover_color="#ff3b30")
+
+    if globals.ollama_active:
+        ctk.CTkLabel(top_deletion_frame,
+                    text=None,
+                    image=globals.ollama_icon).pack(side="left", padx=6, pady=0)
+
+        ctk.CTkLabel(top_deletion_frame,
+                    text="Uninstall Ollama",
+                    font=fonts.heading_font).pack(side="left", padx=(0, 12))
+        
+        uninstall_ollama_button = ctk.CTkButton(top_deletion_frame,
+                                    text="Uninstall",
+                                    width=20,
+                                    command=lambda: uninstall_ollama(globals))
+        uninstall_ollama_button.pack(side="left", padx=(0, 12))
+        uninstall_ollama_button.configure(fg_color="#d62828", hover_color="#ff3b30")
+
+    bottom_deletion_frame = ctk.CTkFrame(advanced_frame,
+                                bg_color="transparent",
+                                fg_color="transparent")
+    bottom_deletion_frame.pack(anchor="w", pady=5)
+
+    if globals.docker_active:
+        ctk.CTkLabel(bottom_deletion_frame,
+                    text=None,
+                    image=globals.docker_icon).pack(side="left", padx=6, pady=0)
+
+        ctk.CTkLabel(bottom_deletion_frame,
+                    text="Uninstall Docker",
+                    font=fonts.heading_font).pack(side="left", padx=(0, 12))
+        
+        uninstall_docker_button = ctk.CTkButton(bottom_deletion_frame,
+                                    text="Uninstall",
+                                    width=20,
+                                    command=lambda: uninstall_docker(globals))
+        uninstall_docker_button.pack(side="left", padx=(0, 12))
+        uninstall_docker_button.configure(fg_color="#d62828", hover_color="#ff3b30")
+
+    if globals.kokoro_active and globals.os_name.startswith("Linux"):
+        ctk.CTkLabel(bottom_deletion_frame,
+                    text=None,
+                    image=globals.kokoro_icon).pack(side="left", padx=6, pady=0)
+
+        ctk.CTkLabel(bottom_deletion_frame,
+                    text="Uninstall Kokoro",
+                    font=fonts.heading_font).pack(side="left", padx=(0, 12))
+        
+        uninstall_kokoro_button = ctk.CTkButton(bottom_deletion_frame,
+                                    text="Uninstall",
+                                    width=20,
+                                    command=lambda: uninstall_kokoro(globals))
+        uninstall_kokoro_button.pack(side="left", padx=(0, 12))
+        uninstall_kokoro_button.configure(fg_color="#d62828", hover_color="#ff3b30")
 
     # Save Button Frame
     save_button_frame = ctk.CTkFrame(advanced_frame,

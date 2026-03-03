@@ -69,11 +69,13 @@ def create_interface(globals):
     globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
     if not globals.ollama_active:
         globals.chat_page.pack_forget()
+        globals.app_title.configure(text="Welcome to Pearl!")
 
     globals.setup_page = ctk.CTkFrame(globals.main_frame)
     globals.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
     if globals.ollama_active:
         globals.setup_page.pack_forget()
+        globals.app_title.configure(text="Pearl at your service!")
 
     globals.changelog = ctk.CTkFrame(globals.main_frame)
     globals.changelog.pack_forget()
@@ -89,6 +91,7 @@ def create_interface(globals):
         globals.save_chats_var = tk.BooleanVar(value=globals.save_chats)
         globals.sink_var = tk.StringVar(value=globals.default_sink)
         globals.github_check_var = tk.BooleanVar(value=globals.github_check)
+        globals.language_var = tk.StringVar(value=globals.language)
 
         create_chat_tab(globals, globals.chat_page)
         create_settings(globals, globals.settings_overlay)

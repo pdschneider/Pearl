@@ -2,6 +2,28 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.2.3] - 2026-03-03
+
+### Added
+- Added interactive install for Docker for Debian and Ubuntu users
+- Added interactive install for Kokoro for Linux users
+- Added uninstall buttons for Docker (Windows + Linux) and Kokoro (Linux Only)
+- Added more granular checks for Linux-based OS's
+- Pearl now hashes shell files at startup to ensure updated versions are used
+- Logs Python version at startup
+- Added language selection (English only for now)
+
+### Changed
+- Better widget refreshing to prevent locked up GUI on first setup
+- Refined Kokoro voice list to reflect language choice
+- Updated README
+- Updated Dependencies
+
+### Fixed
+- General stability and UI improvements
+- Better logging for chat window GUI errors
+- Initial logging added for correct CPU temp polling on Windows
+
 ## [0.2.2] - 2026-02-28
 
 ### Added

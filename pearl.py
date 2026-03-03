@@ -4,7 +4,7 @@ from Utils.startup import startup
 from Interface.interface import create_interface
 from Utils.startup import startup
 from Utils.save_settings import save_all_settings
-from Utils.factory_reset import factory_reset
+from Utils.factory_reset import factory_reset_config
 import sys
 import logging
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
                     globals.root.destroy()
                 except Exception as e:
                     logging.error(f"Error occurred when closing window: {e}")
-            factory_reset(error)
+            factory_reset_config(error)
     else:  # Not bundled
         create_interface(globals)
         globals.root.protocol("WM_DELETE_WINDOW", on_closing)

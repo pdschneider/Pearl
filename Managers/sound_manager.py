@@ -18,15 +18,23 @@ if os_name.startswith("Linux"):
 
 
 # Kokoro
-def kokoro_test():
+def kokoro_test(globals):
     """Tests Kokoro to set flag for active/inactive."""
+    print_success = True if not globals.kokoro_active else False
+    print_failure = True if globals.kokoro_active else False
+    # Set Kokoro flag to true upon success
     try:
-        socket.create_connection(("localhost", 8880), timeout=1).close()
-        logging.info(f"Kokokro found!")
+        socket.create_connection(("localhost", 8880), timeout=2).close()
+        if print_success:
+            logging.info(f"Kokokro found!")
+        globals.kokoro_active = True
         return True
+    # Set Kokoro flag to false upon error
     except Exception as e:
-        logging.error(
-            f"Kokoro not installed. TTS features will be unavailable.")
+        if print_failure:
+            logging.error(
+                f"Kokoro not installed. TTS features will be unavailable.")
+        globals.kokoro_active = False
         return False
 
 
@@ -34,14 +42,41 @@ def fetch_tts_models(globals):
     """loads possible Kokoro models"""
     if globals.kokoro_active:
         try:
-                logging.debug(f"Attempting to load Kokoro voice list...")
-                voices = requests.get("http://localhost:8880/v1/audio/voices")
-                if voices.status_code == 200:
-                    return voices.json()["voices"]
-                else:
-                    logging.error(
-                        f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
-                    return {}
+            logging.debug(f"Attempting to load Kokoro voice list...")
+            voices = requests.get("http://localhost:8880/v1/audio/voices")
+            if voices.status_code == 200:
+                return voices.json()["voices"]
+            else:
+                logging.error(
+                    f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
+                return {}
+        except Exception as e:
+            logging.error(
+                f"Failed to load voices due to {e}. Returning empty dictionary.")
+            return {}
+
+
+def fetch_current_language_models(globals):
+    """loads Kokoro models of the current language selection."""
+    if globals.kokoro_active:
+        try:
+            english_voices = ["af_", "am_", "bf_", "bm_"]
+            voice_list = fetch_tts_models(globals)
+            remove_list = []
+
+            # Make a list of off-language voices
+            for voice in voice_list:
+                if not any(voice.strip().startswith(lang) for lang in english_voices):
+                    remove_list.append(voice)
+
+            # Remove out of language voices
+            for removal in remove_list:
+                voice_list.remove(removal)
+
+            # Remove prefixes
+            ...
+
+            return voice_list
         except Exception as e:
             logging.error(
                 f"Failed to load voices due to {e}. Returning empty dictionary.")
@@ -61,9 +96,19 @@ def kokoro_speak(globals):
                 "input": globals.assistant_message,
                 "voice": globals.active_voice,
                 "response_format": "wav"})
+
+                # Log API error 500 (removed folder)
+                if response.status_code == 500:
+                    logging.error(f"TTS API error: {response.status_code}")
+                    logging.error(f"Error Details: {response.text}")
+                    return
+
+                # Exit early on error
                 if response.status_code != 200:
                     logging.error(f"TTS API error: {response.status_code}")
-                    return  # Early exit on error
+                    return
+
+                # Play TTS if status code is 200
                 logging.debug(f"status code: {response.status_code}. Playing TTS.")
                 audio_data = BytesIO(response.content)
                 data, samplerate = sf.read(audio_data, dtype='float32')

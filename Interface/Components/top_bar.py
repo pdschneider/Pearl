@@ -5,7 +5,7 @@ from CTkToolTip import CTkToolTip
 from Interface.Components.sidebar import create_sidebar
 from Managers.chat_history import start_new_conversation
 from Utils.load_settings import load_data_path
-from Connections.ollama import ollama_version_test
+from Utils.refresher import refresh_gui
 import sounddevice as sd
 from PIL import Image
 import logging
@@ -27,11 +27,10 @@ def create_top_bar(globals):
     def toggle_settings():
         """Shows and hides the settings window when the button is clicked."""
         # Ensure Ollama is active
-        ollama_version_test(globals)
+        refresh_gui(globals)
 
         try:
             if globals.setup_page.winfo_ismapped() or globals.changelog.winfo_ismapped():
-                globals.greeting = "Welcome!"
                 return
         except:
             pass
@@ -41,19 +40,21 @@ def create_top_bar(globals):
         else:
             globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
             globals.chat_page.tkraise()
+            globals.app_title.configure(text="Pearl at your service!")
         if globals.settings_overlay.winfo_ismapped():
             globals.settings_overlay.pack_forget()
+            globals.app_title.configure(text="Pearl at your service!")
         else:
             globals.settings_overlay.pack(fill="both", expand=True, padx=10, pady=0)
             globals.settings_overlay.tkraise()
 
     def reset_to_new_chat():
         """Resets to a new conversation and clears the chat frame."""
-        # Stop sound, trigger flags, test for Ollama, and raise chat page
+        # Stop sound, trigger flags, health check, and raise chat page
         sd.stop()
         start_new_conversation(globals)
-        ollama_version_test(globals)
-        globals.chat_page.tkraise()
+        refresh_gui(globals)
+        globals.app_title.configure(text="Pearl at your service!")
 
         # Clear the current chat bubbles
         for widget in globals.ui_elements["chat_frame"].winfo_children():
@@ -137,7 +138,7 @@ def create_top_bar(globals):
     # Title (center)
     globals.app_title = ctk.CTkLabel(
         top_bar,
-        text=globals.greeting,
+        text="Pearl at your service!",
         font=ctk.CTkFont(size=20, weight="bold"))
     globals.app_title.pack(side="left", expand=True)
 

@@ -31,8 +31,8 @@ def create_chat_tab(globals, chat_tab):
         size=(35, 35))
 
     globals.stop_icon = CTkImage(
-        light_image=Image.open(load_data_path("config", "assets/stop-2.png")),
-        dark_image=Image.open(load_data_path("config", "assets/stop-2.png")),
+        light_image=Image.open(load_data_path("config", "assets/stop-3.png")),
+        dark_image=Image.open(load_data_path("config", "assets/stop-3.png")),
         size=(35, 35))
 
     globals.attach_icon = CTkImage(
@@ -51,6 +51,7 @@ def create_chat_tab(globals, chat_tab):
     chat_frame = ctk.CTkScrollableFrame(chat_tab)
     chat_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+    # Entry Box
     entry_frame = ctk.CTkFrame(chat_tab, fg_color="transparent")
     entry_frame.pack(fill="both", padx=10, pady=5)
 
@@ -63,7 +64,7 @@ def create_chat_tab(globals, chat_tab):
     globals.entry_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
     globals.entry_box.focus_set()
 
-    # Send button
+    # Send Button
     globals.send_button = ctk.CTkButton(entry_frame,
                                 image=globals.send_icon,
                                 text=None,
@@ -80,6 +81,7 @@ def create_chat_tab(globals, chat_tab):
                padx=10,
                pady=5)
 
+    # File Button
     file_button = ctk.CTkButton(entry_frame,
                                 image=globals.attach_icon,
                                 text=None,
@@ -101,35 +103,47 @@ def create_chat_tab(globals, chat_tab):
     # Chat Functions
     def add_bubble(role, text="", model=None, attachment=None):
         """Appends messages to the chat box."""
-        bubble_frame = ctk.CTkFrame(chat_frame, corner_radius=6)
+        try:
+            bubble_frame = ctk.CTkFrame(chat_frame, corner_radius=6)
 
-        if role == "user":
-            bubble_frame.configure(
-                fg_color=globals.theme_dict["CTk"]["fg_color"],
-                corner_radius=6)
-        else:
-            bubble_frame.configure(
-                fg_color=globals.theme_dict["CTk"]["fg_color"],
-                corner_radius=6)
-            name_label = ctk.CTkLabel(chat_frame,
-                                      text="Pearl",
-                                      font=fonts.heading_font)
-            name_label.pack(side="top",
-                            anchor="w",
-                            padx=20,
-                            pady=0)
-        bubble_frame.pack(side="top",
-                          anchor="e" if role == "user" else "w", padx=20, pady=0)
+            # Configure and pack chat bubble frame
+            if role == "user":
+                bubble_frame.configure(
+                    fg_color=globals.theme_dict["CTk"]["fg_color"],
+                    bg_color=globals.theme_dict["CTk"]["fg_color"],
+                    border_color=globals.theme_dict["CTk"]["fg_color"],
+                    corner_radius=6)
+            else:
+                bubble_frame.configure(
+                    fg_color=globals.theme_dict["CTk"]["fg_color"],
+                    bg_color=globals.theme_dict["CTk"]["fg_color"],
+                    border_color=globals.theme_dict["CTk"]["fg_color"],
+                    corner_radius=6)
+                name_label = ctk.CTkLabel(chat_frame,
+                                        text="Pearl",
+                                        font=fonts.heading_font)
+                name_label.pack(side="top",
+                                anchor="w",
+                                padx=20,
+                                pady=0)
+            bubble_frame.pack(side="top",
+                            anchor="e" if role == "user" else "w", padx=20, pady=0)
+        except Exception as e:
+            logging.error(f"Could not create chat bubble frame due to: {e}")
 
-        label = ctk.CTkLabel(bubble_frame,
-                             text=text,
-                             wraplength=600,
-                             font=fonts.message_font,
-                             justify="right" if role == "user" else "left",
-                             padx=15,
-                             pady=10,
-                             anchor="w" if role != "user" else "e")
-        label.pack(fill="both", expand=True)
+        # Add text to message box
+        try:
+            label = ctk.CTkLabel(bubble_frame,
+                                text=text,
+                                wraplength=600,
+                                font=fonts.message_font,
+                                justify="right" if role == "user" else "left",
+                                padx=15,
+                                pady=10,
+                                anchor="w" if role != "user" else "e")
+            label.pack(fill="both", expand=True)
+        except Exception as e:
+            logging.error(f"Could not add text to chat bubble frame due to: {e}")
 
         # Pack widgets underneath messages
         widgets_row = ButtonWidgets(parent=bubble_frame,
@@ -140,12 +154,16 @@ def create_chat_tab(globals, chat_tab):
                                     attachment=globals.file_attachment)
         widgets_row.pack(fill="x")
         widgets_row.hide_buttons()
+        globals.widget_rows.append(widgets_row)
 
+        # Widget events
         def on_enter(event):
+            """Show widgets when the mouse hovers over a message."""
             widgets_row.show_buttons()
 
         def on_leave(event):
-            widgets_row.hide_buttons()
+            """Hide widgets when the mouse leaves a message."""
+            hide_all_buttons()
 
         def on_right_click(event, lbl=label):
             current_label[0] = lbl
@@ -153,10 +171,14 @@ def create_chat_tab(globals, chat_tab):
 
         # Shows the widget buttons on mouse hover
         label.bind("<Enter>", on_enter)
-
         widgets_row.bind("<Enter>", on_enter)
-
         bubble_frame.bind("<Enter>", on_enter)
+
+        # Hides widget buttons when mouse leaves
+        label.bind("<Leave>", on_leave)
+        bubble_frame.bind("<Leave>", on_leave)
+        entry_frame.bind("<Enter>", on_leave)
+        chat_frame.bind("<Leave>", on_leave)
 
         # Shows menu on right click
         label.bind("<Button-3>", on_right_click)
@@ -193,6 +215,11 @@ def create_chat_tab(globals, chat_tab):
 
     globals.entry_box.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
     globals.entry_box.bind("<Shift-Return>", lambda e: upon_shift_enter())
+
+    def hide_all_buttons():
+        """Hide all widget buttons."""
+        for row in globals.widget_rows:
+            row.hide_buttons()
 
     ui_elements = {
         "entrybox": globals.entry_box,

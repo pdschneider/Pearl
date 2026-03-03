@@ -4,7 +4,7 @@ from customtkinter import CTkImage
 from PIL import Image
 from CTkToolTip import CTkToolTip
 from Utils.save_settings import save_all_settings
-from Managers.sound_manager import fetch_tts_models
+from Managers.sound_manager import fetch_tts_models, fetch_current_language_models
 from Managers.sound_manager import get_sink_menu
 from Utils.load_settings import load_data_path
 import Utils.fonts as fonts
@@ -46,12 +46,18 @@ def create_sound_tab(globals, sound_tab):
                                  fg_color="transparent")
     options_frame.pack(fill="both", padx=10, pady=10)
 
-    ctk.CTkLabel(options_frame,
+    # Enable TTS Frame
+    enable_tts_frame = ctk.CTkFrame(options_frame,
+                                 bg_color="transparent",
+                                 fg_color="transparent")
+    enable_tts_frame.pack(fill="both", padx=10, pady=10)
+
+    ctk.CTkLabel(enable_tts_frame,
                  text=None,
                  image=globals.sound_high_icon).pack(
                      side="left", padx=6, pady=0)
 
-    enable_tts_button = ctk.CTkLabel(options_frame,
+    enable_tts_button = ctk.CTkLabel(enable_tts_frame,
                                      text="Enable TTS",
                                      font=fonts.heading_font)
     enable_tts_button.pack(side="left", padx=5)
@@ -62,22 +68,21 @@ def create_sound_tab(globals, sound_tab):
                padx=10,
                pady=5)
 
-    ctk.CTkCheckBox(options_frame,
+    ctk.CTkCheckBox(enable_tts_frame,
                     variable=globals.tts_var,
                     text=None,
                     onvalue=True,
                     offvalue=False).pack(side="left", padx=5)
 
     # Sound Frame
-    sound_frame = ctk.CTkFrame(sound_tab,
+    sound_frame = ctk.CTkFrame(options_frame,
                                bg_color="transparent",
                                fg_color="transparent")
     sound_frame.pack(fill="both", padx=10, pady=10)
 
     # Dynamically build the source list
-    source_options = ["Default"]
     if globals.kokoro_active:
-        source_options.append("Kokoro")
+        globals.source_options.append("Kokoro")
 
     ctk.CTkLabel(sound_frame,
                  text=None,
@@ -96,39 +101,28 @@ def create_sound_tab(globals, sound_tab):
 
     ctk.CTkComboBox(sound_frame,
                     variable=globals.tts_source_var,
-                    values=source_options,
+                    values=globals.source_options,
                     width=150,
                     state="readonly").pack(side="left", padx=5)
 
     tts_source_combobox = ctk.CTkComboBox(sound_frame,
                                           variable=globals.active_voice_var,
-                                          values=fetch_tts_models(globals),
+                                          values=fetch_current_language_models(globals),
                                           width=150,
                                           state="readonly")
-
-    def update_voice_combobox(*_):
-        """Dynamically updates the voice selection box"""
-        if globals.kokoro_active and globals.tts_source_var.get() == "Kokoro":
-            tts_source_combobox.pack(side="left", padx=5)
-        else:
-            tts_source_combobox.pack_forget()
-    update_voice_combobox()
-
-    globals.tts_source_var.trace_add("write", update_voice_combobox)
+    tts_source_combobox.pack(side="left", padx=5)
 
     # Speakers Frame
-    speakers_frame = ctk.CTkFrame(sound_tab,
-                                  bg_color="transparent",
-                                  fg_color="transparent")
-    speakers_frame.pack(fill="both", padx=10, pady=10)
+    if globals.os_name.startswith("Linux"):
+        globals.speakers_frame = ctk.CTkFrame(options_frame,
+                                    bg_color="transparent",
+                                    fg_color="transparent")
+        globals.speakers_frame.pack(fill="both", padx=10, pady=10)
 
-    if globals.kokoro_active and globals.os_name.startswith("Linux"):
-        ctk.CTkLabel(speakers_frame,
+        ctk.CTkLabel(globals.speakers_frame,
                     text=None,
                     image=globals.speaker_icon).pack(side="left", padx=6, pady=0)
 
-    # Default Speakers
-    if globals.os_name.startswith("Linux"):
         globals.sink_list = get_sink_menu()
         sink_labels = [entry["label"] for entry in globals.sink_list]
         label_to_pulse = {entry["label"]: entry["pulse_name"] for entry in globals.sink_list}
@@ -146,22 +140,47 @@ def create_sound_tab(globals, sound_tab):
         initial_label = next((label for label, pulse in label_to_pulse.items() if pulse == initial_pulse), "Default")
         label_var.set(initial_label)
 
-        sound_output_label = ctk.CTkLabel(speakers_frame,
-                                          text="Sound Output",
-                                          font=fonts.heading_font)
+        sound_output_label = ctk.CTkLabel(globals.speakers_frame,
+                                            text="Sound Output",
+                                            font=fonts.heading_font)
         sound_output_label.pack(side="left", padx=5)
         CTkToolTip(sound_output_label,
-                   message="Choose the speakers\n tts plays from",
-                   delay=0.6,
-                   follow=True,
-                   padx=10,
-                   pady=5)
+                    message="Choose the speakers\n tts plays from\n(only works with Kokoro)",
+                    delay=0.6,
+                    follow=True,
+                    padx=10,
+                    pady=5)
 
-        ctk.CTkComboBox(speakers_frame,
+        ctk.CTkComboBox(globals.speakers_frame,
                         variable=label_var,
                         values=sink_labels,
                         width=250,
                         state="readonly").pack(side="left", padx=5)
+
+        globals.speakers_frame.pack(fill="both", padx=10, pady=10)
+
+        def update_speakers_frame(*_):
+            """Dynamically update the speakers frame to only work with Kokoro."""
+            if globals.kokoro_active and globals.tts_source_var.get() == "Kokoro":
+                globals.speakers_frame.tkraise()
+            else:
+                globals.speakers_frame.lower()
+
+        update_speakers_frame()
+
+        globals.tts_source_var.trace_add("write", update_speakers_frame)
+
+    # Dynamically update voice selection box
+    def update_voice_combobox(*_):
+        """Dynamically updates the voice selection box."""
+        if globals.kokoro_active and globals.tts_source_var.get() == "Kokoro":
+            tts_source_combobox.pack(side="left", padx=5)
+        else:
+            tts_source_combobox.pack_forget()
+
+    update_voice_combobox()
+
+    globals.tts_source_var.trace_add("write", update_voice_combobox)
 
     # Save Button Frame
     save_button_frame = ctk.CTkFrame(sound_tab,

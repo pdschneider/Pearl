@@ -4,6 +4,9 @@ import customtkinter as ctk
 from tktooltip import ToolTip
 import Utils.fonts as fonts
 from Connections.ollama import ollama_installation, ollama_test
+from Connections.docker import docker_installation
+from Connections.kokoro import install_kokoro
+from Utils.refresher import refresh_gui
 
 
 def create_setup_tab(globals, setup_tab):
@@ -14,7 +17,7 @@ def create_setup_tab(globals, setup_tab):
                     globals: Global variables
                     setup_tab: The main frame of the setup window
     """
-    setup_frame = ctk.CTkFrame(setup_tab)
+    setup_frame = ctk.CTkScrollableFrame(setup_tab)
     setup_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Ollama Frame
@@ -22,9 +25,9 @@ def create_setup_tab(globals, setup_tab):
     ollama_frame.pack(fill="x", expand=False, padx=10, pady=10)
 
     ctk.CTkLabel(ollama_frame,
-                 text="Welcome to Pearl!",
+                 text="Install Ollama",
                  font=fonts.title_font,
-                 anchor="center").pack(fill="x", pady=20, padx=10)
+                 anchor="center").pack(fill="x", pady=10, padx=10)
 
     inner_width = 900
     ollama_text_container = ctk.CTkFrame(
@@ -33,6 +36,7 @@ def create_setup_tab(globals, setup_tab):
         fg_color="transparent")
     ollama_text_container.pack(anchor="center", pady=5)
 
+    # Ollama installation instructions
     ctk.CTkLabel(ollama_text_container,
                  justify="left",
                  anchor="w",
@@ -40,8 +44,7 @@ def create_setup_tab(globals, setup_tab):
                  text="""
                  Thank you for installing Pearl!\n
                  Pearl uses Ollama under the hood to generate text. Clicking the Interactive Install button below
-                 will open an interactive terminal where you can install Ollama and your first model after entering
-                 your root password (simple).
+                 will open an interactive terminal where you can install Ollama and your first model (simple).
 
                  If preferred, you can also download Ollama from the Ollama website manually along with a starting model
                  using the links provided. The recommended starting model is llama3.2:latest (same process, more steps).
@@ -51,19 +54,19 @@ def create_setup_tab(globals, setup_tab):
     ollama_buttons_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
     ollama_buttons_frame.pack(padx=10, pady=10, side="top")
 
-    ollama_download_button = ctk.CTkButton(
+    globals.ollama_interactive_download_button = ctk.CTkButton(
         ollama_buttons_frame,
         text="Interactive Install",
         state="normal",
         command=lambda: ollama_installation(globals))
-    ollama_download_button.grid(row=0, column=0, padx=5, sticky="ew")
+    globals.ollama_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
 
-    ollama_web_download_button = ctk.CTkButton(
+    globals.ollama_web_download_button = ctk.CTkButton(
         ollama_buttons_frame,
         text="Web Download",
         state="normal",
         command=lambda: webbrowser.open("https://ollama.com/download"))
-    ollama_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
+    globals.ollama_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
 
     models_download_button = ctk.CTkButton(
         ollama_buttons_frame,
@@ -83,9 +86,63 @@ def create_setup_tab(globals, setup_tab):
         padx=10,
         pady=5)
 
+    # Docker Setup
+    docker_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
+    docker_frame.pack(fill="x", expand=False, padx=10, pady=10)
+
+    ctk.CTkLabel(docker_frame,
+                 text="Install Docker",
+                 font=fonts.title_font,
+                 anchor="center").pack(fill="x", pady=10, padx=10)
+
+    docker_text_container = ctk.CTkFrame(
+        docker_frame,
+        width=inner_width,
+        fg_color="transparent")
+    docker_text_container.pack(anchor="center", pady=5)
+
+    ctk.CTkLabel(docker_text_container,
+                justify="left",
+                anchor="w",
+                text="""
+                For enhanced Text to Speech, you may also install Kokoro (this is optional).
+
+                Docker must first be installed (a dependency of Kokoro's). Docker is a containerization engine
+                designed to isolate processes and make them more easily manageable and secure. An interactive install
+                is available for Linux users, otherwise you can download Docker from the official website.
+                """).pack(
+                    fill="both", expand=True, padx=10, pady=10)
+
+    # Docker Buttons
+    docker_buttons_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
+    docker_buttons_frame.pack(padx=10, pady=10)
+
+    globals.docker_interactive_download_button = ctk.CTkButton(
+        docker_buttons_frame,
+        text="Interactive Install",
+        state="normal",
+        command=lambda: docker_installation(globals))
+    globals.docker_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
+
+    # Remove Interactive Install button if not on Linux
+    if not globals.os_name.startswith("Linux"):
+        globals.docker_interactive_download_button.grid_remove()
+
+    globals.docker_web_download_button = ctk.CTkButton(
+        docker_buttons_frame,
+        text="Web Download",
+        command=lambda: webbrowser.open(
+            "https://www.docker.com/get-started/"))
+    globals.docker_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
+
     # Kokoro Frame
     kokoro_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
     kokoro_frame.pack(fill="x", expand=False, padx=10, pady=10)
+
+    ctk.CTkLabel(kokoro_frame,
+                 text="Install Kokoro",
+                 font=fonts.title_font,
+                 anchor="center").pack(fill="x", pady=10, padx=10)
 
     kokoro_text_container = ctk.CTkFrame(
         kokoro_frame,
@@ -97,10 +154,9 @@ def create_setup_tab(globals, setup_tab):
                  justify="left",
                  anchor="w",
                  text="""
-                 For enhanced Text to Speech, you may also install Kokoro (this is optional).
-
-                 First, click the Docker button to install Docker (a dependency of Kokoro), then
-                 head to https://github.com/remsky/Kokoro-FastAPI and follow the instructions for your OS.
+                 After Docker is installed, you can follow the interactive install for Kokoro (Linux Only)
+                 or follow the instructions on the Kokoro GitHub page for your OS. A reboot is required
+                 between installing Docker and installing Kokoro.
                  """).pack(
                      fill="both", expand=True, padx=10, pady=10)
 
@@ -108,22 +164,26 @@ def create_setup_tab(globals, setup_tab):
     kokoro_buttons_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
     kokoro_buttons_frame.pack(padx=10, pady=10)
 
-    kokoro_download_button = ctk.CTkButton(
+    globals.kokoro_interactive_download_button = ctk.CTkButton(
         kokoro_buttons_frame,
-        text="Download Kokoro",
+        text="Install Kokoro",
+        state="normal",
+        command=lambda: install_kokoro(globals))
+    globals.kokoro_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
+
+    # Remove Kokoro Interactive Install button on Windows
+    if not globals.os_name.startswith("Linux"):
+        globals.kokoro_interactive_download_button.grid_remove()
+
+    globals.kokoro_web_download_button = ctk.CTkButton(
+        kokoro_buttons_frame,
+        text="Web Download",
         state="normal",
         command=lambda: webbrowser.open(
             "https://github.com/remsky/Kokoro-FastAPI"))
-    kokoro_download_button.grid(row=0, column=0, padx=5, sticky="ew")
+    globals.kokoro_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
 
-    docker_download_button = ctk.CTkButton(
-        kokoro_buttons_frame,
-        text="Download Docker",
-        command=lambda: webbrowser.open(
-            "https://www.docker.com/get-started/"))
-    docker_download_button.grid(row=0, column=1, padx=5, sticky="ew")
-
-    # Buttons Frameollama_web_download_button
+    # Buttons Frame
     continue_buttons_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
     continue_buttons_frame.pack(fill="x", padx=10, pady=10)
 
@@ -135,11 +195,11 @@ def create_setup_tab(globals, setup_tab):
         """Refreshes button states and adds/removes tooltips"""
         if globals.ollama_active:
             # Disable download button and offer tooltip when Ollama is installed
-            ollama_download_button.configure(state="disabled")
-            ollama_web_download_button.configure(state="disabled")
+            globals.ollama_interactive_download_button.configure(state="disabled")
+            globals.ollama_web_download_button.configure(state="disabled")
 
             globals.ollama_web_download_tooltip = ToolTip(
-                ollama_web_download_button,
+                globals.ollama_web_download_button,
                 msg="Ollama already installed!",
                 delay=0.3,
                 follow=True,
@@ -149,7 +209,7 @@ def create_setup_tab(globals, setup_tab):
                 pady=5)
 
             globals.ollama_interactive_download_tooltip = ToolTip(
-                ollama_download_button,
+                globals.ollama_interactive_download_button,
                 msg="Ollama already installed!",
                 delay=0.3,
                 follow=True,
@@ -159,10 +219,11 @@ def create_setup_tab(globals, setup_tab):
                 pady=5)
         else:
             # Enable ollama download buttons and offer tooltips when Ollama is not installed
-            ollama_download_button.configure(state="normal")
-            ollama_web_download_button.configure(state="normal")
+            if globals.os_name.startswith("Linux"):
+                globals.ollama_interactive_download_button.configure(state="normal")
+            globals.ollama_web_download_button.configure(state="normal")
             globals.ollama_web_download_tooltip = ToolTip(
-                ollama_web_download_button,
+                globals.ollama_web_download_button,
                 msg="https://ollama.com/download",
                 delay=0.3,
                 follow=True,
@@ -171,22 +232,23 @@ def create_setup_tab(globals, setup_tab):
                 padx=10,
                 pady=5
             )
-            globals.ollama_interactive_download_tooltip = ToolTip(
-                ollama_download_button,
-                msg="Opens a new Terminal Window",
-                delay=0.3,
-                follow=True,
-                fg="white",
-                bg="gray20",
-                padx=10,
-                pady=5
-            )
+            if globals.os_name.startswith("Linux"):
+                globals.ollama_interactive_download_tooltip = ToolTip(
+                    globals.ollama_interactive_download_button,
+                    msg="Opens a new Terminal Window",
+                    delay=0.3,
+                    follow=True,
+                    fg="white",
+                    bg="gray20",
+                    padx=10,
+                    pady=5
+                )
 
         # Offer tooltip for kokoro indicating installation is not necessary
         if globals.kokoro_active:
-            kokoro_download_button.configure(state="disabled")
+            globals.kokoro_web_download_button.configure(state="disabled")
             kokoro_download_tooltip = ToolTip(
-                kokoro_download_button,
+                globals.kokoro_web_download_button,
                 msg="Kokoro already installed!",
                 delay=0.3,
                 follow=True,
@@ -195,9 +257,9 @@ def create_setup_tab(globals, setup_tab):
                 padx=10,
                 pady=5)
         else:
-            kokoro_download_button.configure(state="normal")
+            globals.kokoro_web_download_button.configure(state="normal")
             globals.kokoro_download_tooltip = ToolTip(
-                kokoro_download_button,
+                globals.kokoro_web_download_button,
                 msg="https://github.com/remsky/Kokoro-FastAPI",
                 delay=0.3,
                 follow=True,
@@ -207,9 +269,11 @@ def create_setup_tab(globals, setup_tab):
                 pady=5)
 
         if globals.docker_version:
-            docker_download_button.configure(state="disabled")
-            globals.docker_download_tooltip = ToolTip(
-                docker_download_button,
+            globals.docker_web_download_button.configure(state="disabled")
+            if globals.os_name.startswith("Linux"):
+                globals.docker_interactive_download_button.configure(state="disabled")
+            globals.docker_web_download_tooltip = ToolTip(
+                globals.docker_web_download_button,
                 msg="Docker already installed!",
                 delay=0.3,
                 follow=True,
@@ -217,10 +281,22 @@ def create_setup_tab(globals, setup_tab):
                 bg="gray20",
                 padx=10,
                 pady=5)
+            if globals.os_name.startswith("Linux"):
+                globals.docker_interactive_download_tooltip = ToolTip(
+                    globals.docker_interactive_download_button,
+                    msg="Docker already installed!",
+                    delay=0.3,
+                    follow=True,
+                    fg="white",
+                    bg="gray20",
+                    padx=10,
+                    pady=5)
         else:
-            docker_download_button.configure(state="normal")
-            globals.docker_download_tooltip = ToolTip(
-                docker_download_button,
+            globals.docker_web_download_button.configure(state="normal")
+            if globals.os_name.startswith("Linux"):
+                globals.docker_interactive_download_button.configure(state="normal")
+            globals.docker_web_download_tooltip = ToolTip(
+                globals.docker_web_download_button,
                 msg="https://www.docker.com/get-started/",
                 delay=0.3,
                 follow=True,
@@ -228,6 +304,16 @@ def create_setup_tab(globals, setup_tab):
                 bg="gray20",
                 padx=10,
                 pady=5)
+            if globals.os_name.startswith("Linux"):
+                globals.docker_interactive_download_tooltip = ToolTip(
+                    globals.docker_interactive_download_button,
+                    msg="Opens a new Terminal Window",
+                    delay=0.3,
+                    follow=True,
+                    fg="white",
+                    bg="gray20",
+                    padx=10,
+                    pady=5)
 
     refresh_button_states()
 
@@ -241,7 +327,8 @@ def create_setup_tab(globals, setup_tab):
     def continue_to_chat(globals):
         """Forgets setup and settings pages to return
         the user to a clean chat page"""
-        ollama_test(globals)
+        globals.app_title.configure(text="Pearl at your service!")
+        refresh_gui(globals)
         globals.settings_overlay.pack_forget()
         globals.setup_page.pack_forget()
         globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)

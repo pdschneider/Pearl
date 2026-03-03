@@ -7,7 +7,7 @@ customtkinter==5.2.2
 darkdetect==0.8.0
 idna==3.11
 Markdown==3.10.2
-Nuitka==4.0.1
+Nuitka==4.0.2
 numpy==2.4.2
 packaging==26.0
 pep8==1.7.1
@@ -17,7 +17,7 @@ pulsectl==24.12.0
 pycparser==3.0
 pygame==2.6.1
 pyinstaller==6.16.0
-pyinstaller-hooks-contrib==2026.1
+pyinstaller-hooks-contrib==2026.2
 pyttsx3==2.99
 requests==2.32.5
 setuptools==82.0.0
@@ -25,4 +25,5 @@ sounddevice==0.5.5
 soundfile==0.13.1
 tkinter-tooltip==3.1.2
 urllib3==2.6.3
+WMI==1.4.9
 zstandard==0.25.0

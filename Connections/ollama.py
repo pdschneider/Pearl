@@ -5,6 +5,7 @@ import json
 import logging
 import socket
 import subprocess
+import threading
 from datetime import datetime
 from Utils.hardware import get_disk_space, get_ram_info
 from Utils.toast import show_toast
@@ -16,10 +17,10 @@ def ollama_version_test(globals):
     """Tests Ollama only to see if it is installed."""
     try:
         # Set if Ollama version has already been displayed
-        print_version = True if not globals.ollama_active else False
+        print_version = True if not globals.ollama_version else False
 
         # Run ollama --version in terminal
-        version_test = subprocess.run("ollama --version", shell=True, capture_output=True, timeout=4)
+        version_test = subprocess.run("ollama --version", shell=True, capture_output=True, timeout=2)
         if version_test.returncode == 0:
             globals.ollama_version = version_test.stdout.decode('utf-8').strip().split()[3]
             if print_version:
@@ -67,7 +68,7 @@ def pull_model(globals):
     """Downloads the default model if not present."""
     test = ollama_test(globals)
 
-    # If Ollama is not installed, offer to install it.
+    # If Ollama is not installed, offer to install it
     if not test:
         logging.warning(f"Ollama must be installed before downloading a model.")
         download = messagebox.askyesno(
@@ -269,7 +270,7 @@ def uninstall_ollama(globals):
         ])
     elif globals.os_name.startswith("Windows"):
         logging.debug(f"Opening Windows uninstall program window...")
-        subprocess.run("Start-Process appwiz.cpl", shell=True)
+        subprocess.run("start appwiz.cpl", shell=True)
     else:
         logging.warning(f"Uninstall only supported on Linux and Windows.")
         show_toast(globals, message="Uninstall only supported on Linux and Windows.", _type="error")
@@ -277,6 +278,10 @@ def uninstall_ollama(globals):
 
 def get_all_models(globals):
     """Fetch list of available model names from Ollama API"""
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
     try:
         # Test that Ollama is installed first
         test = ollama_version_test(globals)
@@ -297,6 +302,10 @@ def get_all_models(globals):
 
 def get_loaded_models(globals):
     """Fetch list of currently loaded models from Ollama API"""
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
     try:
         # Test that Ollama is installed first
         test = ollama_version_test(globals)
@@ -316,31 +325,44 @@ def get_loaded_models(globals):
 
 
 def load_model(globals, model):
-    """Load a model into memory with a 30-minute keep-alive"""
-    payload = {"model": model,
+    """Load a model into memory with a 20-second timeout."""
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
+    def _load_in_thread(globals, model):
+        """Loads the model in a thread to speed up start time & GUI."""
+        payload = {"model": model,
                "prompt": "",
                "stream": False,
                "keep_alive": "30m"}
-    try:
-        response = requests.post(
-            "http://localhost:11434/api/generate", json=payload)
-        logging.debug(
-            f"Sent request to {model}. Response code: {response.status_code}")
-        if response.status_code == 200:
-            start_time = time.time()
-            while time.time() - start_time < 30:
-                if model in get_loaded_models(globals):
-                    return True
-                time.sleep(1)
-            logging.info(f"Timeout loading {model}")
+        try:
+            response = requests.post(
+                "http://localhost:11434/api/generate", json=payload, timeout=4)
+            logging.debug(
+                f"Sent request to {model}. Response code: {response.status_code}")
+            if response.status_code == 200:
+                start_time = time.time()
+                while time.time() - start_time < 20:
+                    if model in get_loaded_models(globals):
+                        logging.info(f"{model} loaded!")
+                        return True
+                    time.sleep(1)
+                logging.info(f"Timeout loading {model}")
+                return False
+        except Exception as e:
+            logging.error(f"Failed to load {model}: {e}")
             return False
-    except Exception as e:
-        logging.error(f"Failed to load {model}: {e}")
-        return False
+    
+    threading.Thread(target=lambda: _load_in_thread(globals, model), daemon=True).start()
 
 
 def unload_model(model):
     """Unload a model from memory"""
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
     payload = {"model": model, "prompt": "", "keep_alive": 0, "stream": False}
     try:
         response = requests.post(
@@ -366,6 +388,10 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     messages = list of dicts:
     [{"role": "user"|"assistant"|"system", "content": "..."}, ...]
     """
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
     if globals.active_prompt:
         messages_and_prompt = [
             {"role": "system", "content": globals.system_prompt}] + messages
@@ -446,6 +472,11 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
 
 
 def context_query(model, message):
+    """Query the context model for changes in the conversation."""
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
     try:
         response = requests.post("http://localhost:11434/api/generate", json={
             "model": model,
@@ -461,6 +492,10 @@ def context_query(model, message):
 
 def get_model_info(model):
     """Gets detailed model information for a specific model."""
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
     empty_dict = {
         "architecture": "",
         "parameter_count": 0,
@@ -519,6 +554,10 @@ def get_model_info(model):
 
 def _extract_system(modelfile):
     """Extracts the system prompt from model details"""
+    # Gracefully exit if Ollama is not installed
+    if not globals.ollama_active:
+        return
+
     lines = modelfile.splitlines()
     system_lines = []
     in_system = False

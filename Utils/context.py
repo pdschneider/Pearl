@@ -59,5 +59,5 @@ def detect_context(globals, user_text):
                 logging.info(f"Context switched to {best_prompt}")
         return best_prompt, prompts_dict.get(best_prompt, {})
 
-    logging.info("No context detected.")
+    logging.debug("No context detected.")
     return None, None

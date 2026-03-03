@@ -12,7 +12,7 @@ import logging
 import shutil
 import sys
 
-def load_data_path(direct=None, filename=None):
+def load_data_path(direct=None, filename=None, default=False):
     """
     Get the path to a writable data folder or a specific file,
     copying bundled files if needed.
@@ -27,6 +27,8 @@ def load_data_path(direct=None, filename=None):
                      "context.json",
                      "prompts.json",
                      "ollama_install.sh",
+                     "docker_debian.sh",
+                     "docker_ubuntu.sh",
                      "assets/Pearl.png",
                      "assets/Pearl_Sparkle.png",
                      "assets/attach-1.png",
@@ -67,6 +69,12 @@ def load_data_path(direct=None, filename=None):
                      "assets/speaker.png",
                      "assets/theme.png",
                      "assets/preferences.png",
+                     "assets/docker.png",
+                     "assets/fastapi.png",
+                     "assets/en-language.png",
+                     "assets/es-language.png",
+                     "assets/fr-language.png",
+                     "assets/ru-language.png",
                      "themes/cosmic_sky.json",
                      "themes/pastel_green.json",
                      "themes/blazing_red.json",
@@ -172,7 +180,10 @@ def load_data_path(direct=None, filename=None):
             except Exception as e:
                 logging.error(f"Error copying {default_file}: {e}")
 
-    return os.path.normpath(os.path.join(data_dir, filename)) if filename else data_dir
+    if not default:
+        return os.path.normpath(os.path.join(data_dir, filename)) if filename else data_dir
+    else:
+        return os.path.normpath(os.path.join(bundled_dir, filename)) if filename else bundled_dir
 
 
 def load_settings():
@@ -207,10 +218,30 @@ def load_context():
 
 
 def load_ollama_sh():
-    """Loads the ollama install bash script for Linux users."""
+    """Loads the Ollama install bash script for Linux users."""
     try:
         with open(load_data_path("config", "ollama_install.sh")) as f:
-            logging.debug(f"Successfully loaded ollama Linux install file.")
+            logging.debug(f"Successfully loaded Ollama Linux install file.")
             return f.read()
     except:
-        return {}
+        return ""
+
+
+def load_docker_debian():
+    """Loads the Docker install bash script for Debian users."""
+    try:
+        with open(load_data_path("config", "docker_debian.sh")) as f:
+            logging.debug(f"Successfully loaded Docker Debian install file.")
+            return f.read()
+    except:
+        return ""
+
+
+def load_docker_ubuntu():
+    """Loads the Docker install bash script for Ubuntu users."""
+    try:
+        with open(load_data_path("config", "docker_ubuntu.sh")) as f:
+            logging.debug(f"Successfully loaded Docker Ubuntu install file.")
+            return f.read()
+    except:
+        return ""

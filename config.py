@@ -6,8 +6,12 @@ import sys
 import logging
 import platform
 from Utils.load_settings import (load_prompts,
-                                 load_settings, load_context,
-                                 load_data_path, load_ollama_sh)
+                                 load_settings,
+                                 load_context,
+                                 load_data_path,
+                                 load_ollama_sh,
+                                 load_docker_debian,
+                                 load_docker_ubuntu)
 
 pyinstaller_bundle = getattr(sys, 'frozen', False)
 if pyinstaller_bundle:
@@ -20,10 +24,12 @@ class Globals:
         """Initializes settings variables from refresh_globals."""
         self.all_prompts = load_prompts()
         self.ollama_sh = load_ollama_sh()
+        self.docker_debian = load_docker_debian()
+        self.docker_ubuntu = load_docker_ubuntu()
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "0.2.2"
+        self.current_version = "0.2.3"
         self.latest_version = None
         self.ollama_version = None
         self.docker_version = None
@@ -37,6 +43,7 @@ class Globals:
         self.save_chats_var = None
         self.sink_var = None
         self.github_check_var = None
+        self.language_var = None
 
         # Widgets
         self.send_button = None
@@ -48,6 +55,14 @@ class Globals:
         self.ui_elements = None
         self.attach_tip = None
         self.app_title = "Pearl at your service!"
+        self.widget_rows = []
+
+        self.ollama_interactive_download_button = None
+        self.ollama_web_download_button = None
+        self.docker_interactive_download_button = None
+        self.docker_web_download_button = None
+        self.kokoro_interactive_download_button = None
+        self.kokoro_web_download_button = None
 
         # Icons
         self.hamburger_icon = None
@@ -72,6 +87,10 @@ class Globals:
         self.chats_icon = None
         self.config_icon = None
         self.notification_icon = None
+        self.docker_icon = None
+        self.kokoro_icon = None
+        self.en_language_icon = None
+        self.pearl_icon = None
 
         # Pages
         self.main_frame = None
@@ -91,7 +110,6 @@ class Globals:
         self.assistant_label = None
         self.theme_path = None
         self.theme_dict = None
-        self.greeting = "Pearl at your service!"
         self.sink_list = None
         self.conversation_history = []
         self.conversation_id = None
@@ -102,7 +120,10 @@ class Globals:
         # Tooltips
         self.ollama_web_download_tooltip = None
         self.ollama_interactive_download_tooltip = None
-        self.docker_download_tooltip = None
+
+        self.docker_web_download_tooltip = None
+        self.docker_interactive_download_tooltip = None
+
         self.kokoro_download_tooltip = None
 
         # Chat Variables
@@ -120,6 +141,7 @@ class Globals:
 
         # Flags
         self.ollama_active = None
+        self.docker_active = None
         self.kokoro_active = None
         self.ram_found = None
         self.cpu_found = None
@@ -129,6 +151,10 @@ class Globals:
         self.still_streaming = False
         self.is_speaking = False
         self.new_chat = True
+
+        # Sound
+        self.source_options = ["Default"]
+        self.speakers_frame = None
 
         # Miscellaneous Variables
         self.icon = None
@@ -158,6 +184,7 @@ class Globals:
         self.saved_x = settings.get("saved_x", -1)
         self.saved_y = settings.get("saved_y", -1)
         self.github_check = settings.get("github_check", False)
+        self.language = settings.get("language", "English")
 
 
 def apply_theme(name: str) -> None:
