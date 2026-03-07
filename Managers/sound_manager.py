@@ -2,13 +2,14 @@
 import os
 import requests
 import logging
-import socket
-import pyttsx3
 import threading
 import platform
+import numpy as np
+import wave
 import sounddevice as sd
 import soundfile as sf
 from io import BytesIO
+from Utils.load_settings import load_data_path
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 os_name = platform.platform()
@@ -18,71 +19,6 @@ if os_name.startswith("Linux"):
 
 
 # Kokoro
-def kokoro_test(globals):
-    """Tests Kokoro to set flag for active/inactive."""
-    print_success = True if not globals.kokoro_active else False
-    print_failure = True if globals.kokoro_active else False
-    # Set Kokoro flag to true upon success
-    try:
-        socket.create_connection(("localhost", 8880), timeout=2).close()
-        if print_success:
-            logging.info(f"Kokokro found!")
-        globals.kokoro_active = True
-        return True
-    # Set Kokoro flag to false upon error
-    except Exception as e:
-        if print_failure:
-            logging.error(
-                f"Kokoro not installed. TTS features will be unavailable.")
-        globals.kokoro_active = False
-        return False
-
-
-def fetch_tts_models(globals):
-    """loads possible Kokoro models"""
-    if globals.kokoro_active:
-        try:
-            logging.debug(f"Attempting to load Kokoro voice list...")
-            voices = requests.get("http://localhost:8880/v1/audio/voices")
-            if voices.status_code == 200:
-                return voices.json()["voices"]
-            else:
-                logging.error(
-                    f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")
-                return {}
-        except Exception as e:
-            logging.error(
-                f"Failed to load voices due to {e}. Returning empty dictionary.")
-            return {}
-
-
-def fetch_current_language_models(globals):
-    """loads Kokoro models of the current language selection."""
-    if globals.kokoro_active:
-        try:
-            english_voices = ["af_", "am_", "bf_", "bm_"]
-            voice_list = fetch_tts_models(globals)
-            remove_list = []
-
-            # Make a list of off-language voices
-            for voice in voice_list:
-                if not any(voice.strip().startswith(lang) for lang in english_voices):
-                    remove_list.append(voice)
-
-            # Remove out of language voices
-            for removal in remove_list:
-                voice_list.remove(removal)
-
-            # Remove prefixes
-            ...
-
-            return voice_list
-        except Exception as e:
-            logging.error(
-                f"Failed to load voices due to {e}. Returning empty dictionary.")
-            return {}
-
-
 def kokoro_speak(globals):
     """Communicates with the Kokoro endpoint for tts"""
     try:
@@ -94,7 +30,7 @@ def kokoro_speak(globals):
             "http://localhost:8880/v1/audio/speech", json={
                 "model": "kokoro",
                 "input": globals.assistant_message,
-                "voice": globals.active_voice,
+                "voice": globals.kokoro_active_voice,
                 "response_format": "wav"})
 
                 # Log API error 500 (removed folder)
@@ -113,16 +49,21 @@ def kokoro_speak(globals):
                 audio_data = BytesIO(response.content)
                 data, samplerate = sf.read(audio_data, dtype='float32')
 
+                # Set speakers to play from
                 selected_sink = globals.default_sink
-                if selected_sink != "Default":
-                    os.environ['PULSE_SINK'] = selected_sink
+                if os_name.startswith("Windows"):
+                    device_arg = None
                 else:
-                    # Fall back to system default
-                    os.environ.pop('PULSE_SINK', None)
+                    if selected_sink != "Default":
+                        os.environ['PULSE_SINK'] = selected_sink
+                    else:
+                        # Fall back to system default
+                        os.environ.pop('PULSE_SINK', None)
+                    device_arg = 'pulse'
 
                 # Set flag and play audio
                 globals.is_speaking = True
-                sd.play(data, samplerate, device='pulse')
+                sd.play(data, samplerate, device=device_arg)
                 globals.is_speaking = False
             except Exception as e:
                 logging.error(f"Playback error: {e}")
@@ -141,20 +82,127 @@ def default_speak(globals, text):
     def _play_in_thread():
         """Plays default TTS in a thread."""
         try:
+            # Create path for temporary sound file
+            temp_path = os.path.normpath(load_data_path("cache", "temp_tts.wav"))
+
+            # Debug print full voices list
+            # logging.debug(f"{get_default_tts_voices(globals)}\n")
+
+            # Set voice
+            if globals.default_active_voice:
+                globals.engine.setProperty('voice', globals.default_active_voice)
+
+            # Flag is_speaking as true
             globals.is_speaking = True
-            engine = pyttsx3.init()
-            engine.say(text)
-            engine.runAndWait()
-            engine.stop()
-            globals.is_speaking = False
+
+            # Save audio to file
+            globals.engine.save_to_file(text, temp_path)
+            globals.engine.runAndWait()
+
+            # Return if file does not exist
+            if not os.path.exists(temp_path):
+                logging.warning(f"Default TTS audio file does not exist - can't play.")
+                globals.is_speaking = False
+                globals.engine.stop()
+                return
+
+            # Return if sound file is too small
+            if os.path.getsize(temp_path) < 10000:
+                logging.warning(f"TTS file smaller than 10KB - not large enough to contain audio.")
+                globals.is_speaking = False
+                globals.engine.stop()
+                os.remove(temp_path)
+                return
+
+            # Debug for audio file data
+            if os_name.startswith("Linux"):
+                get_audio_info(globals, temp_path)
         except Exception as e:
-            logging.error(f"Could not play TTS via default due to: {e}")
+            logging.error(f"Could not generate audio file due to: {e}")
+            globals.engine.stop()
+            globals.is_speaking = False
+
+        try:
+            # Load audio file into memory
+            with open(temp_path, "rb") as f:
+                audio = f.read()
+
+            # Set speakers to play from
+            selected_sink = globals.default_sink
+            if os_name.startswith("Windows"):
+                device_arg = None
+            else:
+                if selected_sink != "Default":
+                    os.environ['PULSE_SINK'] = selected_sink
+                else:
+                    # Fall back to system default
+                    os.environ.pop('PULSE_SINK', None)
+                device_arg = 'pulse'
+
+            # Play audio from file in memory
+            audio_data = BytesIO(audio)
+            data, samplerate = sf.read(audio_data, dtype='float32')
+            sd.play(data, samplerate, device=device_arg)
+
+            # Clean up the audio file
+            os.remove(temp_path)
+
+            # Stop TTS queue and set flag
+            globals.engine.stop()
+            globals.is_speaking = False
+
+        except Exception as e:
+            logging.error(f"Could not read : {e}")
+            os.remove(temp_path)
             globals.is_speaking = False
     
     try:
         threading.Thread(target=_play_in_thread, daemon=True).start()
     except Exception as e:
         logging.error(f"Could not play default TTS due to: {e}")
+        globals.is_speaking = False
+
+
+def get_audio_info(globals, path):
+    """Debug prints detailed info about audio being played."""
+    logging.debug(f"Playing Voice: {globals.engine.getProperty('voice')}")
+
+    # WAV check
+    try:
+        with wave.open(path, 'rb') as wf:
+            logging.debug(f"Channels: {wf.getnchannels()}")
+            logging.debug(f"Sample width: {wf.getsampwidth()}")
+            logging.debug(f"Frame rate: {wf.getframerate()}")
+            logging.debug(f"Frames: {wf.getnframes()}  → Duration: {wf.getnframes() / wf.getframerate():.2f} sec")
+
+        with wave.open(path, 'rb') as wf:
+            raw_data = wf.readframes(wf.getnframes())
+        audio_array = np.frombuffer(raw_data, dtype=np.int16)
+        logging.debug(f"Max amplitude: {np.max(np.abs(audio_array))}")
+        logging.debug(f"Mean amplitude: {np.mean(np.abs(audio_array))}")
+    except wave.Error as e:
+        logging.debug(f"WAV read error: {e}")
+    except Exception as e:
+        logging.debug(f"Could not find audio file info due to: {e}")
+
+
+def get_default_tts_voices(globals):
+    """Returns a list of default tts voices."""
+    voice_dict = {}
+    try:
+        # Get voice list
+        voices = globals.engine.getProperty('voices')
+
+        # Creates dictionary linking readable names to IDs
+        logging.debug("Available voices:")
+        for voice in voices:
+            if str(voice.languages[0]).startswith("en"):
+                voice_dict[str(voice.name)] = str(voice.id)
+    except Exception as e:
+        logging.error(f"Could not return available default voices due to: {e}")
+
+    # Return complete dictionary
+    return voice_dict
 
 
 # Query for speaker outputs

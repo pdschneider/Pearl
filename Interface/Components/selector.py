@@ -62,7 +62,7 @@ class Treeview:
 
     def _apply_highlight(self, row, on=True):
         """Highlights a specific row."""
-        row.configure(fg_color="white" if on else "transparent")
+        row.configure(fg_color=self.globals.theme_dict["CTkScrollableFrame"]["bg_color"] if on else "transparent")
 
     def _on_row_click(self, event, idx, filename):
         """Triggers selection of an item upon click"""

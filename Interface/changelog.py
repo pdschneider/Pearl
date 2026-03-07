@@ -120,11 +120,14 @@ def create_changelog_tab(globals, changelog_tab):
     ctk.CTkButton(
         btn_frame,
         text="Back",
-        command=lambda: continue_to_chat(),
+        command=lambda: continue_to_chat(globals),
     ).pack(side="top", padx=5)
 
-    def continue_to_chat():
+    def continue_to_chat(globals):
         globals.app_title.configure(text="Pearl at your service!")
-        globals.settings_overlay.pack_forget()
-        globals.changelog.pack_forget()
+        # Map chat page
+        app_pages = [globals.chat_page, globals.setup_page, globals.settings_page, globals.changelog]
+        for page in app_pages:
+            if page:
+                page.pack_forget()
         globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)

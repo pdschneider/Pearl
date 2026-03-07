@@ -1,6 +1,7 @@
 # Interface/interface.py
 import tkinter as tk
 import customtkinter as ctk
+import logging
 from Interface.Settings.settings import create_settings
 from Interface.chat_window import create_chat_tab
 from Interface.Components.top_bar import create_top_bar
@@ -19,7 +20,9 @@ def create_interface(globals):
                     globals: Global variables
     """
     # Set up main window
+    logging.debug(f"Building GUI...")
     globals.root = ctk.CTk()
+    globals.root.withdraw()
     globals.root.title("Pearl")
 
     def draw_window():
@@ -41,9 +44,12 @@ def create_interface(globals):
     globals.root.minsize(width=750, height=675)
 
     # Get Icon
-    globals.icon = load_data_path("config", "assets/Pearl_Sparkle.png")
-    icon_image = tk.PhotoImage(file=str(globals.icon))
-    globals.root.iconphoto(False, icon_image)
+    try:
+        globals.icon = load_data_path("config", "assets/Pearl_Sparkle.png")
+        icon_image = tk.PhotoImage(file=str(globals.icon))
+        globals.root.iconphoto(False, icon_image)
+    except Exception as e:
+        logging.warning(f"Failed to load icon at {globals.icon}")
 
     # String Vars
     globals.chat_message = tk.StringVar()
@@ -62,40 +68,51 @@ def create_interface(globals):
     globals.main_frame.pack(side="left", fill="both", expand=True)
 
     # Window Frames
-    globals.settings_overlay = ctk.CTkFrame(globals.main_frame)
-    globals.settings_overlay.pack_forget()
-
+    globals.settings_page = ctk.CTkFrame(globals.main_frame)
+    globals.changelog = ctk.CTkFrame(globals.main_frame)
     globals.chat_page = ctk.CTkFrame(globals.main_frame)
+    globals.setup_page = ctk.CTkFrame(globals.main_frame)
+
     globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
     if not globals.ollama_active:
         globals.chat_page.pack_forget()
         globals.app_title.configure(text="Welcome to Pearl!")
 
-    globals.setup_page = ctk.CTkFrame(globals.main_frame)
     globals.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
     if globals.ollama_active:
         globals.setup_page.pack_forget()
         globals.app_title.configure(text="Pearl at your service!")
 
-    globals.changelog = ctk.CTkFrame(globals.main_frame)
     globals.changelog.pack_forget()
+    globals.settings_page.pack_forget()
 
     # Initiate Tabs
     def create_tabs():
         """Initiates critical UI functionality."""
-        globals.logging_var = tk.StringVar(value=globals.logging_level)
-        globals.theme_var = tk.StringVar(value=globals.active_theme)
-        globals.tts_var = tk.BooleanVar(value=globals.tts_enabled)
-        globals.active_voice_var = tk.StringVar(value=globals.active_voice)
-        globals.tts_source_var = tk.StringVar(value=globals.tts_source)
-        globals.save_chats_var = tk.BooleanVar(value=globals.save_chats)
-        globals.sink_var = tk.StringVar(value=globals.default_sink)
-        globals.github_check_var = tk.BooleanVar(value=globals.github_check)
-        globals.language_var = tk.StringVar(value=globals.language)
+        # Initiate widget variables
+        globals.logging_var = ctk.StringVar(value=globals.logging_level)
+        globals.theme_var = ctk.StringVar(value=globals.active_theme)
+        globals.tts_var = ctk.BooleanVar(value=globals.tts_enabled)
+        globals.kokoro_active_voice_var = ctk.StringVar(value=globals.kokoro_active_voice)
+        globals.default_active_voice_var = ctk.StringVar(value=globals.default_active_voice)
+        globals.tts_source_var = ctk.StringVar(value=globals.tts_source)
+        globals.save_chats_var = ctk.BooleanVar(value=globals.save_chats)
+        globals.sink_var = ctk.StringVar(value=globals.default_sink)
+        globals.github_check_var = ctk.BooleanVar(value=globals.github_check)
+        globals.language_var = ctk.StringVar(value=globals.language)
 
+        # Create tabs
         create_chat_tab(globals, globals.chat_page)
-        create_settings(globals, globals.settings_overlay)
+        create_settings(globals, globals.settings_page)
         create_setup_tab(globals, globals.setup_page)
         create_changelog_tab(globals, globals.changelog)
 
+        # Display window after widgets have built
+        globals.root.after(1500, lambda: [  # 1.5 seconds
+        globals.root.update_idletasks(),
+        globals.root.deiconify(),
+        globals.root.focus_set()
+    ])
+
+    # Create tabs then show the window
     create_tabs()

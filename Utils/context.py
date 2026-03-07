@@ -1,6 +1,6 @@
 # Utils/context.py
 import logging
-from Connections.ollama import context_query
+from Connections.ollama import context_query, get_all_models
 
 
 def detect_context(globals, user_text):
@@ -13,6 +13,10 @@ def detect_context(globals, user_text):
     """
     prompts_dict = globals.all_prompts
     context_keywords = globals.all_context
+
+    # Exit earlyt if no message was sent
+    if not user_text:
+        return
 
     scores = {name: 0 for name in prompts_dict}
     user_text = user_text.lower()
@@ -48,11 +52,27 @@ def detect_context(globals, user_text):
             best_prompt = top_prompts[0]
         else:
             best_prompt = top_prompts[0]
-
         logging.debug(f"Detected context: {best_prompt}")
-        if globals.context_model:
-            logging.debug(f"Querying context model...")
-            context_response = context_query(globals.context_model, user_text)
+
+        # Get models list, return if empty
+        all_models = get_all_models(globals)
+        if not all_models:
+            logging.warning(f"No models detected. Exiting context query...")
+            return
+
+        # Ensure the model being used is present
+        if not globals.context_model or globals.context_model not in all_models:
+            if "llama3.2:latest" in all_models:
+                globals.context_model = "llama3.2:latest"
+                logging.warning(f"Context model not found in models list. Defaulting to llama3.2:latest...")
+            else:
+                globals.context_model = all_models[0]
+                logging.warning(f"Context model not found in models list. Defaulting to {all_models[0]}...")
+
+        # Query context model
+        logging.debug(f"Querying context model...")
+        context_response = context_query(globals, model=globals.context_model, message=user_text)
+        if context_response:
             logging.debug(f"Context model's response: {context_response}")
             if context_response == best_prompt:
                 globals.active_prompt = best_prompt

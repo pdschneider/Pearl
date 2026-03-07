@@ -83,13 +83,13 @@ def create_about_tab(globals, about_frame):
         """Reinitiates the setup window."""
         refresh_gui(globals)
         globals.app_title.configure(text="Welcome to Pearl!")
-        globals.settings_overlay.pack_forget()
+        globals.settings_page.pack_forget()
         globals.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
 
     def show_changelog(globals):
         """Brings up the changelog window."""
         refresh_gui(globals)
         globals.app_title.configure(text="Changelog")
-        globals.settings_overlay.pack_forget()
+        globals.settings_page.pack_forget()
         globals.chat_page.pack_forget()
         globals.changelog.pack(fill="both", expand=True, padx=10, pady=0)

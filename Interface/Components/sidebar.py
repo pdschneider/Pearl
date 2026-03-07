@@ -3,11 +3,11 @@ import customtkinter as ctk
 from customtkinter import CTkImage
 from PIL import Image
 import logging
+import os
 from Managers.chat_history import (load_conversations,
                                    load_specific_conversation,
                                    start_new_conversation)
 from Utils.load_settings import load_data_path
-from Connections.ollama import ollama_version_test
 from Utils.refresher import refresh_gui
 import sounddevice as sd
 from CTkToolTip import CTkToolTip
@@ -41,14 +41,13 @@ def create_sidebar(globals):
         size=(35, 35))
 
     # Create the sidebar frame
-    sidebar = ctk.CTkFrame(globals.root, width=sidebar_width, corner_radius=0)
-    globals.sidebar = sidebar
+    globals.sidebar = ctk.CTkFrame(globals.root, width=sidebar_width, corner_radius=0)
     globals.sidebar.configure(fg_color=globals.theme_dict["CTk"]["fg_color"])
 
     # Initially place off-screen
-    sidebar.place(x=-sidebar_width, y=0, relheight=1)
+    globals.sidebar.place(x=-sidebar_width, y=0, relheight=1)
 
-    buttons_frame = ctk.CTkFrame(sidebar, width=sidebar_width, corner_radius=0)
+    buttons_frame = ctk.CTkFrame(globals.sidebar, width=sidebar_width, corner_radius=0)
     buttons_frame.pack(fill="x")
     buttons_frame.configure(fg_color=globals.theme_dict["CTk"]["fg_color"])
 
@@ -86,26 +85,53 @@ def create_sidebar(globals):
 
     # Chat History
     title_label = ctk.CTkLabel(
-        sidebar,
+        globals.sidebar,
         text="Chat History",
         font=ctk.CTkFont(size=18, weight="bold"))
     title_label.pack(pady=5, padx=10)
 
     # Scrollable Frame for Chat History items
-    history_frame = ctk.CTkScrollableFrame(sidebar)
+    history_frame = ctk.CTkScrollableFrame(globals.sidebar)
     history_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-    def populate_history():
+    def populate_history(globals):
         """Clears and populates the history frame with chat entries."""
+
+        # Calculate the number of conversations
+        new_chat_count = 0
+        if not os.path.isdir(load_data_path("local", "chats")):
+            os.mkdir(load_data_path("local", "chats"))
+        chat_dir = os.path.normpath(load_data_path("local", "chats"))
+        for filename in os.listdir(chat_dir):
+            if filename.endswith(".json"):
+                new_chat_count += 1
+
+        # Only rebuild sidebar GUI if chat count changed
+        if not globals.chat_count:
+            logging.debug(f"Building sidebar...")
+            globals.chat_count = new_chat_count
+        elif new_chat_count == globals.chat_count:
+            logging.debug(f"Chat count hasn't changed. Skipping sidebar rebuild...")
+            return
+        else:
+            globals.chat_count = new_chat_count
+            logging.debug(f"Building sidebar...")
+        
+        # Destroy old widgets first
         for widget in history_frame.winfo_children():
             widget.destroy()
+        history_frame.pack_forget()
+        history_frame.pack(fill="both", expand=True, padx=10, pady=10)
+            
 
+        # Load conversations and return early with label if empty
         conversations = load_conversations(globals)
         if not conversations:
             no_chats_label = ctk.CTkLabel(history_frame, text="No chats yet!")
             no_chats_label.pack(pady=20, padx=5)
             return
 
+        # Set up times for categories
         now = datetime.now()
         today = now.date()
         yesterday = today - timedelta(days=1)
@@ -122,6 +148,7 @@ def create_sidebar(globals):
             "Older Than a Year": []
         }
 
+        logging.debug(f"Getting conversation metadata...")
         for convo in conversations:
             metadata = convo["metadata"]
             conv_id = metadata["conversation_id"]
@@ -154,16 +181,23 @@ def create_sidebar(globals):
             if not convos:
                 continue
 
+            # Creeate category headers
             header = ctk.CTkLabel(history_frame,
                                   text=section_name,
                                   font=fonts.heading_font,
                                   anchor="w")
             header.pack(fill="x", padx=12, pady=4)
 
+            # Prepare metadata to create labels
+            logging.debug(f"Packing conversations into sidebar for {section_name}...")
             for convo in convos:
                 metadata = convo["metadata"]
                 conv_id = metadata["conversation_id"]
                 title = metadata.get("title", "Untitled")
+
+                # Truncate if title is longer than 30 characters
+                if len(title) > 30:
+                    title = f"{title[:25]}..."
 
                 # Create a frame for each chat entry
                 entry_frame = ctk.CTkFrame(history_frame, corner_radius=6)
@@ -182,6 +216,7 @@ def create_sidebar(globals):
 
     def reset_to_new_chat():
         """Resets to a new conversation and clears the chat frame."""
+        # Stop currently playing audio, refresh GUI, set flags
         sd.stop()
         refresh_gui(globals)
         start_new_conversation(globals)
@@ -191,35 +226,42 @@ def create_sidebar(globals):
             widget.destroy()
         globals.ui_elements["scroll_to_bottom"]()
         globals.root.update_idletasks()
+
+        # Map chat page
+        app_pages = [globals.chat_page, globals.setup_page, globals.settings_page, globals.changelog]
+        for page in app_pages:
+            if page:
+                page.pack_forget()
+        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
         toggle_sidebar()
         logging.info(f"Started new chat from sidebar button.")
 
     def slide_in():
         """Slides the sidebar in after clicking the hamburger button."""
-        current_x = sidebar.winfo_x()
+        current_x = globals.sidebar.winfo_x()
         new_x = min(0, current_x + animation_step)
-        sidebar.place_configure(x=new_x)
+        globals.sidebar.place_configure(x=new_x)
         if new_x < 0:
-            sidebar.after(animation_delay, slide_in)
+            globals.sidebar.after(animation_delay, slide_in)
         else:
             globals.sidebar_open = True
-            populate_history()
+            globals.sidebar.after(animation_delay, populate_history(globals))
 
     def slide_out():
         """Slide the sidebar back out when done."""
-        current_x = sidebar.winfo_x()
+        current_x = globals.sidebar.winfo_x()
         new_x = max(-sidebar_width, current_x - animation_step)
-        sidebar.place_configure(x=new_x)
+        globals.sidebar.place_configure(x=new_x)
         if new_x > -sidebar_width:
-            sidebar.after(animation_delay, slide_out)
+            globals.sidebar.after(animation_delay, slide_out)
         else:
             globals.sidebar_open = False
 
     def toggle_sidebar():
         """Calls the sidebar to be slid in or out."""
         logging.debug(f"Sidebar toggle called.")
-        sidebar.tkraise()
-        logging.debug(f"Current sidebar x position: {sidebar.winfo_x()}")
+        globals.sidebar.tkraise()
+        logging.debug(f"Current sidebar x position: {globals.sidebar.winfo_x()}")
 
         # Health check
         refresh_gui(globals)
@@ -229,7 +271,7 @@ def create_sidebar(globals):
             slide_out()
         else:
             logging.debug(f"Opening sidebar.")
-            sidebar.place(x=-sidebar_width)
+            globals.sidebar.place(x=-sidebar_width)
             slide_in()
 
     def load_and_display_chat(conv_id):
@@ -262,4 +304,6 @@ def create_sidebar(globals):
     else:
         logging.error(f"No globals.hamburger found.")
 
-    return sidebar
+    populate_history(globals)
+
+    return globals.sidebar

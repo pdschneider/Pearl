@@ -2,6 +2,36 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.2.4] - 2026-03-07
+
+This update focuses on overall speed, bug fixes, and stability improvements relating to file attachments and context detection (among others) as well as expanding accepted filetypes for attachments and improving default TTS behavior.
+
+### Added
+- Pearl is now pre-compiled to C on Windows (in addition to Linux), greatly improving speed for all users
+- Roughly tripled the number of accepted filetypes for attachments: .rst, .adoc, .tex, .org, .conf, .js, .sql, .go, .rs, .php, .cpp, .c, .h, .cs, .kt, .swift, .dart, .ts, .tsx, .jsx, .rb, .pl, .lua, .scala, .hs, .jl, .yml, .env, .r, .text, .asc, .properties, .m3u, ,.lst, .list, .gitignore, .gitattributes
+- Greatly improved default TTS functionality:
+    - Now works with speaker selection on Linux
+    - Audio stops playing when program shuts down
+    - Follows same pattern as Kokoro where entering a new message cuts off previous TTS
+- Added icon for Windows users
+
+### Changed
+- Switched theme and context checks to more effective hashing method, ensures proper values
+- Improved code organization for certain features
+- Made Kokoro voice options easier to read
+- Updated build instructions in ReadME
+- Updated Dependencies
+
+### Fixed
+- Fixed bug where pressing enter too many times in a row would disable sending messages
+- Improved chat behavior logic for enter press
+- Impoved stability for context detection and file attachments
+- Window now draws widgets before displaying, reducing UI errors
+- New chat button now maps to the chat page as users would expect
+- Reduced unnecessary chat history rebuilds, improving speed
+- Sidebar now populates chat history on startup, reducing build time in-app
+- General UI and stability improvements
+
 ## [0.2.3] - 2026-03-03
 
 ### Added
@@ -22,7 +52,7 @@ All notable changes to **Pearl** will be located in this file.
 ### Fixed
 - General stability and UI improvements
 - Better logging for chat window GUI errors
-- Initial logging added for correct CPU temp polling on Windows
+- Initial debug logging added for CPU temp polling on Windows
 
 ## [0.2.2] - 2026-02-28
 

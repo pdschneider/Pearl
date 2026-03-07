@@ -29,24 +29,16 @@ def create_top_bar(globals):
         # Ensure Ollama is active
         refresh_gui(globals)
 
-        try:
-            if globals.setup_page.winfo_ismapped() or globals.changelog.winfo_ismapped():
-                return
-        except:
-            pass
-        if globals.chat_page.winfo_ismapped():
-            globals.chat_page.pack_forget()
-            globals.settings_overlay.tkraise()
-        else:
+        # Map settings page
+        if globals.settings_page.winfo_ismapped():
             globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
-            globals.chat_page.tkraise()
-            globals.app_title.configure(text="Pearl at your service!")
-        if globals.settings_overlay.winfo_ismapped():
-            globals.settings_overlay.pack_forget()
-            globals.app_title.configure(text="Pearl at your service!")
+            globals.settings_page.pack_forget()
         else:
-            globals.settings_overlay.pack(fill="both", expand=True, padx=10, pady=0)
-            globals.settings_overlay.tkraise()
+            app_pages = [globals.chat_page, globals.setup_page, globals.changelog]
+            for page in app_pages:
+                if page:
+                    page.pack_forget()
+            globals.settings_page.pack(fill="both", expand=True, padx=10, pady=0)
 
     def reset_to_new_chat():
         """Resets to a new conversation and clears the chat frame."""
@@ -61,6 +53,13 @@ def create_top_bar(globals):
             widget.destroy()
         globals.ui_elements["scroll_to_bottom"]()
         globals.root.update_idletasks()
+
+        # Map chat page
+        app_pages = [globals.chat_page, globals.setup_page, globals.settings_page, globals.changelog]
+        for page in app_pages:
+            if page:
+                page.pack_forget()
+        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
         logging.info(f"Started new chat from the top bar button.")
 
     def report_bug():

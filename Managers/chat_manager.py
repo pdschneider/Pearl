@@ -13,11 +13,19 @@ from datetime import datetime
 
 
 # Chat Functions
-def send_message(globals, ui_elements, event=None):
+def send_message(globals, ui_elements):
     """Sends queries to the LLM."""
     # Stops any currently playing audio
-    sd.stop()
-    globals.is_speaking = False
+    try:
+        sd.stop()
+        globals.is_speaking = False
+    except Exception as e:
+        logging.eror(f"Could not stop TTS due to: {e}")
+
+    # Cancels output if stop button is pressed
+    if globals.cancel_event:
+        globals.cancel_event.set()
+        globals.still_streaming = False
 
     # Prevents sending a message if LLM is currently streaming
     if globals.still_streaming:
@@ -26,9 +34,7 @@ def send_message(globals, ui_elements, event=None):
     # Sets flag to indicate the LLM is now streaming
     globals.still_streaming = True
 
-    if globals.cancel_event:
-        globals.cancel_event.set()
-
+    # Create threading event for cancellation
     globals.cancel_event = threading.Event()
 
     q = queue.Queue()
@@ -44,19 +50,21 @@ def send_message(globals, ui_elements, event=None):
     else:
         return
 
+    # Set to defaults for new conversations
     if globals.is_new_conversation:
-        globals.active_prompt = "Assistant"
         start_new_conversation(globals)
 
-    # inspect for context
+    # Inspect for context
     detect_context(globals, user_text)
 
+    # Add bubble and delete entry box contents
     ui_elements["add_bubble"]("user", clean_text)
     ui_elements['entrybox'].delete("1.0", "end")
 
     # Reset file attachment to None
     globals.file_attachment = None
 
+    # Tack on user text and attachment (if applicable) to conversation history and send to LLM
     messages = globals.conversation_history + [{"role": "user",
                                                 "content": user_text}]
     threading.Thread(target=chat_stream,
@@ -75,6 +83,7 @@ def send_message(globals, ui_elements, event=None):
     # Append message to conversation history
     add_message(globals, "user", clean_text)
 
+    # Sets message start time
     globals.message_start_time = datetime.now().isoformat()
 
     # Re-enables file attachment button
@@ -123,6 +132,10 @@ def send_message(globals, ui_elements, event=None):
                     # Only save to file if save_chats is on
                     if globals.save_chats:
                         save_conversation(globals)
+
+                    # Debug print full conversation history
+                    # logging.debug(f"\nFull conversation history:\n{globals.conversation_history}\n")
+
                     globals.still_streaming = False
                     ui_elements["send_button"].configure(text=None,
                                                          image=globals.send_icon,

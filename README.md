@@ -22,7 +22,6 @@ Pearl is your assistant. She is 100% private and runs locally on your computer.
 - 8GB RAM
 - Linux Ubuntu 18.04 or later, or Window 10/11
 - 50GB+ Disk Space recommended
-- GPU Optional
 
 ## 🚀 Build
 
@@ -43,7 +42,10 @@ nuitka \
     --include-data-files=CHANGELOG.md=CHANGELOG.md \
     --include-data-files=README.md=README.md \
     pearl.py
+    
 ```
+
+Set AppRun inside Pearl.AppDir as executable prior to building the AppImage
 
 Copy pearl.bin into the deepest subdirectory of Pearl.AppDir
 
@@ -52,14 +54,15 @@ Run this command from the app's root directory:
 
 ### 🖥️ Windows
 
-For Windows, build Pearl with Pyinstaller:
+On Windows, Pearl can also be built via Nuitka
 
-IMPORTANT: Python 3.12.10 is recommended for building Pearl.
+IMPORTANT: Must have Visual Studio Build Tools installed with C++ / MVSC bindings
 
 ```
 pip install -r requirements.txt
 
-pyinstaller pearl.spec
+nuitka --standalone --msvc=latest --onefile --remove-output --enable-plugin=tk-inter --windows-disable-console --output-dir=dist --include-package=pyttsx3.drivers --windows-icon-from-ico=defaults/assets/pearl.ico --include-data-dir=defaults=defaults --include-data-files=CHANGELOG.md=CHANGELOG.md --include-data-files=README.md=README.md pearl.py
+
 ```
 
 ## 🪲 Report Bugs

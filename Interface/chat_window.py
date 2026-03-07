@@ -1,15 +1,14 @@
 # Interface/chat_window.py
 import tkinter as tk
-from tkinter import filedialog, messagebox
 import customtkinter as ctk
 from customtkinter import CTkImage
 from PIL import Image
 from CTkToolTip import CTkToolTip
 from Managers.chat_manager import send_message
+from Managers.attachments import attach_file
 from Utils.load_settings import load_data_path
 import Utils.fonts as fonts
 import logging
-import os
 from Interface.Components.widgets import ButtonWidgets
 
 
@@ -21,8 +20,6 @@ def create_chat_tab(globals, chat_tab):
                     globals: Global variables
                     chat_tab: The main frame of the chat window
     """
-    # Sets tkinter widgets to inactive status if Ollama isn't found
-    widget_state = "normal" if globals.ollama_active else "disabled"
 
     # Get Icons
     globals.send_icon = CTkImage(
@@ -58,7 +55,7 @@ def create_chat_tab(globals, chat_tab):
     globals.entry_box = ctk.CTkTextbox(entry_frame,
                               font=fonts.body_font,
                               wrap="word",
-                              state=widget_state,
+                              state="normal",
                               corner_radius=16,
                               height=100)
     globals.entry_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
@@ -68,10 +65,10 @@ def create_chat_tab(globals, chat_tab):
     globals.send_button = ctk.CTkButton(entry_frame,
                                 image=globals.send_icon,
                                 text=None,
-                                state=widget_state,
+                                state="normal",
                                 height=50,
                                 width=40,
-                                corner_radius=35,
+                                corner_radius=20,
                                 command=lambda: send_message(globals, ui_elements))
     globals.send_button.pack(side="top", padx=5, pady=5)
     CTkToolTip(globals.send_button,
@@ -85,20 +82,19 @@ def create_chat_tab(globals, chat_tab):
     file_button = ctk.CTkButton(entry_frame,
                                 image=globals.attach_icon,
                                 text=None,
-                                state=widget_state,
+                                state="normal",
                                 height=50,
                                 width=40,
-                                corner_radius=35,
-                                command=lambda: attach_file())
+                                corner_radius=20,
+                                command=lambda: attach_file(globals))
     globals.file_button = file_button
     globals.file_button.pack(side="bottom", padx=5, pady=5)
-    attach_tip = CTkToolTip(file_button,
+    globals.attach_tip = CTkToolTip(file_button,
                             message="Attach",
                             delay=1.0,
                             follow=True,
                             padx=10,
                             pady=5)
-    globals.attach_tip = attach_tip
 
     # Chat Functions
     def add_bubble(role, text="", model=None, attachment=None):
@@ -202,8 +198,14 @@ def create_chat_tab(globals, chat_tab):
         """Triggers send message and prevents additional
         lines in the entry box upon pressing enter."""
         if globals.still_streaming:
-            globals.cancel_event.set() if globals.cancel_event else None
+            logging.debug(f"Enter button pressed.")
+            if globals.entry_box.get("1.0", "end").strip():
+                globals.cancel_event.set() if globals.cancel_event else None
+                send_message(globals, ui_elements)
+            else:
+                return "break"
         else:
+            logging.debug(f"Enter button pressed.")
             send_message(globals, ui_elements)
         return "break"
 
@@ -230,44 +232,3 @@ def create_chat_tab(globals, chat_tab):
 
     globals.ui_elements = ui_elements
 
-    accepted_filetypes = [".txt", ".csv", ".json",
-                          ".py", ".pyw", ".spec",
-                          ".log", ".ini", ".cfg", ".xml",
-                          ".sh", ".bat", ".ps1",
-                          ".md", ".tsv", ".toml", ".yaml",
-                          ".html", ".css"]
-
-    def attach_file():
-        file = filedialog.askopenfilename(parent=globals.file_button,
-                                          title="Select Attachment",
-                                          filetypes=(("All files", "*.*"),
-                                                     ("Text files", "*.txt"),
-                                                     ("CSV files", "*.csv"),
-                                                     ("Python files", "*.py")))
-        if not file or not os.path.isfile(file):
-            return
-        globals.attachment_path = file
-        logging.info(f"Attached file: {file}")
-        try:
-            for i in accepted_filetypes:
-                if file.endswith(i):
-                    with open(file, "r") as f:
-                        globals.file_attachment = f.read()
-            if not globals.file_attachment:
-                logging.warning(f"File type not supported: {file}")
-                messagebox.showwarning(
-                    parent=file_button,
-                    title="Unsupported File Type",
-                    message=f"File type not supported: {file}")
-                return
-        except Exception as e:
-            logging.warning(f"Could not attach file due to: {e}")
-            messagebox.showwarning(
-                parent=file_button,
-                title="Attachment Not Supported",
-                message=f"Could not attach file due to: {e}. Likely an unsupported file type with the wrong extension.")
-            return
-        if globals.file_attachment:
-            file_button.configure(state="disabled")
-            attach_tip.configure(message="File Already Attached")
-        logging.debug(f"File attachment: {file}")

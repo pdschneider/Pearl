@@ -20,6 +20,7 @@ def start_new_conversation(globals):
     globals.chat_history = globals.conversation_history
     globals.conversation_id = str(uuid.uuid4())
     globals.is_new_conversation = True
+    globals.active_prompt = "Assistant"
     globals.created_at = datetime.now().isoformat()
     logging.debug(f"Started new conversation with ID: {globals.conversation_id}")
 
@@ -83,6 +84,7 @@ def load_conversations(globals):
     if not os.path.isdir(load_data_path("local", "chats")):
         os.mkdir(load_data_path("local", "chats"))
     chat_dir = os.path.normpath(load_data_path("local", "chats"))
+    logging.debug(f"Loading conversations...")
     for filename in os.listdir(chat_dir):
         if filename.endswith(".json"):
             filepath = os.path.join(chat_dir, filename)
@@ -112,10 +114,13 @@ def load_conversations(globals):
                         "metadata": metadata,
                         "history": history,
                         "filepath": filepath})
+
             except Exception as e:
                 logging.error(f"Failed to load {filename}: {e}")
+
     # Sort by created_at descending
     conversations.sort(key=lambda c: c["metadata"].get("created_at", ""), reverse=True)
+    logging.debug(f"Successfully loaded conversations!")
     return conversations
 
 

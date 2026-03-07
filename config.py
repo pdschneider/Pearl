@@ -5,6 +5,7 @@ import json
 import sys
 import logging
 import platform
+import pyttsx3
 from Utils.load_settings import (load_prompts,
                                  load_settings,
                                  load_context,
@@ -29,7 +30,7 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "0.2.3"
+        self.current_version = "0.2.4"
         self.latest_version = None
         self.ollama_version = None
         self.docker_version = None
@@ -38,7 +39,8 @@ class Globals:
         self.theme_var = None
         self.logging_var = None
         self.tts_var = None
-        self.active_voice_var = None
+        self.kokoro_active_voice_var = None
+        self.default_active_voice_var = None
         self.tts_source_var = None
         self.save_chats_var = None
         self.sink_var = None
@@ -96,15 +98,15 @@ class Globals:
         self.main_frame = None
         self.startup_root = None
         self.chat_page = None
+        self.setup_page = None
         self.tabview = None
         self.model_tree = None
-        self.settings_overlay = None
+        self.settings_page = None
         self.changelog = None
         self.sidebar = None
 
         # Miscellaneous
         self.active_prompt = "Assistant"
-        self.setup_page = None
         self.top_bar = None
         self.hamburger = None
         self.assistant_label = None
@@ -116,6 +118,7 @@ class Globals:
         self.created_at = None
         self.message_start_time = None
         self.message_end_time = None
+        self.chat_count = 0
 
         # Tooltips
         self.ollama_web_download_tooltip = None
@@ -155,6 +158,7 @@ class Globals:
         # Sound
         self.source_options = ["Default"]
         self.speakers_frame = None
+        self.engine = pyttsx3.init()
 
         # Miscellaneous Variables
         self.icon = None
@@ -170,7 +174,8 @@ class Globals:
 
         # Variables from settings
         self.active_model = settings.get("active_model", "llama3.2:3b")
-        self.active_voice = settings.get("active_voice", "af_heart")
+        self.kokoro_active_voice = settings.get("kokoro_active_voice", "af_heart")
+        self.default_active_voice = settings.get("default_active_voice", "")
         self.tts_enabled = settings.get("tts_enabled", False)
         self.tts_source = settings.get("tts_source", "default")
         self.dynamic_mode = settings.get("dynamic_mode", False)

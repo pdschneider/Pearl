@@ -293,6 +293,7 @@ def get_all_models(globals):
         response = requests.get("http://localhost:11434/api/tags")
         if response.status_code == 200:
             data = response.json()
+            logging.debug(f"ALL MODELS: {list(set(model["name"] for model in data.get("models", [])))}")
             return list(set(model["name"] for model in data.get("models", [])))
         return []
     except Exception as e:
@@ -317,6 +318,7 @@ def get_loaded_models(globals):
         response = requests.get("http://localhost:11434/api/ps")
         if response.status_code == 200:
             data = response.json()
+            logging.debug(f"LOADED MODELS: {[model["name"] for model in data.get("models", [])]}")
             return [model["name"] for model in data.get("models", [])]
         return []
     except Exception as e:
@@ -444,10 +446,16 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
 
         # Output text in a stream
         for line in response.iter_lines():
+            # Cancel output if cancel event is set
             if cancel_event.is_set():
                 logging.debug(
                     f"Cancel event triggered during Ollama chat stream.")
-                break
+                globals.message_end_time = datetime.now().isoformat()
+                out_q.put(None)
+                # Close only if response was given
+                if got_response:
+                    response.close()
+                return
             if line:
                 try:
                     chunk = json.loads(line.decode("utf-8"))
@@ -471,10 +479,10 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             response.close()
 
 
-def context_query(model, message):
+def context_query(globals, model="llama3.2:latest", message=""):
     """Query the context model for changes in the conversation."""
-    # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    # Gracefully exit if Ollama is not installed or message is empty
+    if not globals.ollama_active or not message:
         return
 
     try:
@@ -482,10 +490,17 @@ def context_query(model, message):
             "model": model,
             "prompt": f"Based on this list, determine the best context of the message and return ONLY the word. Nothing else: 'Assistant', 'Therapist', 'Financial', 'Storyteller', 'Conspiracy', 'Meditation', 'Motivation'. The message: ' {message}",
             "stream": False},
-            timeout=5)
+            timeout=10)
         logging.debug(f"Context model status code: {response.status_code}")
-        if response.status_code == 200:
-            return response.json()["response"]
+
+        # Exit on failure
+        if response.status_code != 200:
+            logging.error(f"Context Query Failed | Status Code: {response.status_code}")
+            return
+
+        # Return response on success
+        return response.json()["response"]
+
     except Exception as e:
         logging.error(f"Could not query context model due to: {e}")
 
