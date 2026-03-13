@@ -14,12 +14,18 @@ startup(globals)
 
 
 def on_closing():
-    """Saves all settings before closing the program."""
+    """Saves all settings and shuts down logging before closing the program."""
     try:
         save_all_settings(globals, reject_toast=True)
     except Exception as e:
         logging.error(f"Error occurred when saving settings: {e}")
+    logging.shutdown()
     globals.root.quit()
+    globals.root.destroy()
+    if globals.startup_root:
+            globals.startup_root.destroy()
+            globals.startup_root.quit()
+            globals.startup_root = None
 
 if __name__ == "__main__":
     # Initialize GUI
@@ -36,7 +42,7 @@ if __name__ == "__main__":
             factory_reset_config(error)
             if globals.root:
                 try:
-                    globals.root.destroy()
+                    globals.root.quit()
                 except Exception as e:
                     logging.error(f"Error occurred when closing window: {e}")
     else:  # Not bundled

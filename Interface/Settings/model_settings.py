@@ -1,13 +1,13 @@
 # Interface/model_settings.py
 import logging
 import time
-from tkinter import messagebox
 import customtkinter as ctk
 from CTkToolTip import CTkToolTip
 from Connections.ollama import get_all_models, get_loaded_models, load_model
 from Utils.hardware import get_ram_info
 from Utils.save_settings import save_settings
 from Interface.Components.selector import Treeview
+from PySide6.QtWidgets import QMessageBox
 
 
 def create_models_tab(globals, models_frame):
@@ -28,18 +28,26 @@ def create_models_tab(globals, models_frame):
         logging.debug(f"Initiating model load...")
         available_ram = get_ram_info()
         sel = model_selector.selection()
+
+        # Return if no model is selected
         if not sel:
             logging.warning(f"No model selected.")
             return
+
         if available_ram != {}:
+            # Return early with a warning if RAM is less than 1GB
             if available_ram["avail_ram_gb"] < 1.0:
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
-                messagebox.showerror(
-                    title="Not Enough RAM",
-                    message="Must have more than 1GB of available RAM to load models.",
-                    parent=models_frame,)
+                # Display a messagebox letting the user know they need more RAM
+                QMessageBox.warning(
+                    None,
+                    "Not Enough RAM",
+                    f"You must have at least 1GB of available RAM to load models.",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
                 return
+
             model_name = sel[0]
             if model_name not in get_loaded_models(globals):
                 logging.debug(f"Attempting to load {model_name}...")
@@ -62,9 +70,13 @@ def create_models_tab(globals, models_frame):
             if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globals):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
-                messagebox.showerror(title="Not Enough RAM",
-                                     message="Must have more than 1GB of available RAM to load models.",
-                                     parent=models_frame)
+                # Display a messagebox letting the user know they need more RAM
+                QMessageBox.warning(
+                    None,
+                    "Not Enough RAM",
+                    f"You must have more than 1GB of available RAM to load models.",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
                 return
         if globals.active_model != model_name:
             globals.active_model = model_name
@@ -90,9 +102,13 @@ def create_models_tab(globals, models_frame):
             if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globals):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
-                messagebox.showerror(title="Not Enough RAM",
-                                     message="Must have more than 1GB of available RAM to load models.",
-                                     parent=models_frame)
+                # Display a messagebox letting the user know they need more RAM
+                QMessageBox.warning(
+                    None,
+                    "Not Enough RAM",
+                    f"You must have more than 1GB of available RAM to load models.",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
                 return
         if globals.context_model != model_name:
             globals.context_model = model_name

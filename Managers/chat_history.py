@@ -5,8 +5,11 @@ import logging
 import os
 from datetime import datetime
 from config import load_data_path
+from Utils.hardware import get_disk_space
+from Utils.toast import show_toast
 
 
+# Create chats directory if it doesn't already exist
 chat_dir = os.path.normpath(load_data_path("local", "chats"))
 try:
     os.makedirs(chat_dir, exist_ok=True)
@@ -53,11 +56,22 @@ def add_message(globals, role, content, model=None, tokens=0, **kwargs):
 
 
 def save_conversation(globals):
-    """Saves conversation history each message"""
+    """Saves conversation history per message"""
+
+    # Exits early if conversation history is empty
     if not globals.conversation_history:
         logging.debug("No history to save; skipping.")
         return
     
+    # Check disk space to ensure at least 10GB
+    free_space = get_disk_space()['free_disk']
+    logging.debug(f"Free disk space: {free_space}")
+    if free_space < 1:
+        logging.warning(f"Free disk space must be at least 1GB to save chats.")
+        show_toast(globals, message="Must have 1GB of free disk space to save chats", _type="error")
+        return
+
+    # Sets conversation ID if none available
     if globals.conversation_id is None:
         globals.conversation_id = str(uuid.uuid4())
 
@@ -78,8 +92,10 @@ def save_conversation(globals):
 
 
 def load_conversations(globals):
-    """Loads all saved conversations from the chat dir,
-    sorted by created_at descending."""
+    """
+    Loads all saved conversations from the chat directory,
+    sorted by created_at descending.
+    """
     conversations = []
     if not os.path.isdir(load_data_path("local", "chats")):
         os.mkdir(load_data_path("local", "chats"))
@@ -93,9 +109,11 @@ def load_conversations(globals):
                     data = json.load(f)
                     metadata = data.get("metadata", {})
                     history = data.get("history", [])
+
                     # Generate a better title if "Untitled"
                     if metadata.get("title", "").startswith("Untitled"):
                         preview = "Untitled"
+
                         # Find first user message for preview
                         for msg in history:
                             if msg["role"] == "user":
@@ -125,7 +143,11 @@ def load_conversations(globals):
 
 
 def load_specific_conversation(globals, conversation_id):
-    """Loads a specific conversation by ID into globals."""
+    """
+    Loads a specific conversation by ID into globals.
+    
+    Sets globals.chat_history and globals.conversation_history
+    """
     chat_dir = os.path.normpath(load_data_path("local", "chats"))
     filename = os.path.join(chat_dir, f"chat_{conversation_id}.json")
     try:

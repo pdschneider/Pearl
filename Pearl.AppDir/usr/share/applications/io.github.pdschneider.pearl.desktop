@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Pearl
+Exec=pearl
+Icon=pearl
+Type=Application
+Categories=Utility;
+Name[en_US]=io.github.pdschneider.pearl.desktop

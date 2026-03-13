@@ -5,10 +5,6 @@ import psutil
 import platform
 
 os_name = platform.platform()
-if os_name.startswith("Windows"):
-    import wmi
-else:
-    logging.debug(f"Skipping wmi import for non-Windows PC.")
 
 
 def get_os_info():
@@ -128,20 +124,8 @@ def cpu_temp_info():
             logging.warning(f"Unable to retrieve CPU temperature: {e}")
             return {'cpu_temp_c': None}
 
-    # Poll for CPU temp on Windows
+    # Not supported on Windows
     elif os_name.startswith("Windows"):
-        try:
-            w = wmi.WMI(namespace="root\\OpenHardwareMonitor")
-            sensors = w.Sensor()
-            temps = [s.Value for s in sensors
-                     if s.SensorType == 'Temperature' and 'CPU' in s.Name]
-            logging.debug(f"CPU Temps: {temps if temps else None}")
-            return {'cpu_temp_c': None}
-            
-        except Exception as e:
-            logging.debug(f"Could not parse CPU temp on Windows due to: {e}")
-            return {'cpu_temp_c': None}
-    else:
         return {'cpu_temp_c': None}
 
 
@@ -276,7 +260,8 @@ def get_hardware_stats():
             logging.info(f"        {stats['PRETTY_NAME']}")
         logging.info(f"  - RAM: {stats['avail_ram_gb']:.1f}GB available / {stats['total_ram_gb']:.1f}GB total")
         logging.info(f"  - CPU Threads: {stats['cpu_threads']}")
-        logging.info(f"  - CPU Temperature: {stats['cpu_temp_c']}°C")
+        if os_name.startswith("Linux"):
+            logging.info(f"  - CPU Temperature: {stats['cpu_temp_c']}°C")
         logging.info(f"  - L3 Cache Size: {stats['l3_size']}MiB")
         logging.info(f"  - DISK: {stats['free_disk']}GB free / {stats['total_disk']} total / {stats['used_disk']} used")
         logging.info(f"  - LLM-capable GPU: {'Yes' if stats['has_llm_gpu'] else 'No'} ({stats['gpu_type']}, {stats['gpu_vram_gb']:.1f}GB VRAM)\n")

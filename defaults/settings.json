@@ -1,6 +1,6 @@
 {
     "active_model": "llama3.2:latest",
-    "kokoro_active_voice": "af_heart",
+    "kokoro_active_voice": "bf_v0isabella",
     "default_active_voice": "",
     "tts_enabled": false,
     "tts_source": "Default",

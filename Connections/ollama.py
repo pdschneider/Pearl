@@ -340,7 +340,7 @@ def load_model(globals, model):
                "keep_alive": "30m"}
         try:
             response = requests.post(
-                "http://localhost:11434/api/generate", json=payload, timeout=4)
+                "http://localhost:11434/api/generate", json=payload, timeout=5)
             logging.debug(
                 f"Sent request to {model}. Response code: {response.status_code}")
             if response.status_code == 200:
@@ -359,7 +359,7 @@ def load_model(globals, model):
     threading.Thread(target=lambda: _load_in_thread(globals, model), daemon=True).start()
 
 
-def unload_model(model):
+def unload_model(globals, model):
     """Unload a model from memory"""
     # Gracefully exit if Ollama is not installed
     if not globals.ollama_active:

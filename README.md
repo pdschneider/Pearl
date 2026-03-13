@@ -5,9 +5,9 @@ Pearl is your assistant. She is 100% private and runs locally on your computer.
 ### ✨ Features
 - Private AI chats
 - Dynamic context switching based on keywords
-- Interactive install for dependencies, making setup simple
-- Saving chats to disk is optional, supporting privacy
-- Offline use is fully supported, assuming dependencies are installed
+- Simple setup
+- Saving chats is optional, supporting privacy
+- Offline use is fully supported after setup
 - Sends no data outside the local machine by default
 - Comes with 5 themes
 - Supports file uploads
@@ -37,6 +37,8 @@ nuitka \
     --onefile \
     --remove-output \
     --output-dir=dist \
+    --enable-plugin=pyside6 \
+    --enable-plugin=tk-inter \
     --include-package=pyttsx3.drivers \
     --include-data-dir=defaults=defaults \
     --include-data-files=CHANGELOG.md=CHANGELOG.md \
@@ -47,7 +49,7 @@ nuitka \
 
 Set AppRun inside Pearl.AppDir as executable prior to building the AppImage
 
-Copy pearl.bin into the deepest subdirectory of Pearl.AppDir
+Copy pearl.bin to the deepest subdirectory of Pearl.AppDir
 
 Run this command from the app's root directory:
 `appimagetool Pearl.AppDir Pearl-Linux.AppImage -v`
@@ -61,7 +63,7 @@ IMPORTANT: Must have Visual Studio Build Tools installed with C++ / MVSC binding
 ```
 pip install -r requirements.txt
 
-nuitka --standalone --msvc=latest --onefile --remove-output --enable-plugin=tk-inter --windows-disable-console --output-dir=dist --include-package=pyttsx3.drivers --windows-icon-from-ico=defaults/assets/pearl.ico --include-data-dir=defaults=defaults --include-data-files=CHANGELOG.md=CHANGELOG.md --include-data-files=README.md=README.md pearl.py
+nuitka --standalone --msvc=latest --onefile --remove-output --enable-plugin=pyside6 --enable-plugin=tk-inter --windows-disable-console --output-dir=dist --include-package=pyttsx3.drivers --windows-icon-from-ico=defaults/assets/pearl.ico --include-data-dir=defaults=defaults --include-data-files=CHANGELOG.md=CHANGELOG.md --include-data-files=README.md=README.md pearl.py
 
 ```
 

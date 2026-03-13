@@ -23,6 +23,7 @@ def factory_reset_config(error=None):
     root.destroy()
 
 def total_factory_reset(globals):
+    """Completely wipes all Pearl data."""
     answer = messagebox.askyesno(parent=globals.root,
                                  title="Reset All Settings?",
                                  message=

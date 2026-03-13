@@ -4,12 +4,6 @@ import logging
 import shutil
 import json
 import platform
-
-
-import os
-import platform
-import logging
-import shutil
 import sys
 
 def load_data_path(direct=None, filename=None, default=False):
@@ -75,6 +69,8 @@ def load_data_path(direct=None, filename=None, default=False):
                      "assets/es-language.png",
                      "assets/fr-language.png",
                      "assets/ru-language.png",
+                     "assets/no-sound.png",
+                     "assets/column-chart.png",
                      "themes/cosmic_sky.json",
                      "themes/pastel_green.json",
                      "themes/blazing_red.json",

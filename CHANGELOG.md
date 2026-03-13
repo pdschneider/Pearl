@@ -2,6 +2,31 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.2.5] - 2026-03-13
+
+This update adds new buttons to assistant messages, giving more control over TTS output and helpful information, along with an improved updater and partial re-write in the much more modern GUI framework PySide6. This is the beginning of a slow transition to the new framework.
+
+### Added
+- Added button underneath assistant messages to stop ongoing TTS
+- Added stats button under assistant messages which shows token count
+- appimage.xml better integrates AppImage into Linux desktop environments
+- Windows build is now signed with a self-signed certificate
+
+### Changed
+- Updater now brings you directly to the correct download, not the generic new release page
+- Switched updater from outdated tkinter framework to modern PySide6
+- Updater now shows latest release notes so users can see what's new before downloading
+- Updated file attachment box to PySide6, greatly improving UX, especially for Linux users
+- Updated Dependencies
+
+### Fixed
+- Selecting a conversation from the sidebar now switches to the chat page
+- Creating a new chat now correctly scrolls to the top of the chat frame
+- Pearl now checks thread count and aborts excessive actions to increase stability
+- Fixed bug stopping models from being unloaded via the model settings tab
+- Pearl now correctly shuts down logging and both roots on exit
+- General stability improvements
+
 ## [0.2.4] - 2026-03-07
 
 This update focuses on overall speed, bug fixes, and stability improvements relating to file attachments and context detection (among others) as well as expanding accepted filetypes for attachments and improving default TTS behavior.
@@ -16,7 +41,7 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 - Added icon for Windows users
 
 ### Changed
-- Switched theme and context checks to more effective hashing method, ensures proper values
+- Switched theme and context checks to more effective hashing method, ensuring proper values
 - Improved code organization for certain features
 - Made Kokoro voice options easier to read
 - Updated build instructions in ReadME
@@ -28,16 +53,19 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 - Impoved stability for context detection and file attachments
 - Window now draws widgets before displaying, reducing UI errors
 - New chat button now maps to the chat page as users would expect
-- Reduced unnecessary chat history rebuilds, improving speed
-- Sidebar now populates chat history on startup, reducing build time in-app
+- Eliminated unnecessary chat history rebuilds, improving speed
+- Sidebar now populates chat history on startup, reducing loading time on first click
 - General UI and stability improvements
 
 ## [0.2.3] - 2026-03-03
+
+This update focuses on improving Pearl in all the ways user feedback suggests. I've added an interactive install for both Docker and Kokoro for Linux users, making Kokoro TTS simple to get working. I also added uninstall buttons for both Docker and Kokoro and a factory reset button for deleting all Pearl-related data. In addition, Pearl features greater stability, responsiveness, general bug fixes, and improved logging.
 
 ### Added
 - Added interactive install for Docker for Debian and Ubuntu users
 - Added interactive install for Kokoro for Linux users
 - Added uninstall buttons for Docker (Windows + Linux) and Kokoro (Linux Only)
+- Added factory reset button for all Pearl data
 - Added more granular checks for Linux-based OS's
 - Pearl now hashes shell files at startup to ensure updated versions are used
 - Logs Python version at startup
@@ -56,6 +84,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.2.2] - 2026-02-28
 
+Pearl can now check for new updates on startup, making downloading the most recent version much easier. An uninstall button was also added for Ollama and overall responsiveness, stability, and speed have been improved.
+
 ### Added
 - Optional update check, prompts to download most recent version from GitHub if enabled
 - Prompts to download default model if not found (optional)
@@ -73,6 +103,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 - Cleaned up logs 
 
 ## [0.2.1] - 2026-02-25
+
+Pearl now has an interactive install for Ollama making first time user setup much simpler. Speed and stability have also greatly improved.
 
 ### Added
 - Added interactive install for Ollama, greatly speeding up initial setup
@@ -96,6 +128,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.2.0] - 2026-02-22
 
+VERSION 0.2 IS HERE! This time around, Pearl is pre-compiled to C on Linux systems, greatly improving speed and performance. Documentation has been improved by adding dedicated changelog and readme files and stability is greatly improved with startup checks to sanitize corrupted or nonconforming settings.
+
 ### Added
 - Pearl is now compiled to C, greatly improving speed and performance (Linux Only)
 - CHANGELOG.md file added to better document changes
@@ -112,6 +146,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 - Removed old spec file used for building via Pyinstaller on Linux
 
 ## [0.1.12] - 2026-02-01
+
+This update features the ability to delete chats, report bugs, and various UI and stability improvements!
 
 ### Added 
 - Added startup checks which analyze and sanitize corrupted values and files
@@ -131,6 +167,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.11] - 2025-12-30
 
+Pearl now dynamically determines the context of the conversation and adjusts tone on the fly! Other minor updates include an improved sidebar, better logging per message, and handy buttons for github and logs.
+
 ### Added
 - Dynamic prompt switching with context model enabled
 - Added model name underneath assistant messages
@@ -146,6 +184,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.10] - 2025-12-28
 
+Pearl now supports file attachments as well as a new chat button, tooltips, and improved stability!
+
 ### Added
 - Supports attachments for filetypes: .txt, .csv, .json, .py, .pyw, .log, .ini, .cfg, .xml, .sh, .bat, .ps1, .md, .tsv, .toml, .yaml, .html, .css, .spec
 - Added experimental underlying context model choice
@@ -160,6 +200,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.9] - 2025-12-19
 
+Chat history is finally here along with an audio output selection on Linux!
+
 ### Added
 - Functional chat history introduced
 - Added audio output selection (Linux Only)
@@ -168,6 +210,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 - Minor bug fixes and improvements
 
 ## [0.1.8] - 2025-12-08
+
+Pearl now ships as an AppImage for Linux users, improving compatibility across distros, plus a sidebar for an upcoming chat history feature, a changelog page, and general stability improvements.
 
 ### Added
 - Ships as AppImage for Linux users
@@ -183,6 +227,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.7] - 2025-12-07
 
+This update finishes the GUI overhaul with a total redesign of the main chat page. However, markdown support is lost.
+
 ### Added
 - Added about page
 
@@ -197,6 +243,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.6] - 2025-12-05
 
+This version features a near-total overhaul of the interface to a more modern framework, plus three new themes.
+
 ### Added
 - Converted entire GUI to Custom Tkinter
 - Added 3 new themes
@@ -208,6 +256,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.5] - 2025-12-02
 
+This version includes an optional save chats toggle for future implementation and a more responsive UI.
+
 ### Added
 - Added threading for more responsive UI during chats
 - Added initial greeting
@@ -215,6 +265,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 - Optional save chats toggle
 
 ## [0.1.4] - 2025-11-30
+
+This update adds built-in cross-platform TTS as well as hardware checks for better debugging.
 
 ### Added
 - Added universal cross-platform default TTS
@@ -226,6 +278,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.3] - 2025-11-29
 
+This version adds markdown support, improves TTS output, and updates fonts.
+
 ### Added
 - Added support for markdown italics, bold, and strike-through
 - Improved TTS by removing italics, bold, and strike-through markdown from speech
@@ -235,6 +289,8 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 - Removed unused query_ollama function, reducing code size
 
 ## [0.1.2] - 2025-11-28
+
+This update greatly improves Test to Speech by including Kokoro-FastAPI support and improves launch speed.
 
 ### Added
 - Added TTS with dozens of voices (requires Kokoro)
@@ -248,16 +304,20 @@ This update focuses on overall speed, bug fixes, and stability improvements rela
 
 ## [0.1.1] - 2025-11-27
 
+This update adds Windows support and a handy onboarding page for new users, plus log files and a dependencies list for devs.
+
 ### Added
 - Added requirements.txt with dependencies for easier builds
 - Added rotating log files
 - Added setup instructions for users without Ollama installed
-- Added Windows 11 Support
+- Added Windows 10/11 Support
 
 ### Changed
 - Improved error handling
 
 ## [0.1.0] - 2025-11-25
+
+Welcome to Pearl's initial release! To kick it off, we have a functional AI chat, two themes to choose from, a place to view, select, load, and unload downloaded models, and persistent chat history!
 
 ### Added
 - AI chat window

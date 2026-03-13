@@ -2,25 +2,48 @@
 import threading
 import queue
 import logging
+import time
 import sounddevice as sd
 from Connections.ollama import chat_stream
-from Managers.sound_manager import kokoro_speak, default_speak
+from Managers.sound_manager import play_tts
 from Managers.chat_history import (save_conversation,
                                    add_message,
                                    start_new_conversation)
 from Utils.context import detect_context
+from Utils.toast import show_toast
 from datetime import datetime
 
 
 # Chat Functions
 def send_message(globals, ui_elements):
     """Sends queries to the LLM."""
+
+    # Returns if user send a message within the past 2 seconds
+    now = time.time()
+    if now - globals.last_message_time <= 2:
+        logging.warning(f"Sending messages too fast - must wait 2 seconds.")
+        return
+    else:
+        globals.last_message_time = now
+
+
+    # Returns if thread count exceeds 6
+    active_threads = threading.active_count()
+    logging.info(f"Total Active Threads: {active_threads}")
+    if active_threads > 6:
+        logging.warning(f"Active threads: {active_threads} - sending messages too fast")
+        show_toast(globals, message=f"Active threads: {active_threads} - Sending messages too fast!", _type="error")
+        return
+
     # Stops any currently playing audio
     try:
         sd.stop()
-        globals.is_speaking = False
+        if globals.os_name.startswith("Windows"):
+            sd.wait()
+        with globals.speaking_lock:
+            globals.is_speaking = False
     except Exception as e:
-        logging.eror(f"Could not stop TTS due to: {e}")
+        logging.error(f"Could not stop TTS due to: {e}")
 
     # Cancels output if stop button is pressed
     if globals.cancel_event:
@@ -37,10 +60,16 @@ def send_message(globals, ui_elements):
     # Create threading event for cancellation
     globals.cancel_event = threading.Event()
 
+    # Create queue
     q = queue.Queue()
+    
+    # Set active model
     model = globals.active_model
+
+    # Strip whitespace from entry box contents
     clean_text = ui_elements['entrybox'].get("1.0", "end").strip()
 
+    # Append file attachment contents to user text if applicable
     if not clean_text and globals.file_attachment:
         user_text = f"Refer to the following: {globals.file_attachment}"
     elif clean_text and globals.file_attachment:
@@ -64,9 +93,11 @@ def send_message(globals, ui_elements):
     # Reset file attachment to None
     globals.file_attachment = None
 
-    # Tack on user text and attachment (if applicable) to conversation history and send to LLM
+    # Tack on user text and attachment (if applicable) to conversation history
     messages = globals.conversation_history + [{"role": "user",
                                                 "content": user_text}]
+    
+    # Query Ollama in a thread
     threading.Thread(target=chat_stream,
                      args=(globals,
                            model,
@@ -78,6 +109,8 @@ def send_message(globals, ui_elements):
 
     current_model = globals.active_model
     globals.assistant_label = ui_elements["add_bubble"]("assistant", "", model=current_model)
+
+    # Reset assistant message
     globals.assistant_message = ""
 
     # Append message to conversation history
@@ -118,17 +151,25 @@ def send_message(globals, ui_elements):
                         globals.assistant_message.replace(component, "")
 
                     # TTS
-                    if globals.kokoro_active and globals.tts_enabled == True and globals.tts_source == "Kokoro":
-                        kokoro_speak(globals)
-                    elif globals.tts_enabled == True and globals.tts_source == "Default":
-                        default_speak(globals, globals.assistant_message)
+                    play_tts(globals, text=globals.assistant_message)
 
+                    # Add message to conversation history
                     add_message(globals,
                                 "assistant",
                                 globals.assistant_message,
                                 model=globals.active_model,
                                 tokens=tokens)
+                    
+                    # So the stats widget gets token count
+                    if globals.widget_rows:
+                        last_widget = globals.widget_rows[-1]
+                        if last_widget.role == "assistant":
+                            last_widget.tokens = tokens
+                            last_widget._update_stats()
+                    
+                    # Set new conversation flag off
                     globals.is_new_conversation = False
+
                     # Only save to file if save_chats is on
                     if globals.save_chats:
                         save_conversation(globals)

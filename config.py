@@ -6,6 +6,8 @@ import sys
 import logging
 import platform
 import pyttsx3
+import threading
+from PySide6.QtWidgets import QApplication
 from Utils.load_settings import (load_prompts,
                                  load_settings,
                                  load_context,
@@ -23,6 +25,8 @@ class Globals:
     """Class to store global variables"""
     def __init__(self):
         """Initializes settings variables from refresh_globals."""
+
+        # Information loaded from files
         self.all_prompts = load_prompts()
         self.ollama_sh = load_ollama_sh()
         self.docker_debian = load_docker_debian()
@@ -30,12 +34,18 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "0.2.4"
+        self.current_version = "0.2.5"
         self.latest_version = None
         self.ollama_version = None
         self.docker_version = None
 
-        # Tkinter Variables
+        # PySide6 Widgets
+        self.app = QApplication(sys.argv)
+
+        # Thread Locks
+        self.speaking_lock = threading.Lock()
+
+        # Tkinter Vars
         self.theme_var = None
         self.logging_var = None
         self.tts_var = None
@@ -47,18 +57,21 @@ class Globals:
         self.github_check_var = None
         self.language_var = None
 
-        # Widgets
+        # Custom Tkinter Widgets
         self.send_button = None
         self.file_button = None
         self.entry_box = None
 
         # UI variables
         self.root = None
+        self.app_title = "Pearl at your service!"
+        self.startup_root = None
         self.ui_elements = None
         self.attach_tip = None
-        self.app_title = "Pearl at your service!"
         self.widget_rows = []
+        self.hamburger = None
 
+        # Wizard Buttons
         self.ollama_interactive_download_button = None
         self.ollama_web_download_button = None
         self.docker_interactive_download_button = None
@@ -93,40 +106,32 @@ class Globals:
         self.kokoro_icon = None
         self.en_language_icon = None
         self.pearl_icon = None
+        self.no_sound_icon = None
+        self.stats_icon = None
 
         # Pages
         self.main_frame = None
-        self.startup_root = None
         self.chat_page = None
         self.setup_page = None
+        self.settings_page = None
         self.tabview = None
         self.model_tree = None
-        self.settings_page = None
         self.changelog = None
         self.sidebar = None
+        self.top_bar = None
 
         # Miscellaneous
         self.active_prompt = "Assistant"
-        self.top_bar = None
-        self.hamburger = None
         self.assistant_label = None
         self.theme_path = None
         self.theme_dict = None
-        self.sink_list = None
-        self.conversation_history = []
-        self.conversation_id = None
-        self.created_at = None
-        self.message_start_time = None
-        self.message_end_time = None
-        self.chat_count = 0
+        self.last_message_time = 0.0
 
         # Tooltips
         self.ollama_web_download_tooltip = None
         self.ollama_interactive_download_tooltip = None
-
         self.docker_web_download_tooltip = None
         self.docker_interactive_download_tooltip = None
-
         self.kokoro_download_tooltip = None
 
         # Chat Variables
@@ -140,7 +145,13 @@ class Globals:
         self.assistant_message = ""
         self.file_attachment = None
         self.attachment_path = None
-        self.markdown_components = ["***", "___", "**", "__", "~~", "#####", "####", "###"]
+        self.markdown_components = ["***", "___", "**", "__", "~~", "#####", "####", "###", "😊", "🚀"]
+        self.conversation_history = []
+        self.conversation_id = None
+        self.created_at = None
+        self.message_start_time = None
+        self.message_end_time = None
+        self.chat_count = 0
 
         # Flags
         self.ollama_active = None
@@ -159,6 +170,7 @@ class Globals:
         self.source_options = ["Default"]
         self.speakers_frame = None
         self.engine = pyttsx3.init()
+        self.sink_list = None
 
         # Miscellaneous Variables
         self.icon = None

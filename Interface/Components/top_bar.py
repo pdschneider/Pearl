@@ -2,6 +2,7 @@
 import customtkinter as ctk
 from customtkinter import CTkImage
 from CTkToolTip import CTkToolTip
+from PySide6.QtWidgets import QMessageBox
 from Interface.Components.sidebar import create_sidebar
 from Managers.chat_history import start_new_conversation
 from Utils.load_settings import load_data_path
@@ -9,7 +10,6 @@ from Utils.refresher import refresh_gui
 import sounddevice as sd
 from PIL import Image
 import logging
-import textwrap
 import webbrowser
 import urllib.parse
 
@@ -51,7 +51,7 @@ def create_top_bar(globals):
         # Clear the current chat bubbles
         for widget in globals.ui_elements["chat_frame"].winfo_children():
             widget.destroy()
-        globals.ui_elements["scroll_to_bottom"]()
+        globals.ui_elements["scroll_to_top"]()
         globals.root.update_idletasks()
 
         # Map chat page
@@ -64,15 +64,27 @@ def create_top_bar(globals):
 
     def report_bug():
         """Opens the default mail application to report a bug."""
-        to = "bugs@phillipplays.com"
-        subject = "Bug Report for Pearl"
-        raw_body = """Thank you very much for making a report!
-        Let me know what problem occurred, your OS, the version of Pearl you are using,
-        and feel free to also include any logs or screenshots that may help!"""
-        body = textwrap.dedent(raw_body).strip()
-        encoded_body = urllib.parse.quote(body)
-        mailto = f"mailto:{to}?subject={subject}&body={encoded_body}"
-        webbrowser.open(mailto)
+
+        # Display a messagebox first
+        reply = QMessageBox.question(
+            None,
+            "Report Bug?",
+            f"Would you like to open your default email application for a bug report?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        
+        # Opens up the default email application
+        if reply == QMessageBox.StandardButton.Yes:
+            logging.debug(f"Bug Report button clicked.")
+            to = "bugs@phillipplays.com"
+            subject = "Bug Report for Pearl"
+            body = f"Thank you very much for making a report! " \
+            f"Let me know what problem occurred, the behavior your expected, " \
+            f"and feel free to also include any logs or screenshots that may help! " \
+            f" | Pearl Version: {globals.current_version} | OS: {globals.os_name}"
+            encoded_body = urllib.parse.quote(body)
+            mailto = f"mailto:{to}?subject={subject}&body={encoded_body}"
+            webbrowser.open(mailto)
 
     # Get Icons
     globals.hamburger_icon = CTkImage(

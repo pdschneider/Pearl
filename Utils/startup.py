@@ -36,6 +36,7 @@ def startup(globals):
         logging.getLogger('PIL').setLevel(logging.WARNING)
         logging.getLogger('comtypes').setLevel(logging.WARNING)
         logging.getLogger('pyttsx3').setLevel(logging.WARNING)
+        logging.getLogger('webbrowser').setLevel(logging.WARNING)
 
         logs_dir = os.path.join(load_data_path(direct="cache"), "logs")  # Sets up logs folder
         os.makedirs(logs_dir, exist_ok=True)  # Creates the logs folder if it doesn't exist
@@ -426,7 +427,8 @@ def startup(globals):
         progress_bar.stop()
         if globals.startup_root:
             globals.startup_root.destroy()
-        globals.startup_root = None
+            globals.startup_root.quit()
+            globals.startup_root = None
 
     def check_if_done():
         """Periodically checks to see if loading is finished."""

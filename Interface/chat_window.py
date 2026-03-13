@@ -9,6 +9,7 @@ from Managers.attachments import attach_file
 from Utils.load_settings import load_data_path
 import Utils.fonts as fonts
 import logging
+import time
 from Interface.Components.widgets import ButtonWidgets
 
 
@@ -97,7 +98,7 @@ def create_chat_tab(globals, chat_tab):
                             pady=5)
 
     # Chat Functions
-    def add_bubble(role, text="", model=None, attachment=None):
+    def add_bubble(role, text="", model=None, attachment=None, prompt=None, tokens=0):
         """Appends messages to the chat box."""
         try:
             bubble_frame = ctk.CTkFrame(chat_frame, corner_radius=6)
@@ -115,6 +116,8 @@ def create_chat_tab(globals, chat_tab):
                     bg_color=globals.theme_dict["CTk"]["fg_color"],
                     border_color=globals.theme_dict["CTk"]["fg_color"],
                     corner_radius=6)
+
+                # Create and pack assistant name only for assistant messages
                 name_label = ctk.CTkLabel(chat_frame,
                                         text="Pearl",
                                         font=fonts.heading_font)
@@ -147,7 +150,12 @@ def create_chat_tab(globals, chat_tab):
                                     label=label,
                                     copy_callback=copy_bubble_text,
                                     model=model,
-                                    attachment=globals.file_attachment)
+                                    attachment=globals.file_attachment,
+                                    prompt=globals.active_prompt,
+                                    tokens=tokens,
+                                    role=role,
+                                    text=text,
+                                    message_index=len(globals.conversation_history))
         widgets_row.pack(fill="x")
         widgets_row.hide_buttons()
         globals.widget_rows.append(widgets_row)
@@ -200,7 +208,8 @@ def create_chat_tab(globals, chat_tab):
         if globals.still_streaming:
             logging.debug(f"Enter button pressed.")
             if globals.entry_box.get("1.0", "end").strip():
-                globals.cancel_event.set() if globals.cancel_event else None
+                if time.time() - globals.last_message_time >= 2:
+                    globals.cancel_event.set() if globals.cancel_event else None
                 send_message(globals, ui_elements)
             else:
                 return "break"
@@ -228,7 +237,8 @@ def create_chat_tab(globals, chat_tab):
         "chat_frame": chat_frame,
         "add_bubble": add_bubble,
         "send_button": globals.send_button,
-        "scroll_to_bottom": lambda: chat_frame._parent_canvas.yview_moveto(1.0)}
+        "scroll_to_bottom": lambda: chat_frame._parent_canvas.yview_moveto(1.0),
+        "scroll_to_top": lambda: chat_frame._parent_canvas.yview_moveto(0.0)}
 
     globals.ui_elements = ui_elements
 

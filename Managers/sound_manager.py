@@ -10,6 +10,7 @@ import sounddevice as sd
 import soundfile as sf
 from io import BytesIO
 from Utils.load_settings import load_data_path
+from Utils.toast import show_toast
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 os_name = platform.platform()
@@ -18,18 +19,47 @@ if os_name.startswith("Linux"):
     import pulsectl
 
 
+# Unified Speech
+def play_tts(globals, text=None):
+    """Plays TTS with the correct voice and source."""
+
+    # Returns if thread count exceeds 6
+    active_threads = threading.active_count()
+    logging.info(f"Total Active Threads: {active_threads}")
+    if active_threads > 6:
+        logging.warning(f"Active threads: {active_threads} - sending messages too fast")
+        show_toast(globals, message=f"Active threads: {active_threads} - Sending messages too fast!", _type="error")
+        return
+
+    # Returns early if TTS is not enabled
+    if not globals.tts_enabled:
+        return
+
+    # Plays via either Default or Kokoro
+    if globals.kokoro_active and globals.tts_source == "Kokoro":
+        kokoro_speak(globals, text=text)
+    elif globals.tts_source == "Default":
+        default_speak(globals, text=text)
+
+
 # Kokoro
-def kokoro_speak(globals):
+def kokoro_speak(globals, text=None):
     """Communicates with the Kokoro endpoint for tts"""
     try:
         # Defined to play in a separate thread
         def _play_in_thread():
             """Queries Kokoro API and plays TTS in a thread."""
+
+            # Return early if event was cancelled
+            if globals.cancel_event and globals.cancel_event.is_set():
+                logging.debug(f"TTS cancelled before generation.")
+                return
+
             try:
                 response = requests.post(
             "http://localhost:8880/v1/audio/speech", json={
                 "model": "kokoro",
-                "input": globals.assistant_message,
+                "input": text or globals.assistant_message,
                 "voice": globals.kokoro_active_voice,
                 "response_format": "wav"})
 
@@ -61,10 +91,26 @@ def kokoro_speak(globals):
                         os.environ.pop('PULSE_SINK', None)
                     device_arg = 'pulse'
 
-                # Set flag and play audio
-                globals.is_speaking = True
-                sd.play(data, samplerate, device=device_arg)
-                globals.is_speaking = False
+                # Second Check: Return early if event was cancelled
+                if globals.cancel_event and globals.cancel_event.is_set():
+                    logging.debug(f"TTS cancelled before playback.")
+                    return
+
+                # Set flag and play audio, then stop and reset flag
+                with globals.speaking_lock:
+                    globals.is_speaking = True
+                try:
+                    sd.play(data, samplerate, device=device_arg)
+                    if globals.os_name.startswith("Windows"):
+                        sd.wait()
+                except sd.PortAudioError as e:
+                    logging.error(f"Playback error: {e}")
+
+                # IMPORTANT: Currently does not wait for audio to finish playing to reset flag
+
+                with globals.speaking_lock:
+                    globals.is_speaking = False
+
             except Exception as e:
                 logging.error(f"Playback error: {e}")
                 globals.is_speaking = False
@@ -73,14 +119,21 @@ def kokoro_speak(globals):
         threading.Thread(target=_play_in_thread, daemon=True).start()
     except Exception as e:
         logging.error(f"TTS error: {e}")
-        globals.is_speaking = False
+        with globals.speaking_lock:
+            globals.is_speaking = False
 
 
 # Default TTS
-def default_speak(globals, text):
+def default_speak(globals, text=None):
     """Plays TTS from the computers default TTS source."""
     def _play_in_thread():
         """Plays default TTS in a thread."""
+
+        # Return early if event was cancelled
+        if globals.cancel_event and globals.cancel_event.is_set():
+            logging.debug(f"TTS cancelled before generation.")
+            return
+
         try:
             # Create path for temporary sound file
             temp_path = os.path.normpath(load_data_path("cache", "temp_tts.wav"))
@@ -93,23 +146,26 @@ def default_speak(globals, text):
                 globals.engine.setProperty('voice', globals.default_active_voice)
 
             # Flag is_speaking as true
-            globals.is_speaking = True
+            with globals.speaking_lock:
+                globals.is_speaking = True
 
             # Save audio to file
-            globals.engine.save_to_file(text, temp_path)
+            globals.engine.save_to_file(text or globals.assistant_message, temp_path)
             globals.engine.runAndWait()
 
             # Return if file does not exist
             if not os.path.exists(temp_path):
                 logging.warning(f"Default TTS audio file does not exist - can't play.")
-                globals.is_speaking = False
+                with globals.speaking_lock:
+                    globals.is_speaking = False
                 globals.engine.stop()
                 return
 
             # Return if sound file is too small
             if os.path.getsize(temp_path) < 10000:
                 logging.warning(f"TTS file smaller than 10KB - not large enough to contain audio.")
-                globals.is_speaking = False
+                with globals.speaking_lock:
+                    globals.is_speaking = False
                 globals.engine.stop()
                 os.remove(temp_path)
                 return
@@ -120,7 +176,8 @@ def default_speak(globals, text):
         except Exception as e:
             logging.error(f"Could not generate audio file due to: {e}")
             globals.engine.stop()
-            globals.is_speaking = False
+            with globals.speaking_lock:
+                globals.is_speaking = False
 
         try:
             # Load audio file into memory
@@ -139,22 +196,42 @@ def default_speak(globals, text):
                     os.environ.pop('PULSE_SINK', None)
                 device_arg = 'pulse'
 
+            # Second Check: Return early if event was cancelled
+            if globals.cancel_event and globals.cancel_event.is_set():
+                logging.debug(f"TTS cancelled before playback.")
+                return
+
+            # Set flag
+            with globals.speaking_lock:
+                globals.is_speaking = True
+
             # Play audio from file in memory
             audio_data = BytesIO(audio)
             data, samplerate = sf.read(audio_data, dtype='float32')
-            sd.play(data, samplerate, device=device_arg)
+            try:
+                sd.play(data, samplerate, device=device_arg)
+                if globals.os_name.startswith("Windows"):
+                    sd.wait()
+            except sd.PortAudioError as e:
+                logging.error(f"Playback error: {e}")
+            
+            # IMPORTANT: Currently does not wait for audio to finish playing to reset flag
 
             # Clean up the audio file
-            os.remove(temp_path)
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
             # Stop TTS queue and set flag
             globals.engine.stop()
-            globals.is_speaking = False
+            with globals.speaking_lock:
+                globals.is_speaking = False
 
         except Exception as e:
             logging.error(f"Could not read : {e}")
-            os.remove(temp_path)
-            globals.is_speaking = False
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            with globals.speaking_lock:
+                globals.is_speaking = False
     
     try:
         threading.Thread(target=_play_in_thread, daemon=True).start()
@@ -164,7 +241,7 @@ def default_speak(globals, text):
 
 
 def get_audio_info(globals, path):
-    """Debug prints detailed info about audio being played."""
+    """Logs detailed info about audio being played."""
     logging.debug(f"Playing Voice: {globals.engine.getProperty('voice')}")
 
     # WAV check
@@ -205,7 +282,7 @@ def get_default_tts_voices(globals):
     return voice_dict
 
 
-# Query for speaker outputs
+# Query for speaker outputs (Linux only)
 def get_sink_menu():
     """
     Returns a list of dicts:

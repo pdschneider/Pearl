@@ -79,7 +79,7 @@ class Treeview:
 
     def _unload_handler(self, event, model):
         """Handles unloading of models."""
-        unload_model(model)
+        unload_model(self.globals, model)
         self.refresh()
         return "break"
 

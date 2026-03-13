@@ -224,11 +224,11 @@ def create_sidebar(globals):
         # Clear the current chat bubbles
         for widget in globals.ui_elements["chat_frame"].winfo_children():
             widget.destroy()
-        globals.ui_elements["scroll_to_bottom"]()
+        globals.ui_elements["scroll_to_top"]()
         globals.root.update_idletasks()
 
         # Map chat page
-        app_pages = [globals.chat_page, globals.setup_page, globals.settings_page, globals.changelog]
+        app_pages = [globals.setup_page, globals.settings_page, globals.changelog]
         for page in app_pages:
             if page:
                 page.pack_forget()
@@ -279,6 +279,12 @@ def create_sidebar(globals):
         sd.stop()
         load_specific_conversation(globals, conv_id)
 
+        app_pages = [globals.setup_page, globals.settings_page, globals.changelog]
+        for page in app_pages:
+            if page:
+                page.pack_forget()
+        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
+
         # Clear current chat bubbles
         for widget in globals.ui_elements["chat_frame"].winfo_children():
             widget.destroy()
@@ -288,14 +294,15 @@ def create_sidebar(globals):
             role = msg["role"]
             content = msg["content"]
             model = msg.get("model")
-            globals.ui_elements["add_bubble"](role, content, model=model)
+            prompt = msg.get("prompt")
+            tokens = msg.get("tokens")
+            globals.ui_elements["add_bubble"](role, content, model=model, prompt=prompt, tokens=tokens)
 
         globals.ui_elements["scroll_to_bottom"]()
         globals.root.update_idletasks()
 
         # Close sidebar after selection
         toggle_sidebar()
-        globals.chat_page.tkraise()
         logging.info(f"Displaying conversation: {conv_id}")
 
     # Override the hamburger button command in top_bar

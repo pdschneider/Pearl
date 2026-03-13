@@ -1,6 +1,5 @@
 # Interface/Settings/general_settings.py
-import tkinter as tk
-from tkinter import messagebox
+from PySide6.QtWidgets import QMessageBox
 import shutil
 import customtkinter as ctk
 from customtkinter import CTkImage
@@ -186,16 +185,16 @@ def create_general_settings_tab(globals, general_frame):
     deletion_frame.pack(fill="x", pady=10, padx=10)
 
     def delete_chats():
-        root = tk.Tk()
-        root.withdraw()
-        answer = messagebox.askyesno(parent=root,
-                                     title="Delete Chats",
-                                     message=f"Are you sure you would like to delete all conversations?",
-                                     icon="error")
-        if answer:
+        # Create a messagebox asking for confirmation
+        reply = QMessageBox.question(
+            None,
+            "Delete Chats",
+            f"Are you sure you would like to delete all conversations?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        if reply == QMessageBox.StandardButton.Yes:
             shutil.rmtree(load_data_path("local", "chats"))
             show_toast(globals, "Conversations deleted!")
-        root.destroy()
 
     ctk.CTkLabel(deletion_frame,
                  text=None,
