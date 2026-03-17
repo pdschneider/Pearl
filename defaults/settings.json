@@ -6,14 +6,20 @@
     "tts_source": "Default",
     "dynamic_mode": false,
     "logging_level": "INFO",
-    "active_theme": "dark_cloud",
+    "active_theme": "cosmic_sky",
     "save_chats": false,
     "default_sink": "Default",
     "context_model": "llama3.2:latest",
+    "title_gen_model": "llama3.2:latest",
     "saved_width": 0,
     "saved_height": 0,
     "saved_x": 0,
     "saved_y": 0,
     "github_check": false,
-    "language": "English"
+    "language": "English",
+    "ollama_chat_path": "http://localhost:11434/",
+    "ollama_context_path": "http://localhost:11434/",
+    "ollama_title_path": "http://localhost:11434/",
+    "enable_context": true,
+    "generate_titles": true
 }
