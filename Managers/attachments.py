@@ -2,8 +2,16 @@
 from PySide6.QtWidgets import QFileDialog
 import logging
 import os
+import pdfplumber
 from Utils.toast import show_toast
 
+try:
+    from pdf2image import convert_from_path
+    import pytesseract
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
+    logging.warning("OCR libraries (pdf2image/pytesseract) not found. Fallback disabled.")
 
 accepted_filetypes = [".txt", ".csv", ".json",
                       ".py", ".pyw", ".spec",
@@ -15,7 +23,7 @@ accepted_filetypes = [".txt", ".csv", ".json",
                       ".tex", ".org", ".conf",
                       ".js", ".sql", ".go",
                       ".rs", ".php", ".cpp",
-                      ".c", ".h", ".cs ",
+                      ".c", ".h", ".cs",
                       ".kt", ".swift", ".dart",
                       ".ts", ".tsx", ".jsx",
                       ".rb", ".pl", ".lua",
@@ -23,7 +31,8 @@ accepted_filetypes = [".txt", ".csv", ".json",
                       ".yml", ".env", ".r",
                       ".text", ".asc", ".properties",
                       ".m3u", ".lst", ".list",
-                      ".gitignore", ".gitattributes"]
+                      ".gitignore", ".gitattributes",
+                      ".pdf"]
 
 def attach_file(globals):
     """Attach a file to a message."""
@@ -52,10 +61,8 @@ def attach_file(globals):
 
         # Open and extract file contents if filetype is accepted, save as global variable
         for i in accepted_filetypes:
-            if file.lower().endswith(i.lower()):
+            if file.lower().endswith(i):
                 passed = True
-                with open(file, "r", encoding='utf-8') as f:
-                    attachment = f.read(max_character_length).strip()
                 break
         
         # Exit with warning if file type is not supported
@@ -63,6 +70,13 @@ def attach_file(globals):
             logging.warning(f"File type not supported: {file}")
             show_toast(globals, message=f"File type not supported: {file}", _type="error")
             return
+
+        # Open and read file if passed
+        if file.lower().endswith(".pdf"):
+            attachment = parse_pdf(globals, file)
+        else:
+            with open(file, "r", encoding='utf-8') as f:
+                attachment = f.read(max_character_length).strip()
 
         # Exit with warning if file is empty
         if not attachment:
@@ -100,3 +114,49 @@ def attach_file(globals):
     globals.file_attachment = attachment
     globals.file_button.configure(state="disabled")
     globals.attach_tip.configure(message="File Already Attached")
+
+
+def parse_pdf(globals, file):
+    """Parse text from a PDF."""
+    text_collected = ""
+    try:
+        with pdfplumber.open(file) as pdf:
+            if len(pdf.pages) > 50:
+                logging.warning(f"PDF files can only be 50 pages or less.")
+                show_toast(globals, message="Only 50 page or less PDF files are supported.", _type="error")
+                return
+            for page in pdf.pages:
+                text = page.extract_text(layout=True) or ""
+                if text.strip():
+                    text_collected += text.strip() + "\n\n"
+        if text_collected:
+            return text_collected
+    
+        # Only run OCR if no text was extracted
+        elif not text_collected.strip():
+            logging.debug("pdfplumber returned no text - falling back to OCR")
+            ocr_text = extract_with_ocr(file)
+            return ocr_text
+    
+    except Exception as e:
+        logging.error(f"Error reading with pdfplumber: {e}\nAttempting fallback OCR...")
+        return ""
+
+def extract_with_ocr(file):
+    """Extract text with OCR if pdfplumber fails."""
+    if not OCR_AVAILABLE:
+        logging.warning(f"OCR not available for {file}. Skipping fallback.")
+        return ""
+    try:
+        images = convert_from_path(file)
+        text_collected = ""
+        for image in images:
+            text = pytesseract.image_to_string(image)
+            if text.strip():
+                text_collected += text + "\n\n"
+        logging.debug(f"Full PDF text with OCR: {text_collected}")
+        return str(text_collected)
+
+    except Exception as e:
+        logging.error(f"OCR error on {file}: {e}")
+        return ""

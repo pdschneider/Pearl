@@ -34,7 +34,7 @@ class Globals:
         self.refresh_globals()
 
         # Current Version
-        self.current_version = "0.2.5"
+        self.current_version = "0.3.0"
         self.latest_version = None
         self.ollama_version = None
         self.docker_version = None
@@ -44,6 +44,7 @@ class Globals:
 
         # Thread Locks
         self.speaking_lock = threading.Lock()
+        self.prompt_lock = threading.Lock()
 
         # Tkinter Vars
         self.theme_var = None
@@ -56,6 +57,11 @@ class Globals:
         self.sink_var = None
         self.github_check_var = None
         self.language_var = None
+        self.ollama_chat_path_var = None
+        self.ollama_context_path_var = None
+        self.ollama_title_path_var = None
+        self.enable_context_var = None
+        self.generate_titles_var = None
 
         # Custom Tkinter Widgets
         self.send_button = None
@@ -108,6 +114,8 @@ class Globals:
         self.pearl_icon = None
         self.no_sound_icon = None
         self.stats_icon = None
+        self.operations_icon = None
+        self.title_icon = None
 
         # Pages
         self.main_frame = None
@@ -145,7 +153,7 @@ class Globals:
         self.assistant_message = ""
         self.file_attachment = None
         self.attachment_path = None
-        self.markdown_components = ["***", "___", "**", "__", "~~", "#####", "####", "###", "😊", "🚀"]
+        self.markdown_components = ["***", "___", "**", "__", "~~", "#####", "####", "###"]
         self.conversation_history = []
         self.conversation_id = None
         self.created_at = None
@@ -202,7 +210,12 @@ class Globals:
         self.saved_y = settings.get("saved_y", -1)
         self.github_check = settings.get("github_check", False)
         self.language = settings.get("language", "English")
-
+        self.ollama_chat_path = settings.get("ollama_chat_path", "http://localhost:11434/")
+        self.ollama_context_path = settings.get("ollama_context_path", "http://localhost:11434/")
+        self.ollama_title_path = settings.get("ollama_title_path", "http://localhost:11434/")
+        self.enable_context = settings.get("enable_context", True)
+        self.generate_titles = settings.get("generate_titles", True)
+        self.title_gen_model = settings.get("title_gen_model", "llama3.2:3b")
 
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ctk widgets."""

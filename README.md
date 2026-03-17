@@ -2,7 +2,10 @@
 
 Pearl is your assistant. She is 100% private and runs locally on your computer.
 
+<img src="defaults/assets/Pearl.png" align="right" width="30%" />
+
 ### ✨ Features
+
 - Private AI chats
 - Dynamic context switching based on keywords
 - Simple setup
@@ -11,6 +14,7 @@ Pearl is your assistant. She is 100% private and runs locally on your computer.
 - Sends no data outside the local machine by default
 - Comes with 5 themes
 - Supports file uploads
+- Utilize any device on LAN
 
 ### 🛠️ Dependencies
 - Ollama (with at least one LLM - llama3.2:latest is currently the most compatible)
@@ -22,6 +26,28 @@ Pearl is your assistant. She is 100% private and runs locally on your computer.
 - 8GB RAM
 - Linux Ubuntu 18.04 or later, or Window 10/11
 - 50GB+ Disk Space recommended
+
+## 📸 View Screenshots
+<details>
+<summary>📸 Pearl 1</summary>
+
+![Pearl Screenshot](Screenshots/Pearl-2.png)
+
+</details>
+
+<details>
+<summary>📸 Pearl 2</summary>
+
+![Pearl Screenshot](Screenshots/Pearl-3.png)
+
+</details>
+
+<details>
+<summary>📸 Pearl 3</summary>
+
+![Pearl Screenshot](Screenshots/Pearl-1.png)
+
+</details>
 
 ## 🚀 Build
 
@@ -58,7 +84,7 @@ Run this command from the app's root directory:
 
 On Windows, Pearl can also be built via Nuitka
 
-IMPORTANT: Must have Visual Studio Build Tools installed with C++ / MVSC bindings
+**IMPORTANT: Must have Visual Studio Build Tools installed with C++ / MVSC bindings**
 
 ```
 pip install -r requirements.txt

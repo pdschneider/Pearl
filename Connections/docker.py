@@ -1,7 +1,7 @@
 # Utils/docker.py
 import subprocess
 import logging
-from tkinter import messagebox
+from PySide6.QtWidgets import QMessageBox
 from Utils.hardware import get_disk_space, get_ram_info, get_os_info
 from Utils.toast import show_toast
 
@@ -46,21 +46,26 @@ def docker_check(globals):
             if not version:
                 return False
 
-            # If Docker is installed, test if active
+            # If Docker is installed
             basic_test = subprocess.run("docker ps",
                                         shell=True,
                                         capture_output=True,
                                         timeout=4)
+
+            # Return true if return code is 0
             if basic_test.returncode == 0:
                 if print_success:
                     logging.debug(f"'docker ps' command succeeded. Docker is running!")
                 globals.docker_active = True
                 return True
+
+            # Warn user if return code is not 0
             else:
                 logging.warning(
                      f"Docker is installed but not running. Enhanced TTS is unavailable.")
                 globals.docker_active = False
                 return False
+
         # Gracefully return false on exceptions
         except Exception as e:
             logging.error(
@@ -71,13 +76,18 @@ def docker_check(globals):
 
 def docker_installation(globals):
     """Installs Docker via the terminal."""
-    # Do an initial check to see if Ollama is already installed.
-    test = docker_check(globals)
+    # Do an initial check to see if Docker is already installed.
+    docker_check(globals)
 
     # Gracefully exit if Docker is already installed
-    if test:
+    if globals.docker_active:
         logging.warning(f"Docker is already active and running. No need to install.")
-        messagebox.showinfo("Docker Already Installed", message="Docker is already active and running. No need to install!")
+        QMessageBox.warning(
+                    None,
+                    "Docker Already Installed",
+                    f"Docker is already active and running. No need to install!",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
         return
 
     # Check disk space to ensure at least 1GB
@@ -118,8 +128,13 @@ def docker_installation(globals):
     # Warning for non-Linux users
     else:
         logging.warning(f"Only Linux is supported for Docker interactive install.")
-        messagebox.showinfo("OS Not Supported", message="Only Linux is supported for interactive install of Docker. Use the web installer instead.")
-    
+        QMessageBox.warning(
+                    None,
+                    "OS Not Supported",
+                    f"Only Linux is supported for interactive install of Docker. Use the web installer instead.",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
+
     # Test again to see if it worked
     test = docker_check(globals)
     if test:

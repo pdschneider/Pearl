@@ -21,7 +21,7 @@ def create_advanced_tab(globals, advanced_frame):
 
             Parameters:
                     globals: Global variables
-                    about_frame: The main frame of the about tab
+                    advanced_frame: The main frame of the advanced tab
     """
 
     # Get Icons
@@ -66,7 +66,7 @@ def create_advanced_tab(globals, advanced_frame):
         size=(40, 40))
 
     ctk.CTkLabel(advanced_frame,
-                 text="Advanced Settings",
+                 text="Advanced",
                  font=fonts.title_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
 

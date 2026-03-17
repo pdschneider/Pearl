@@ -1,6 +1,7 @@
 # Utils/context.py
 import logging
 from Connections.ollama import context_query, get_all_models
+from Utils.toast import show_toast
 
 
 def detect_context(globals, user_text):
@@ -55,7 +56,7 @@ def detect_context(globals, user_text):
         logging.debug(f"Detected context: {best_prompt}")
 
         # Get models list, return if empty
-        all_models = get_all_models(globals)
+        all_models = get_all_models(globals, endpoint=globals.ollama_chat_path)
         if not all_models:
             logging.warning(f"No models detected. Exiting context query...")
             return
@@ -69,14 +70,40 @@ def detect_context(globals, user_text):
                 globals.context_model = all_models[0]
                 logging.warning(f"Context model not found in models list. Defaulting to {all_models[0]}...")
 
+        # Set prompt to highest scoring for now, then query context model for long-term change
+        logging.info(f"Switching to {best_prompt} for next message!")
+        with globals.prompt_lock:
+            globals.active_prompt = best_prompt
+
         # Query context model
-        logging.debug(f"Querying context model...")
-        context_response = context_query(globals, model=globals.context_model, message=user_text)
-        if context_response:
-            logging.debug(f"Context model's response: {context_response}")
-            if context_response == best_prompt:
-                globals.active_prompt = best_prompt
-                logging.info(f"Context switched to {best_prompt}")
+        try:
+            logging.debug(f"Querying context model...")
+            context_response = context_query(globals, model=globals.context_model, message=user_text)
+            if context_response:
+                llm_prompt = str(context_response).strip().lower()
+                best_prompt = str(best_prompt).strip().lower()
+                logging.debug(f"Context model's response: {llm_prompt}")
+
+                # If context models response aligns with the determined prompt
+                if llm_prompt.startswith(best_prompt):
+                    with globals.prompt_lock:
+                        globals.active_prompt = best_prompt
+                    logging.info(f"Context switched to {best_prompt}")
+                else:
+                    logging.debug(f"Model choice and keywords not aligned: {best_prompt} vs {context_response}")
+                    logging.info(f"Switching back to Assistant prompt...")
+                    with globals.prompt_lock:
+                        globals.active_prompt = "Assistant"
+        
+        # Show error on exception
+        except Exception as e:
+            logging.error(f"Unable to query context model or switch prompt due to: {e}")
+            show_toast(globals,
+                       message="Unable to reach context model - is Ollama up on that network?",
+                       _type="error")
+            with globals.prompt_lock:
+                        globals.active_prompt = "Assistant"
+
         return best_prompt, prompts_dict.get(best_prompt, {})
 
     logging.debug("No context detected.")

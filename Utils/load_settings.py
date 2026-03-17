@@ -71,6 +71,8 @@ def load_data_path(direct=None, filename=None, default=False):
                      "assets/ru-language.png",
                      "assets/no-sound.png",
                      "assets/column-chart.png",
+                     "assets/operations.png",
+                     "assets/tag.png",
                      "themes/cosmic_sky.json",
                      "themes/pastel_green.json",
                      "themes/blazing_red.json",

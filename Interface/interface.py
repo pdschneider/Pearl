@@ -5,7 +5,7 @@ import logging
 from Interface.Settings.settings import create_settings
 from Interface.chat_window import create_chat_tab
 from Interface.Components.top_bar import create_top_bar
-from Interface.setup_window import create_setup_tab
+from Interface.Setup.setup_window import create_setup_tab
 from Interface.Components.sidebar import create_sidebar
 from Interface.changelog import create_changelog_tab
 from Utils.load_settings import load_data_path
@@ -100,6 +100,11 @@ def create_interface(globals):
         globals.sink_var = ctk.StringVar(value=globals.default_sink)
         globals.github_check_var = ctk.BooleanVar(value=globals.github_check)
         globals.language_var = ctk.StringVar(value=globals.language)
+        globals.ollama_chat_path_var = ctk.StringVar(value=globals.ollama_chat_path)
+        globals.ollama_context_path_var = ctk.StringVar(value=globals.ollama_context_path)
+        globals.ollama_title_path_var = ctk.StringVar(value=globals.ollama_title_path)
+        globals.enable_context_var = ctk.BooleanVar(value=globals.enable_context)
+        globals.generate_titles_var = ctk.BooleanVar(value=globals.generate_titles)
 
         # Create tabs
         create_chat_tab(globals, globals.chat_page)

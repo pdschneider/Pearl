@@ -11,6 +11,7 @@ from Managers.chat_history import (save_conversation,
                                    start_new_conversation)
 from Utils.context import detect_context
 from Utils.toast import show_toast
+from Utils.hardware import cpu_temp_info
 from datetime import datetime
 
 
@@ -83,8 +84,12 @@ def send_message(globals, ui_elements):
     if globals.is_new_conversation:
         start_new_conversation(globals)
 
-    # Inspect for context
-    detect_context(globals, user_text)
+    # Inspect for context if enabled
+    if globals.enable_context:
+        threading.Thread(target=detect_context,
+                         args=(globals, user_text),
+                         daemon=True,
+                         name="Context Thread").start()
 
     # Add bubble and delete entry box contents
     ui_elements["add_bubble"]("user", clean_text)
@@ -132,7 +137,7 @@ def send_message(globals, ui_elements):
                                          if globals.cancel_event else None)
     tokens = 0
 
-    def pull_response():
+    def pull_response(user_text):
         """Pulls the response from Ollama via the thread-safe queue"""
         nonlocal tokens
         local_id = globals.current_response_id
@@ -150,6 +155,16 @@ def send_message(globals, ui_elements):
                     for component in globals.markdown_components:
                         globals.assistant_message.replace(component, "")
 
+                    # Health Check
+                    if globals.os_name.startswith("Linux"):
+                        temp = cpu_temp_info()['cpu_temp_c']
+                        if temp >= 100:
+                            logging.critical(f"CRITICAL WARNING: CPU TEMP: {temp}C")
+                        elif temp >= 90:
+                            logging.warning(f"WARNING: CPU temp: {temp}C")
+                        else:
+                            logging.debug(f"CPU Temp: {temp}C")
+
                     # TTS
                     play_tts(globals, text=globals.assistant_message)
 
@@ -166,13 +181,15 @@ def send_message(globals, ui_elements):
                         if last_widget.role == "assistant":
                             last_widget.tokens = tokens
                             last_widget._update_stats()
-                    
-                    # Set new conversation flag off
-                    globals.is_new_conversation = False
 
                     # Only save to file if save_chats is on
                     if globals.save_chats:
-                        save_conversation(globals)
+                        threading.Thread(target=save_conversation,
+                                         args=(globals, user_text),
+                                         daemon=True,
+                                         name="Save Chats Thread").start()
+                    else:
+                        globals.is_new_conversation = False
 
                     # Debug print full conversation history
                     # logging.debug(f"\nFull conversation history:\n{globals.conversation_history}\n")
@@ -208,6 +225,6 @@ def send_message(globals, ui_elements):
             globals.still_streaming = False
             return
 
-        globals.root.after(20, pull_response)
+        globals.root.after(20, lambda: pull_response(user_text))
 
-    pull_response()
+    pull_response(user_text)

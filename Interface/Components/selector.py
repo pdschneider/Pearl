@@ -14,7 +14,7 @@ class Treeview:
         self._last_idx = None
         self._rename_bind_id = None
         if get_dir is None:
-            self.get_dir = lambda: get_all_models(self.globals)
+            self.get_dir = lambda: get_all_models(self.globals, self.globals.ollama_chat_path)
         elif callable(get_dir):
             self.get_dir = get_dir
         else:
@@ -37,7 +37,7 @@ class Treeview:
             return
 
         models = self.get_dir()
-        loaded = get_loaded_models(self.globals)
+        loaded = get_loaded_models(self.globals, self.globals.ollama_chat_path)
         for idx, model in enumerate(sorted(models)):
             row = ctk.CTkFrame(self.selection_frame,
                                height=42,
@@ -98,8 +98,8 @@ class Treeview:
         self._rows.clear()
         self.selection_clear()
 
-        models = get_all_models(self.globals)
-        loaded = get_loaded_models(self.globals)
+        models = get_all_models(self.globals, self.globals.ollama_chat_path)
+        loaded = get_loaded_models(self.globals, self.globals.ollama_chat_path)
         for idx, model in enumerate(sorted(models)):
             row = ctk.CTkFrame(self.selection_frame,
                                height=42,

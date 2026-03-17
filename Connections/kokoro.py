@@ -9,6 +9,7 @@ from Utils.hardware import get_disk_space, get_ram_info
 from Utils.toast import show_toast
 from Utils.load_settings import load_data_path
 from Connections.docker import docker_check
+from PySide6.QtWidgets import QMessageBox
 
 
 # Kokoro
@@ -75,15 +76,31 @@ def fetch_current_language_models(globals):
             logging.error(
                 f"Failed to load voices due to {e}. Returning empty dictionary.")
             return {}
+    else:
+        return {}
 
 
 def install_kokoro(globals):
     """Installs Kokoro via the terminal."""
-    test = docker_check(globals)
+
+    # Return early if Kokoro is already up and running
+    if globals.kokoro_active:
+        logging.warning(f"Kokoro is already up and running - no need to install!")
+        QMessageBox.warning(
+                    None,
+                    "Kokoro Already Installed",
+                    f"Kokoro is already active and running. No need to install!",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
+        return
+
+    # Check if Docker is up and running
+    docker_check(globals)
 
     # If Docker is not installed, exit
-    if not test:
+    if not globals.docker_active:
         logging.warning(f"Docker must be installed and running before downloading Kokoro.")
+        logging.debug(f"Docker Version: {globals.docker_version} | Docker Active? {globals.docker_active}")
         show_toast(globals, message="Docker must be installed before downloading Kokoro", _type="error")
         return
 
@@ -97,7 +114,7 @@ def install_kokoro(globals):
 
     # Check available RAM to ensure at least 7GB
     free_ram = get_ram_info()['avail_ram_gb']
-    logging.debug(f"RAM: get_ram_info()['avail_ram_gb']")
+    logging.debug(f"RAM: {free_ram}")
     if free_ram < 7:
         logging.warning(f"Available RAM must be at least 7GB to install Kokoro.")
         show_toast(globals, message="Must have at least 7GB of available RAM to install Kokoro", _type="error")
@@ -156,6 +173,7 @@ def uninstall_kokoro(globals):
     """Uninstalls Kokoro-FastAPI."""
     kokoro_installed = kokoro_test(globals)
 
+    # Exit early if Kokoro is not installed
     if not kokoro_installed:
         logging.warning(f"Kokoro not installed — no need to uninstall.")
         show_toast(globals, message="Kokoro not installed — no need to uninstall")

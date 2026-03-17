@@ -26,6 +26,11 @@ def save_all_settings(globals, reject_toast=False):
     current_save_chats = globals.save_chats_var.get()
     current_sink = globals.sink_var.get()
     current_github_check = globals.github_check_var.get()
+    current_ollama_chat_path = globals.ollama_chat_path_var.get()
+    current_ollama_context_path = globals.ollama_context_path_var.get()
+    current_ollama_title_path = globals.ollama_title_path_var.get()
+    current_enable_context = globals.enable_context_var.get()
+    current_generate_titles = globals.generate_titles_var.get()
 
     # Handle logging level based on dev mode change
     logging_level = current_logging_level
@@ -61,7 +66,12 @@ def save_all_settings(globals, reject_toast=False):
             saved_height=current_height,
             saved_x=current_x,
             saved_y=current_y,
-            github_check=current_github_check)
+            github_check=current_github_check,
+            ollama_chat_path=current_ollama_chat_path,
+            ollama_context_path=current_ollama_context_path,
+            ollama_title_path=current_ollama_title_path,
+            enable_context=current_enable_context,
+            generate_titles=current_generate_titles)
 
     # Refresh Globals
     globals.refresh_globals()
@@ -77,6 +87,11 @@ def save_all_settings(globals, reject_toast=False):
     globals.save_chats_var.set(settings["save_chats"])
     globals.sink_var.set(settings["default_sink"])
     globals.github_check_var.set(settings["github_check"])
+    globals.ollama_chat_path_var.set(settings["ollama_chat_path"])
+    globals.ollama_context_path_var.set(settings["ollama_context_path"])
+    globals.ollama_title_path_var.set(settings["ollama_title_path"])
+    globals.enable_context_var.set(settings["enable_context"])
+    globals.generate_titles_var.set(settings["generate_titles"])
 
     # Update logging
     logging.root.setLevel(getattr(logging, settings["logging_level"]))

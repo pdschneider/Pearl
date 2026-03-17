@@ -2,6 +2,33 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.3.0] - 2026-03-17
+
+Pearl now has networking capabilities! You can now utilize multiple devices for context detection, title generation, & chats so long as they are compatible with Ollama. Context detection logic and speed have also greatly improved and pdf files are now supported!
+
+### Added
+- Networking: users can now utilize multiple devices for chats, title generation, & context detection
+- Context detection toggle now available in settings
+- Pearl now generates chat titles
+- Chat title generation toggle available in settings
+- Added optional wizard to about settings
+- Added bug report button in about settings
+- .pdf files are now supported in file attachments
+
+### Changed
+- Greatly improved context detection logic and keywords
+- Context detection now runs in a separate thread, improving chat speed
+- Converted all convertable message boxes to PySide6
+- Updated About page
+- Updated Dependencies
+- Updated ReadME
+
+### Fixed
+- Added dependency check and installer script for Linux systems missing libxb-cursor0
+- Fixed major bug where Linux systems without Kokoro installed would crash
+- Toasts now correctly display when selecting models
+- General stability improvements
+
 ## [0.2.5] - 2026-03-13
 
 This update adds new buttons to assistant messages, giving more control over TTS output and helpful information, along with an improved updater and partial re-write in the much more modern GUI framework PySide6. This is the beginning of a slow transition to the new framework.

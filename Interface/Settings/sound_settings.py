@@ -37,7 +37,7 @@ def create_sound_tab(globals, sound_tab):
         size=(40, 40))
 
     ctk.CTkLabel(sound_tab,
-                 text="Sound Settings",
+                 text="Sound",
                  font=fonts.title_font,
                  anchor="center").pack(fill="x", pady=20, padx=10)
 
@@ -107,7 +107,7 @@ def create_sound_tab(globals, sound_tab):
                     state="readonly").pack(side="left", padx=5)
 
     # TTS Voices Box
-    if globals.os_name.startswith("Linux"):
+    if globals.os_name.startswith("Linux") and globals.kokoro_active:
         available_voices = {}
 
         # Create dictionary mapping human-readable names to Kokoro-readable names
@@ -205,7 +205,9 @@ def create_sound_tab(globals, sound_tab):
             else:
                 tts_source_combobox.pack_forget()
 
-        update_voice_combobox()
+        # Update box only if Kokoro is active
+        if globals.kokoro_active:
+            update_voice_combobox()
 
         globals.tts_source_var.trace_add("write", update_voice_combobox)
 

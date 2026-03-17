@@ -1,12 +1,14 @@
 # pearl.py
+import sys
+import logging
+from Utils.dependencies import check_dependencies
+check_dependencies()
 from config import globals
 from Utils.startup import startup
 from Interface.interface import create_interface
 from Utils.startup import startup
 from Utils.save_settings import save_all_settings
 from Utils.factory_reset import factory_reset_config
-import sys
-import logging
 
 
 # Tests dependencies and sets flags
@@ -39,7 +41,7 @@ if __name__ == "__main__":
             globals.root.mainloop()
         except Exception as error:
             logging.critical(f"Creash in bundled mode!")
-            factory_reset_config(error)
+            factory_reset_config(globals, error)
             if globals.root:
                 try:
                     globals.root.quit()

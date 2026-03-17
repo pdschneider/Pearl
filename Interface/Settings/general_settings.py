@@ -47,6 +47,16 @@ def create_general_settings_tab(globals, general_frame):
         dark_image=Image.open(load_data_path("config", "assets/en-language.png")),
         size=(40, 40))
 
+    globals.operations_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/operations.png")),
+        dark_image=Image.open(load_data_path("config", "assets/operations.png")),
+        size=(40, 40))
+    
+    globals.title_icon = CTkImage(
+        light_image=Image.open(load_data_path("config", "assets/tag.png")),
+        dark_image=Image.open(load_data_path("config", "assets/tag.png")),
+        size=(40, 40))
+
     ctk.CTkLabel(general_frame,
                  text="General Settings",
                  font=fonts.title_font,
@@ -178,6 +188,60 @@ def create_general_settings_tab(globals, general_frame):
                     text=None,
                     offvalue=False).pack(side="left", padx=5)
 
+    # Context Detection
+    context_frame = ctk.CTkFrame(general_frame,
+                                  bg_color="transparent",
+                                  fg_color="transparent")
+    context_frame.pack(fill="x", pady=10, padx=10)
+
+    ctk.CTkLabel(context_frame,
+                 text=None,
+                 image=globals.operations_icon).pack(side="left", padx=6, pady=0)
+
+    context_label = ctk.CTkLabel(context_frame,
+                                    text="Context Detection",
+                                    font=fonts.heading_font)
+    context_label.pack(side="left", padx=(0, 12))
+    CTkToolTip(context_label,
+               message="Turns on/off context detection",
+               delay=0.8,
+               follow=True,
+               padx=10,
+               pady=5)
+
+    ctk.CTkCheckBox(context_frame,
+                    variable=globals.enable_context_var,
+                    onvalue=True,
+                    text=None,
+                    offvalue=False).pack(side="left", padx=5)
+    
+    # Title Generation
+    title_gen_frame = ctk.CTkFrame(general_frame,
+                                  bg_color="transparent",
+                                  fg_color="transparent")
+    title_gen_frame.pack(fill="x", pady=10, padx=10)
+
+    ctk.CTkLabel(title_gen_frame,
+                 text=None,
+                 image=globals.title_icon).pack(side="left", padx=6, pady=0)
+
+    context_label = ctk.CTkLabel(title_gen_frame,
+                                    text="Generate Chat Titles",
+                                    font=fonts.heading_font)
+    context_label.pack(side="left", padx=(0, 12))
+    CTkToolTip(context_label,
+               message="Turns on/off title generation",
+               delay=0.8,
+               follow=True,
+               padx=10,
+               pady=5)
+
+    ctk.CTkCheckBox(title_gen_frame,
+                    variable=globals.generate_titles_var,
+                    onvalue=True,
+                    text=None,
+                    offvalue=False).pack(side="left", padx=5)
+
     # Deletion Frame
     deletion_frame = ctk.CTkFrame(general_frame,
                                   bg_color="transparent",
@@ -201,7 +265,7 @@ def create_general_settings_tab(globals, general_frame):
                  image=globals.delete_icon).pack(side="left", padx=6, pady=0)
 
     ctk.CTkLabel(deletion_frame,
-                 text="Delete All Chats:",
+                 text="Delete All Chats",
                  font=fonts.heading_font).pack(side="left", padx=(0, 12))
 
     delete_chats_button = ctk.CTkButton(deletion_frame,

@@ -3,36 +3,49 @@ import subprocess
 import logging
 import psutil
 import platform
+import os
 
 os_name = platform.platform()
 
 
 def get_os_info():
-    """Gets granular information about the OS."""
+    """Gets granular information about Linux OS."""
     components = ["ID=", "NAME=", "UBUNTU_CODENAME=", "PRETTY_NAME=", "ID_LIKE="]
     os_parts = {'NAME': None, 'ID': None, 'ID_LIKE': None, 'PRETTY_NAME': None, 'UBUNTU_CODENAME': None}
+
+    # Exit if OS is Windows-basec
     if os_name.startswith("Windows"):
         return os_parts
+    
+    # Poll /etc/os-release if on a Linux system
     elif os_name.startswith("Linux"):
         try:
+            # Return if /etc/os-release is not found
+            if not os.path.isfile("/etc/os-release"):
+                logging.warning(f"Unable to locate /etc/os-release.")
+                return os_parts
+
             # Extract text from the os-release file
             with open("/etc/os-release", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     for component in components:
+
                         # Add present values to os_parts
                         if line.startswith(component):
                             value = line.strip().replace(component, '').replace('"', '')
                             new_component = component.replace("=", "")
                             os_parts[f'{new_component}'] = value
+
                 # Add keys for missing values
                 for component in components:
                     component = component.replace("=", "")
                     if component not in os_parts:
                         os_parts[component] = None
             return os_parts
+
         except Exception as e:
-            logging.warning(f"Unable to locate /etc/os-release.")
+            logging.warning(f"Unable to locate /etc/os-release due to: {e}")
             return os_parts
     else:
         logging.warning(f"Only Windows and Linux are officially supported.")
@@ -47,6 +60,8 @@ def get_ram_info():
         return {'avail_ram_gb': avail_ram_gb, 'total_ram_gb': total_ram_gb}
     except Exception as e:
         logging.warning(f"Could not retrieve RAM information: {e}.")
+
+    # Fall back to /proc/meminfo on Linux if psutil fails
     if os_name.startswith("Linux"):
         try:
             with open('/proc/meminfo') as f:
@@ -70,7 +85,9 @@ def get_cpu_info():
         cpu_threads = psutil.cpu_count(logical=True)
         return {'cpu_threads': cpu_threads}
     except Exception as e:
-        logging.warning(f"Unable to retrieve CPU thread count: {e}")
+        logging.warning(f"Unable to retrieve CPU thread count via psutil: {e}")
+    
+    # Fall back to /proc/cpuinfo on Linux if psutil fails
     if os_name.startswith("Linux"):
         try:
             with open('/proc/cpuinfo') as f:
@@ -126,6 +143,10 @@ def cpu_temp_info():
 
     # Not supported on Windows
     elif os_name.startswith("Windows"):
+        return {'cpu_temp_c': None}
+
+    # Not supported on any other OS
+    else:
         return {'cpu_temp_c': None}
 
 
@@ -222,6 +243,7 @@ def get_gpu_info():
                     gpu_vram_gb = int(vram_line.split()[-2]) / (1024**3)
                     has_llm_gpu = True
                     gpu_type = "AMD with ROCm"
+
         except Exception as e:
             logging.warning(f"Unable to retrieve AMD GPU information: {e}.")
             pass
@@ -239,19 +261,23 @@ def get_disk_space():
         return {'total_disk': total, 'used_disk': used, 'free_disk': free, 'percent_disk': percent}
     except Exception as e:
         logging.error(f"Could not calculate disk space due to {e}")
+        return {'total_disk': None, 'used_disk': None, 'free_disk': None, 'percent_disk': None}
 
 
 def get_hardware_stats():
     """Collect system hardware stats (RAM, CPU, GPU)."""
-    os = get_os_info()
-    ram = get_ram_info()
-    cpu = get_cpu_info()
-    cput = cpu_temp_info()
-    l3c = get_l3_cache()
-    gpu = get_gpu_info()
-    disk = get_disk_space()
+    try:
+        os = get_os_info()
+        ram = get_ram_info()
+        cpu = get_cpu_info()
+        cput = cpu_temp_info()
+        l3c = get_l3_cache()
+        gpu = get_gpu_info()
+        disk = get_disk_space()
 
-    stats = {**ram, **cpu, **cput, **l3c, **gpu, **disk, **os}
+        stats = {**ram, **cpu, **cput, **l3c, **gpu, **disk, **os}
+    except Exception as e:
+        logging.warning(f"Unable to retreive hardware stats due to: {e}")
 
     try:
         logging.info("\nDetected Hardware:")
@@ -266,8 +292,8 @@ def get_hardware_stats():
         logging.info(f"  - DISK: {stats['free_disk']}GB free / {stats['total_disk']} total / {stats['used_disk']} used")
         logging.info(f"  - LLM-capable GPU: {'Yes' if stats['has_llm_gpu'] else 'No'} ({stats['gpu_type']}, {stats['gpu_vram_gb']:.1f}GB VRAM)\n")
 
-    except:
-        logging.warning(f"Unable to parse one or more hardware statistics.")
+    except Exception as e:
+        logging.warning(f"Unable to parse one or more hardware statistics due to: {e}")
         pass
 
     return stats

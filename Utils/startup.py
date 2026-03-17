@@ -37,6 +37,9 @@ def startup(globals):
         logging.getLogger('comtypes').setLevel(logging.WARNING)
         logging.getLogger('pyttsx3').setLevel(logging.WARNING)
         logging.getLogger('webbrowser').setLevel(logging.WARNING)
+        logging.getLogger('pdfplumber').setLevel(logging.WARNING)
+        logging.getLogger('pdfminer').setLevel(logging.WARNING)
+        logging.getLogger('pdfminer.six').setLevel(logging.WARNING)
 
         logs_dir = os.path.join(load_data_path(direct="cache"), "logs")  # Sets up logs folder
         os.makedirs(logs_dir, exist_ok=True)  # Creates the logs folder if it doesn't exist
@@ -74,7 +77,7 @@ def startup(globals):
             # Accepted string values
             accepted_logging_values = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
             accepted_themes = ["cosmic_sky", "pastel_green", "blazing_red", "dark_cloud", "soft_light"]
-            accepted_languages = ["English", "Spanish", "French", "Russian"]
+            accepted_languages = ["English"]
 
             # Check to make sure keys are present and the correct type
             if "active_model" not in data or not isinstance(data["active_model"], str):
@@ -121,6 +124,10 @@ def startup(globals):
                 data["context_model"] = "llama3.2:latest"
                 changed = True
                 logging.info(f"Added missing or nonconforming 'context_model' key to settings.json")
+            if "title_gen_model" not in data or not isinstance(data["title_gen_model"], str):
+                data["title_gen_model"] = "llama3.2:latest"
+                changed = True
+                logging.info(f"Added missing or nonconforming 'title_gen_model' key to settings.json")
             if "saved_width" not in data or not isinstance(data["saved_width"], int):
                 data["saved_width"] = 0
                 changed = True
@@ -145,6 +152,26 @@ def startup(globals):
                 data["language"] = "English"
                 changed = True
                 logging.info(f"Added missing key 'language' to settings.json")
+            if "ollama_chat_path" not in data or not isinstance(data["ollama_chat_path"], str):
+                data["ollama_chat_path"] = "http://localhost:11434/"
+                changed = True
+                logging.info(f"Added missing or nonconforming 'ollama_chat_path' key to settings.json")
+            if "ollama_context_path" not in data or not isinstance(data["ollama_context_path"], str):
+                data["ollama_context_path"] = "http://localhost:11434/"
+                changed = True
+                logging.info(f"Added missing or nonconforming 'ollama_context_path' key to settings.json")
+            if "ollama_title_path" not in data or not isinstance(data["ollama_title_path"], str):
+                data["ollama_title_path"] = "http://localhost:11434/"
+                changed = True
+                logging.info(f"Added missing or nonconforming 'ollama_title_path' key to settings.json")
+            if "enable_context" not in data or not isinstance(data["enable_context"], bool):
+                data["enable_context"] = True
+                changed = True
+                logging.info(f"Added missing or nonconforming 'enable_context' key to settings.json")
+            if "generate_titles" not in data or not isinstance(data["generate_titles"], bool):
+                data["generate_titles"] = True
+                changed = True
+                logging.info(f"Added missing or nonconforming 'generate_titles' key to settings.json")
 
             # Write to file
             if changed:
@@ -369,7 +396,7 @@ def startup(globals):
             # Test for Ollama
             ollama_success = ollama_test(globals)
             if ollama_success:
-                loaded_models = get_loaded_models(globals)
+                loaded_models = get_loaded_models(globals, endpoint=globals.ollama_chat_path)
                 if globals.active_model not in loaded_models:
                     logging.debug(f"Attempting to load initial model....")
                     # Loads the active model before GUI is built
