@@ -1,0 +1,28 @@
+
+# Build and distribution folders
+dist/
+build/
+
+# Nuitka / PyInstaller outputs
+*.AppImage
+Pearl-Linux
+Pearl.bin
+pearl.bin
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+pearl_venv/
+
+# All __pycache__ folders (recursive)
+__pycache__/
+
+# Specific project excludes
+Notes.txt
+backburner/
+data/
+.vscode/
+build_linux.sh
+.git/
