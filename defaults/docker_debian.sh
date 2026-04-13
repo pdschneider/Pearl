@@ -53,6 +53,16 @@ echo "Updating repositories..."
 sudo apt update || echo "Warning: apt update had warnings/errors — continuing anyway"
 echo ""
 
+# Notify of Terms
+echo "Docker Engine (CE) on Linux is free and open source (Apache 2.0 license)."
+echo "It can be used for any purpose, including commercial and production environments."
+echo ""
+echo "Full license details: https://docs.docker.com/engine/install/ubuntu/"
+echo "Docker Subscription Service Agreement (mainly applies to Docker Desktop): https://www.docker.com/legal/docker-subscription-service-agreement"
+echo ""
+echo 'Press Enter to install Docker (you will need to enter your sudo password)...';
+read -p '> ' dummy
+
 # Install Docker
 echo "Installing Docker..."
 sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin

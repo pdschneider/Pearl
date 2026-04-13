@@ -1,6 +1,10 @@
 # Pearl — Personal Everything Assistant Running Locally
 
-Pearl is your assistant. She is 100% private and runs locally on your computer.
+**Pearl** is your assistant. She is 100% private and runs locally on your computer.
+
+## Welcome to Pearl!
+
+Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, or data sent over the web happens by default after initial setup. She chats with you privately, switches context intelligently, and supports file uploads.
 
 <img src="defaults/assets/Pearl.png" align="right" width="30%" />
 
@@ -16,16 +20,34 @@ Pearl is your assistant. She is 100% private and runs locally on your computer.
 - Supports file uploads
 - Utilize any Ollama-compatible device on LAN
 
-### 🛠️ Dependencies
-- Ollama with at least one model
-- Kokoro Fast-API for optional TTS integration
-- Docker (a dependency for Kokoro, optional)
+## ⚡ Getting Started
 
-### ⚙️ Requirements
-- 4-Core CPU
-- 8GB RAM highly recommended
-- Linux Ubuntu 18.04 or later, or Window 10/11
-- 50GB+ Disk Space recommended
+1. **Download** the latest release for your platform:
+   - Windows: [`Pearl.exe`](https://github.com/pdschneider/Pearl/releases)
+   - Linux: [`Pearl.AppImage`](https://github.com/pdschneider/Pearl/releases)
+
+2. **Run the app** (first time only):
+   - The onboarding wizard will guide you through setup
+   - Download dependencies
+   - Choose a model
+
+3. **Start chatting**:
+   - Type your message and click Send (>) or Enter
+   - Optionally attach a file
+   - Click the Settings Gear to customize Pearl
+
+→ Full step-by-step instructions are available in **[How to Use Pearl](docs/usage.md)**.
+
+[GitHub repository](https://github.com/pdschneider/Pearl)
+
+## 📚 Documentation
+
+| Document                               | Description                              |
+|----------------------------------------|------------------------------------------|
+| [usage.md](docs/usage.md)              | Complete user guide and workflow         |
+| [build.md](docs/build.md)              | How to build from source                 |
+| [roadmap.md](docs/roadmap.md)          | Planned features and future direction    |
+| [architecture.md](docs/architecture.md)| Technical architecture (for developers)  |
 
 ## 📸 View Screenshots
 <details>
@@ -49,61 +71,34 @@ Pearl is your assistant. She is 100% private and runs locally on your computer.
 
 </details>
 
-## 🚀 Build
+### 🛠️ Dependencies
+- Ollama with at least one model
+- Kokoro Fast-API for optional TTS integration
+- Docker (a dependency for Kokoro, optional)
 
-### 🐧 Linux
-
-Pearl can be built from source files via Nuitka & bundled into an AppImage on Linux:
-
-```
-pip install -r requirements.txt
-
-nuitka \
-    --standalone \
-    --onefile \
-    --remove-output \
-    --output-dir=dist \
-    --enable-plugin=pyside6 \
-    --enable-plugin=tk-inter \
-    --include-qt-plugins=platforms,iconengines,imageformats \
-    --include-package=pyttsx3.drivers \
-    --include-data-dir=defaults=defaults \
-    --include-data-files=CHANGELOG.md=CHANGELOG.md \
-    --include-data-files=README.md=README.md \
-    pearl.py
-    
-```
-
-Set AppRun inside Pearl.AppDir as executable prior to building the AppImage
-
-Copy pearl.bin to subdirectory Pearl.AppDir/usr/bin
-
-Run this command from the app's root directory:
-`appimagetool Pearl.AppDir Pearl-Linux.AppImage -v`
-
-### 🖥️ Windows
-
-On Windows, Pearl can also be built via Nuitka
-
-**IMPORTANT: Must have Visual Studio Build Tools installed with C++ / MVSC bindings**
-
-```
-pip install -r requirements.txt
-
-nuitka --standalone --msvc=latest --onefile --remove-output --enable-plugin=pyside6 --include-qt-plugins=platforms --enable-plugin=tk-inter --windows-disable-console --output-dir=dist --include-package=pyttsx3.drivers --windows-icon-from-ico=defaults/assets/pearl.ico --include-data-dir=defaults=defaults --include-data-files=CHANGELOG.md=CHANGELOG.md --include-data-files=README.md=README.md pearl.py
-
-```
-
-## 🪲 Report Bugs
-Report bugs via GitHub Issues or to bugs@phillipplays.com.
+### ⚙️ Requirements
+- 4-Core CPU
+- 8GB RAM highly recommended
+- Linux Ubuntu 18.04 or later, or Window 10/11
+- 50GB+ Disk Space recommended
 
 ## 💬 Testimonials
 
 "I love the Pearl AI! So friendly and sweet." - lils_the_gamer1 (Twitch)
 
+"It works well. This is how I like to use my AI." - CHAINSAWBEAR (Twitch)
+
 "It was really easy to run with the AppImage. Good job!" - ChainsawCowboy (Minds)
 
 "Pearl was just telling me her favorite thing to do is dance. I don't have the heart to tell her that she doesn't have legs." - ChainsawCowboy (Minds)
+
+## 🌟 Credits
+
+- Icon by Twoeliz
+- Developed by Phillip Schneider
+
+## 🪲 Report Bugs
+Report bugs via GitHub Issues or to bugs@phillipplays.com.
 
 ## ⚠️ Disclaimer - Third-Party AI Models
 

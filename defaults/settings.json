@@ -7,7 +7,7 @@
     "dynamic_mode": false,
     "logging_level": "INFO",
     "active_theme": "cosmic_sky",
-    "save_chats": false,
+    "save_chats": true,
     "default_sink": "Default",
     "context_model": "llama3.2:latest",
     "title_gen_model": "llama3.2:latest",

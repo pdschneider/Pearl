@@ -2,12 +2,37 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.3.2] - 2026-04-13
+
+This update features an officially recognized certificate for Windows users, increasing compatibility with Windows Defender. It also features simple installer scripts for Docker and Kokoro on Windows so Windows users can benefit from enhanced TTS without the hastle of a complex setup, along with various bug fixes and documentation additions.
+
+### Added
+- Added documentation: Architecture, Build Instructions, Roadmap, Usage
+- Improved context detection via adding more keywords
+- Added debian folder structure for future .deb builds
+- Added model download script for Windows users when no model is available but Ollama is running
+- Pearl on Windows is now signed with an officially recognized code signing certificate
+- Added simple Docker and Kokoro installation for Windows users
+
+### Changed
+- Reorganized project structure
+- Updated Dependencies
+- Updated ReadMe
+
+### Fixed
+- Fixed crash when trying to report a bug
+- Fixed various crashes resulting from QT-based messageboxes
+- General stability & UI improvements
+
+### Security
+- Patched moderate level cryptography vulnerability which allowed buffer overflow attacks in certain scenarios
+
 ## [0.3.1] - 2026-03-29
 
 This update features a hotfix for Windows users who had trouble getting past Windows Defender false positives, along with general back-end and organizational improvements to speed up build time.
 
 ### Added
-- Added quantization to model info parser
+- Added metadata to Windows build
 - Added .gitignore file + helper script for faster builds
 
 ### Changed

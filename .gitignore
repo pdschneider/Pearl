@@ -5,8 +5,8 @@ build/
 
 # Nuitka / PyInstaller outputs
 *.AppImage
+*.deb
 Pearl-Linux
-Pearl.bin
 pearl.bin
 
 # Virtual environments
@@ -24,5 +24,8 @@ Notes.txt
 backburner/
 data/
 .vscode/
-build_linux.sh
+build.sh
+build.ps1
+build_deb.sh
 .git/
+.Diricon

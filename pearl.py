@@ -1,14 +1,14 @@
 # pearl.py
 import sys
 import logging
-from Utils.dependencies import check_dependencies
+from src.utils.dependencies import check_dependencies
 check_dependencies()
 from config import globals
-from Utils.startup import startup
-from Interface.interface import create_interface
-from Utils.startup import startup
-from Utils.save_settings import save_all_settings
-from Utils.factory_reset import factory_reset_config
+from src.utils.startup import startup
+from src.interface.interface import create_interface
+from src.utils.startup import startup
+from src.utils.save_settings import save_all_settings
+from src.utils.factory_reset import factory_reset_config
 
 
 # Tests dependencies and sets flags
@@ -25,7 +25,6 @@ def on_closing():
     globals.root.destroy()
     if globals.startup_root:
         globals.startup_root.quit()
-        globals.startup_root.destroy()
     logging.shutdown()
 
 if __name__ == "__main__":

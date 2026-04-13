@@ -7,15 +7,17 @@ import logging
 import platform
 import pyttsx3
 import threading
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMainWindow
 from version import __version__
-from Utils.load_settings import (load_prompts,
+from src.utils.load_settings import (load_prompts,
                                  load_settings,
                                  load_context,
                                  load_data_path,
                                  load_ollama_sh,
                                  load_docker_debian,
-                                 load_docker_ubuntu)
+                                 load_docker_ubuntu,
+                                 load_docker_windows,
+                                 load_kokoro_windows)
 
 
 class Globals:
@@ -28,6 +30,8 @@ class Globals:
         self.ollama_sh = load_ollama_sh()
         self.docker_debian = load_docker_debian()
         self.docker_ubuntu = load_docker_ubuntu()
+        self.docker_windows = load_docker_windows()
+        self.kokoro_windows = load_kokoro_windows()
         self.refresh_globals()
 
         # Current Version
@@ -38,6 +42,8 @@ class Globals:
 
         # PySide6 Widgets
         self.app = QApplication(sys.argv)
+        self.window = QMainWindow()
+        self.qt_mode = None
 
         # Thread Locks
         self.speaking_lock = threading.Lock()
