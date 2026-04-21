@@ -1,0 +1,10 @@
+#!/bin/sh
+# Runs before the package's files are removed
+# This script stops services and prepared the system for removal
+
+set -e
+
+# Stop any running instance (use -f for safety — works even if process name is long)
+pkill -f "/usr/bin/pearl" || true
+
+exit 0

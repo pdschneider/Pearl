@@ -1,4 +1,4 @@
-# Pearl — Personal Everything Assistant Running Locally
+# ⚪ Pearl — Personal Everything Assistant Running Locally
 
 **Pearl** is your assistant. She is 100% private and runs locally on your computer.
 
@@ -32,7 +32,7 @@ Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, 
    - Choose a model
 
 3. **Start chatting**:
-   - Type your message and click Send (>) or Enter
+   - Type your message and click Send (>) or press Enter
    - Optionally attach a file
    - Click the Settings Gear to customize Pearl
 
@@ -48,8 +48,9 @@ Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, 
 | [build.md](docs/build.md)              | How to build from source                 |
 | [roadmap.md](docs/roadmap.md)          | Planned features and future direction    |
 | [architecture.md](docs/architecture.md)| Technical architecture (for developers)  |
+| [attachments.md](docs/attachments.md)  | Supported filetypes as attachments       |
 
-## 📸 View Screenshots
+## 📸 Screenshots
 <details>
 <summary>📸 Pearl 1</summary>
 
@@ -75,6 +76,8 @@ Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, 
 - Ollama with at least one model
 - Kokoro Fast-API for optional TTS integration
 - Docker (a dependency for Kokoro, optional)
+
+***NOTE: All Dependencies can be installed within Pearl - this is the recommended installation method.***
 
 ### ⚙️ Requirements
 - 4-Core CPU

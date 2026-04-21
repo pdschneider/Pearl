@@ -14,13 +14,13 @@ from src.utils.factory_reset import factory_reset_config
 # Tests dependencies and sets flags
 startup(globals)
 
-
 def on_closing():
     """Saves all settings and shuts down logging before closing the program."""
     try:
         save_all_settings(globals, reject_toast=True)
     except Exception as e:
         logging.error(f"Error occurred when saving settings: {e}")
+    globals.root.withdraw()
     globals.root.quit()
     globals.root.destroy()
     if globals.startup_root:

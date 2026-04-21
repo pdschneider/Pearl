@@ -209,9 +209,9 @@ def create_sidebar(globals):
         start_new_conversation(globals)
 
         # Clear the current chat bubbles
-        for widget in globals.ui_elements["chat_frame"].winfo_children():
+        for widget in globals.chat_frame.winfo_children():
             widget.destroy()
-        globals.ui_elements["scroll_to_top"]()
+        globals.chat_frame._parent_canvas.yview_moveto(0.0)
         globals.root.update_idletasks()
 
         # Map chat page
@@ -273,7 +273,7 @@ def create_sidebar(globals):
         globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
 
         # Clear current chat bubbles
-        for widget in globals.ui_elements["chat_frame"].winfo_children():
+        for widget in globals.chat_frame.winfo_children():
             widget.destroy()
 
         # Add new bubbles from loaded chat
@@ -283,9 +283,9 @@ def create_sidebar(globals):
             model = msg.get("model")
             prompt = msg.get("prompt")
             tokens = msg.get("tokens")
-            globals.ui_elements["add_bubble"](role, content, model=model, prompt=prompt, tokens=tokens)
+            globals.ui_elements["add_bubble"](globals, role=role, text=content, model=model, prompt=prompt, tokens=tokens)
 
-        globals.ui_elements["scroll_to_bottom"]()
+        globals.chat_frame._parent_canvas.yview_moveto(1.0)
         globals.root.update_idletasks()
 
         # Close sidebar after selection

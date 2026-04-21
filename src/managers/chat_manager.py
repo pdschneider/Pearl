@@ -13,6 +13,7 @@ from src.utils.context import detect_context
 from src.utils.toast import show_toast
 from src.utils.hardware import cpu_temp_info
 from datetime import datetime
+from PySide6.QtCore import Qt, QTimer
 
 
 # Chat Functions
@@ -68,7 +69,10 @@ def send_message(globals, ui_elements):
     model = globals.active_model
 
     # Strip whitespace from entry box contents
-    clean_text = ui_elements['entrybox'].get("1.0", "end").strip()
+    if globals.qt_mode:
+        clean_text = globals.input_box.toPlainText().strip()
+    else:
+        clean_text = globals.input_box.get("1.0", "end").strip()
 
     # Append file attachment contents to user text if applicable
     if not clean_text and globals.file_attachment:
@@ -83,6 +87,7 @@ def send_message(globals, ui_elements):
     # Set to defaults for new conversations
     if globals.is_new_conversation:
         start_new_conversation(globals)
+        globals.context_warning = True
 
     # Inspect for context if enabled
     if globals.enable_context:
@@ -91,9 +96,14 @@ def send_message(globals, ui_elements):
                          daemon=True,
                          name="Context Thread").start()
 
-    # Add bubble and delete entry box contents
-    ui_elements["add_bubble"]("user", clean_text)
-    ui_elements['entrybox'].delete("1.0", "end")
+    # Add bubble
+    ui_elements["add_bubble"](globals, role="user", text=clean_text)
+
+    # Delete entry box contents
+    if globals.qt_mode:
+        globals.input_box.clear()
+    else:
+        globals.input_box.delete("1.0", "end")
 
     # Reset file attachment to None
     globals.file_attachment = None
@@ -113,7 +123,7 @@ def send_message(globals, ui_elements):
                            name="Chat Stream").start()
 
     current_model = globals.active_model
-    globals.assistant_label = ui_elements["add_bubble"]("assistant", "", model=current_model)
+    globals.assistant_label = ui_elements["add_bubble"](globals, role="assistant", text="", model=current_model)
 
     # Reset assistant message
     globals.assistant_message = ""
@@ -125,16 +135,23 @@ def send_message(globals, ui_elements):
     globals.message_start_time = datetime.now().isoformat()
 
     # Re-enables file attachment button
-    globals.file_button.configure(state="normal")
-    globals.attach_tip.configure(message="Attach")
+    if globals.qt_mode:
+        pass
+    else:
+        globals.file_button.configure(state="normal")
+        globals.attach_tip.configure(message="Attach")
     globals.file_attachment = None
     globals.attachment_path = None
 
     # Toggle button to stop mode
-    ui_elements["send_button"].configure(text=None,
-                                         image=globals.stop_icon,
-                                         command=lambda: globals.cancel_event.set()
-                                         if globals.cancel_event else None)
+    if globals.qt_mode:
+        pass
+    else:
+        globals.send_button.configure(
+            text=None,
+            image=globals.stop_icon,
+            command=lambda: globals.cancel_event.set()
+            if globals.cancel_event else None)
     tokens = 0
 
     def pull_response(user_text):
@@ -195,9 +212,13 @@ def send_message(globals, ui_elements):
                     # logging.debug(f"\nFull conversation history:\n{globals.conversation_history}\n")
 
                     globals.still_streaming = False
-                    ui_elements["send_button"].configure(text=None,
-                                                         image=globals.send_icon,
-                                                         command=lambda: send_message(globals, ui_elements))
+                    if globals.qt_mode:
+                        pass
+                    else:
+                        globals.send_button.configure(
+                            text=None,
+                            image=globals.send_icon,
+                            command=lambda: send_message(globals, ui_elements))
                     return
 
                 if globals.current_response_id == local_id:
@@ -214,9 +235,13 @@ def send_message(globals, ui_elements):
                                                         "####", "").replace(
                                                             "###", "")
                     if globals.assistant_label:
-                        globals.assistant_label.configure(
-                            text=globals.assistant_message)
-                    ui_elements["scroll_to_bottom"]()
+                        if globals.qt_mode:
+                            globals.assistant_label.setText(
+                                globals.assistant_message)
+                        else:
+                            globals.assistant_label.configure(
+                                text=globals.assistant_message)
+                            globals.chat_frame._parent_canvas.yview_moveto(1.0)
 
         except queue.Empty:
             pass
@@ -225,6 +250,9 @@ def send_message(globals, ui_elements):
             globals.still_streaming = False
             return
 
-        globals.root.after(20, lambda: pull_response(user_text))
+        if globals.qt_mode:
+            QTimer.singleShot(20, lambda: pull_response(user_text))
+        else:
+            globals.root.after(20, lambda: pull_response(user_text))
 
     pull_response(user_text)

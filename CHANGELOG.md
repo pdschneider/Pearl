@@ -2,15 +2,56 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.3.4] - 2026-00-00
+
+Pearl now ships as a .deb for Linux! For the first time, Linux users can benefit from full desktop integration just like on Windows: pinning Pearl to the dock, seeing the app in the start menu, and a proper uninstall button. This update also adds support for 31 new file types including .docx.
+
+### Added
+- Pearl is now packaged as a .deb file on Linux in addition to AppImage!
+- Supports the following file types: .eml, .zig, .nim, .erl, .ex, .exs, .sol, .vue, .svelte, .tf, .tfvars, .f, .f90, .asm, .s, .cmake, .gradle, .m, .mm, .vimrc, .inputrc, .npmrc, .nvmrc, .yarnrc, .eslintrc, .prettierrc, .babelrc, .pylintrc, .flake8, .gemrc, .docx
+
+### Changed
+- Doubled maximum character length for file uploads
+- Rewrote chat logic to work with PySide6 when the new GUI framework is ready
+
+### Fixed
+- Fixed bug preventing chats from being deleted
+- Added missing copyright to Windows setup file metadata
+- Fixed broken Beta update channel
+
+## [0.3.3] - 2026-04-21
+
+This update enhances context detection by adding 12 new prompts and improving back-end logic. Maximum context length is also now used by default, enabling much longer chats before Pearl begins to forget older parts of the conversation. Pearl now also supports 39 new file types, supports thinking models, and includes an optional beta release channel!
+
+### Added
+- Added 12 new prompts
+- Pearl now uses maximum context length by default, enabling much longer conversations
+- Added token count checks with warnings if conversation exceeds maximum length
+- Thinking models are now supported
+- Added new documentation for listing supported file types
+- Added beta release channel
+- Pearl now supports the following file types as attachments: .repo, .htm, .java, .xhtml, .scss, .sass, .less, .vbs, .asp, .ipynb, .editorconfig, .htaccess, .dockerignore, .bashrc, .bash_aliases, .bash_history, .lynxrc, .bash_logout, .gitconfig, .python_history, .profile, .taskrc, .selected_editor, .steampid, .sweeprc, .sweeptimes, .update-timestamp, .wget-hsts, .windows-serial, .xinputrc, .xsession-errors, .zshrc, .lesshst, .desktop, .pid, .directory, .adm, .admx, .adml
+
+### Changed
+- Added restart prompt when saving settings which require app restart to apply
+- Added startup hash check for prompts file
+- Pearl now closes much faster when exiting the app
+- Improved context detection logic
+- Various UI improvements
+
+### Fixed
+- Fixed major bug preventing system prompt from changing via context detection
+- File attachments which exceed maximum tokens for the active model are now rejected
+
 ## [0.3.2] - 2026-04-13
 
-This update features an officially recognized certificate for Windows users, increasing compatibility with Windows Defender. It also features simple installer scripts for Docker and Kokoro on Windows so Windows users can benefit from enhanced TTS without the hastle of a complex setup, along with various bug fixes and documentation additions.
+This update features an officially recognized certificate for Windows users, increasing compatibility with Windows Defender. It also features simple installer scripts for Docker and Kokoro so Windows users can benefit from enhanced TTS without the hassle of complex setup, along with various bug fixes and documentation additions.
 
 ### Added
 - Added documentation: Architecture, Build Instructions, Roadmap, Usage
 - Improved context detection via adding more keywords
-- Added debian folder structure for future .deb builds
-- Added model download script for Windows users when no model is available but Ollama is running
+- Added Debian folder structure for future .deb builds
+- Added default model download script for Windows users when no model is available but Ollama is running
 - Pearl on Windows is now signed with an officially recognized code signing certificate
 - Added simple Docker and Kokoro installation for Windows users
 
@@ -21,7 +62,7 @@ This update features an officially recognized certificate for Windows users, inc
 
 ### Fixed
 - Fixed crash when trying to report a bug
-- Fixed various crashes resulting from QT-based messageboxes
+- Fixed various crashes resulting from QT-based message boxes
 - General stability & UI improvements
 
 ### Security

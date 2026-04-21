@@ -48,9 +48,9 @@ def create_top_bar(globals):
         globals.app_title.configure(text="Pearl at your service!")
 
         # Clear the current chat bubbles
-        for widget in globals.ui_elements["chat_frame"].winfo_children():
+        for widget in globals.chat_frame.winfo_children():
             widget.destroy()
-        globals.ui_elements["scroll_to_top"]()
+        globals.chat_frame._parent_canvas.yview_moveto(0.0)
         globals.root.update_idletasks()
 
         # Map chat page

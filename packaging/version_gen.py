@@ -1,6 +1,8 @@
 # packaging/version_gen.py
 # Auto-generates version.txt from version.py for PyInstaller Windows builds
+# Also updates Inno Script
 
+import re
 import sys
 from pathlib import Path
 
@@ -54,7 +56,65 @@ VSVersionInfo(
 )
 '''
 
-# Always write version.txt to the project root
+# Also update the Inno Script file with correct information
+inno_script_path = project_root / 'packaging' / 'InnoSetup.iss'
+
+if inno_script_path.exists():
+    with open(inno_script_path, 'r', encoding='utf-8') as f:
+        inno_content = f.read()
+
+    # Update the three defines using the values from version.py
+    inno_content = re.sub(
+        r'^#define MyAppName ".*"',
+        f'#define MyAppName "{__title__}"',
+        inno_content,
+        flags=re.MULTILINE
+    )
+    inno_content = re.sub(
+        r'^#define MyAppVersion ".*"',
+        f'#define MyAppVersion "{__version__}"',
+        inno_content,
+        flags=re.MULTILINE
+    )
+    inno_content = re.sub(
+        r'^#define MyAppPublisher ".*"',
+        f'#define MyAppPublisher "{__author__}"',
+        inno_content,
+        flags=re.MULTILINE
+    )
+
+    with open(inno_script_path, 'w', encoding='utf-8') as f:
+        f.write(inno_content)
+    
+    print(f"✅ Inno Setup script successfully updated")
+    print(f"   Location: {inno_script_path}")
+else:
+    print(f"⚠️  Inno script not found at {inno_script_path}")
+
+# Update the Debian control file
+control_file_path = project_root / 'packaging' / 'deb' / 'DEBIAN' / 'control'
+
+if control_file_path.exists():
+    with open(control_file_path, 'r', encoding='utf-8') as f:
+        control_content = f.read()
+
+    # Replace the Version line specifically
+    # This regex matches "Version: " followed by anything until the end of the line
+    control_content = re.sub(
+        r'^Version: .*$',
+        f'Version: {__version__}',
+        control_content,
+        flags=re.MULTILINE)
+
+    with open(control_file_path, 'w', encoding='utf-8') as f:
+        f.write(control_content)
+    
+    print(f"✅ Debian control file successfully updated")
+    print(f"   Location: {control_file_path}")
+else:
+    print(f"⚠️  Control file not found at {control_file_path}")
+
+# Always write version.txt to the corect location
 version_txt_path = project_root / 'packaging' / 'version.txt'
 
 with open(version_txt_path, 'w', encoding='utf-8') as f:

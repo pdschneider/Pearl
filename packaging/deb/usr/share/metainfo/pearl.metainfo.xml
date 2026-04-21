@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+	<id>pearl.desktop</id>
+	<metadata_license>https://github.com/pdschneider/Pearl/blob/main/LICENSE.txt</metadata_license>
+	<project_license>https://github.com/pdschneider/Pearl/blob/main/LICENSE.txt</project_license>
+	<name>Pearl</name>
+	<url type="homepage">https://github.com/pdschneider/Pearl</url>
+	<summary>Personal Everything Assistant Running Locally</summary>
+	<description>
+		<p>Pearl is a private AI assistant which uses Ollama under the hood to generate text. Pearl features dynamic context switching, an interactive install for Ollama, Docker and Kokoro, and extreme privacy in mind - no data leaves the local machine by default.</p>
+	</description>
+	<screenshots>
+		<screenshot type="default">
+			<image>https://raw.githubusercontent.com/pdschneider/Pearl/main/Screenshots/Pearl-1.png</image>
+			<caption>Private AI Chats and More</caption>
+		</screenshot>
+	</screenshots>
+</component>

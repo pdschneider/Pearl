@@ -16,6 +16,7 @@
     "saved_x": 0,
     "saved_y": 0,
     "github_check": false,
+    "beta": false,
     "language": "English",
     "ollama_chat_path": "http://localhost:11434/",
     "ollama_context_path": "http://localhost:11434/",

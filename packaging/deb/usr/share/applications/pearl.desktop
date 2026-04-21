@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Pearl
+GenericName=AI Chats
+Comment=Private AI chats
+Exec=/usr/bin/pearl
+Icon=pearl
+Terminal=false
+Categories=Utility;AI;
+Keywords=ai;chats;local;private;ollama;privacy;pearl
+StartupNotify=true
+StartupWMClass=Tk
+MimeType=application/x-pearl;

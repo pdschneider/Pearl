@@ -1,7 +1,11 @@
 # Interface/Settings/sound_settings.py
 import customtkinter as ctk
 from CTkToolTip import CTkToolTip
+from tkinter import messagebox
+from PySide6.QtWidgets import QMessageBox
 import logging
+import subprocess
+import sys
 from src.utils.save_settings import save_all_settings
 from src.connections.kokoro import fetch_current_language_models
 from src.managers.sound_manager import get_sink_menu
@@ -204,4 +208,35 @@ def create_sound_tab(globals, sound_tab):
 
     ctk.CTkButton(save_button_frame,
                   text="Save Settings",
-                  command=lambda: save_all_settings(globals)).pack()
+                  command=lambda: save_button(globals)).pack()
+
+    def save_button(globals):
+        """Saves and prompts for restart if required."""
+        prompt_restart = False
+        if globals.github_check != globals.github_check_var.get():
+            prompt_restart = True
+        elif globals.active_theme != globals.theme_var.get():
+            prompt_restart = True
+        elif globals.beta != globals.beta_var.get():
+            prompt_restart = True
+        save_all_settings(globals)
+
+        if prompt_restart:
+            if globals.qt_mode:
+                reply = QMessageBox.question(
+                    None,
+                    "Restart Pearl?",
+                    f"Would you like to restart Pearl to apply all changes?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes)
+                if reply == QMessageBox.StandardButton.Yes:
+                    subprocess.Popen(globals.app_path)
+                    sys.exit(0)
+            else:
+                    reply = messagebox.askyesno(
+                        parent=globals.root,
+                        title="Restart Pearl",
+                        message="Would you like restart Pearl to apply all changes?")
+                    if reply:
+                        subprocess.Popen(globals.app_path)
+                        sys.exit(0)

@@ -149,6 +149,10 @@ def startup(globals):
                 data["github_check"] = False
                 changed = True
                 logging.info(f"Added missing or nonconforming 'github_check' key to settings.json")
+            if "beta" not in data or not isinstance(data["beta"], bool):
+                data["beta"] = False
+                changed = True
+                logging.info(f"Added missing or nonconforming 'beta' key to settings.json")
             if "language" not in data or not isinstance(data["language"], str) or data["language"] not in accepted_languages:
                 data["language"] = "English"
                 changed = True
@@ -418,7 +422,6 @@ def startup(globals):
 
     def setup_context():
         """Makes sure the context file is updated and usable."""
-
         try:
             # Read the contents of the default path and hash it
             default_context_path = load_data_path("config", "context.json", default=True)
@@ -446,11 +449,62 @@ def startup(globals):
                 if os.path.isfile(load_data_path("config", "context.json")):
                     logging.debug(f"Hash mismatch. Removing old context.json...")
                     os.remove(load_data_path("config", "context.json"))
-                logging.info(f"Updating dontext.json...")
+                logging.info(f"Updating context.json...")
                 load_data_path("config", "context.json", default=True)
 
             except Exception as e:
                 logging.warning(f"Unable to update context.json due to: {e}")
+    
+    def setup_prompts():
+        """Makes sure the prompts file is updated and usable."""
+        try:
+            # Read the contents of the default path and hash it
+            default_prompts_path = load_data_path("config", "prompts.json", default=True)
+            with open(default_prompts_path, 'r', encoding='utf-8') as f:
+                default_prompts_file = f.read()
+            hashed_default_prompts_file = hashlib.md5(default_prompts_file.encode()).hexdigest()
+            if not hashed_default_prompts_file:
+                logging.warning(f"No hash for default prompts.json found.")
+
+            # Read the contents of the current user's path and hash it
+            user_prompts_path = load_data_path("config", "prompts.json")
+            with open(user_prompts_path, 'r', encoding='utf-8') as f:
+                user_prompts_file = f.read()
+            hashed_user_prompts_file = hashlib.md5(user_prompts_file.encode()).hexdigest()
+            if not hashed_user_prompts_file:
+                logging.warning(f"No has for user's prompts.json found.")
+
+        except Exception as e:
+            logging.warning(f"Unable to hash prompts.json due to: {e}")
+            return
+
+        # Compare hashes, remove and replace old file if different
+        if hashed_default_prompts_file != hashed_user_prompts_file:
+            try:
+                if os.path.isfile(load_data_path("config", "prompts.json")):
+                    logging.debug(f"Hash mismatch. Removing old prompts.json...")
+                    os.remove(load_data_path("config", "prompts.json"))
+                logging.info(f"Updating prompts.json...")
+                load_data_path("config", "prompts.json", default=True)
+
+            except Exception as e:
+                logging.warning(f"Unable to update prompts.json due to: {e}")
+
+    def get_exec_type():
+        """Get the correct executable type."""
+        
+        # Check if AppImage
+        if 'APPIMAGE' in os.environ:
+            return "AppImage"
+        # Check if .deb
+        elif os.path.realpath(sys.executable).startswith("/usr/") and getattr(sys, 'frozen', False):
+            return "Deb"
+        # Check if running in frozen/compiled mode
+        elif getattr(sys, 'frozen', False):
+            return "Exe"
+        # Development mode
+        else:
+            return "Development"
 
     def startup_tasks(globals, tasks_done):
         """Tests dependencies and sets flags."""
@@ -458,14 +512,17 @@ def startup(globals):
         setup_settings()
         setup_themes()
         setup_context()
+        setup_prompts()
         ollama_install_check()
         docker_debian_check()
         docker_ubuntu_check()
         docker_windows_check()
         kokoro_windows_check()
         load_icons(globals)
+        globals.app_type = get_exec_type()
         logging.info(f"Python Version: {sys.version}")
         logging.info(f"Pearl Version: {globals.current_version}")
+        logging.info(f"Executable Type: {globals.app_type}")
         try:
             # Test for Ollama
             ollama_success = ollama_test(globals)

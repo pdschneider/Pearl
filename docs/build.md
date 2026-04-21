@@ -5,7 +5,7 @@ Pearl can be built from source code via Pyinstaller on both Windows and Linux an
 
 ## 🐧 Linux
 
-1. Open your IDE (VSCode recommended) and create a virtual environment using these commands:
+Open your IDE (VSCode recommended) and create a virtual environment using these commands:
 
 ```
 python3 -m venv pearl_venv
@@ -13,17 +13,9 @@ python3 -m venv pearl_venv
 source pearl_venv/bin/activate
 ```
 
-2. Run these commands to install dependencies and generate the file:
-
 **IMPORTANT: Must have patchelf installed: `sudo apt patchelf`**
 
-Install appimagetool if not already installed:
-```
-wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-
-chmod +x appimagetool-x86_64.AppImage
-sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
-```
+Run this commands to install dependencies and generate the file:
 
 ```
 pip install -r packaging/requirements.txt
@@ -44,12 +36,62 @@ nuitka \
     pearl.py
 ```
 
-3. **IMPORTANT: Set AppRun inside Pearl.AppDir as executable prior to building the AppImage**
+## AppImage
 
-4. Copy pearl.bin from dist/ to packaging/Pearl.AppDir/usr/bin
+To build an AppImage file, follow these steps after building the file with the previous command.
 
-5. Run this command from the app's root directory:
+Install appimagetool if not already installed:
+```
+wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+
+chmod +x appimagetool-x86_64.AppImage
+sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
+```
+
+**IMPORTANT: Set AppRun inside Pearl.AppDir as executable prior to building the AppImage**
+
+Copy pearl.bin from dist/ to packaging/Pearl.AppDir/usr/bin as pearl:
+
+```
+# Copy built file to AppImage directory
+mkdir -p packaging/Pearl.AppDir/usr/bin
+cp dist/pearl.bin packaging/Pearl.AppDir/usr/bin/pearl
+```
+
+Run this command from the app's root directory:
 `appimagetool packaging/Pearl.AppDir Pearl-Linux.AppImage -v`
+
+## DEBIAN
+
+For a Debian (.deb) file, follow these steps after building the file with the command listed earlier.
+
+Copy built file to deb directory:
+```
+mkdir -p packaging/deb/usr/bin
+cp dist/pearl.bin packaging/deb/usr/bin/pearl
+```
+
+Set permissions:
+```
+find packaging/deb -type d -exec chmod 755 {} +
+find packaging/deb/usr/bin -type f -exec chmod 755 {} +
+find packaging/deb/DEBIAN -type f -exec chmod 755 {} +
+find packaging/deb -type f ! -path "*/DEBIAN/*" -exec chmod 644 {} +
+chmod 755 packaging/deb/usr/bin/pearl
+find packaging/deb -type f ! -path "*/DEBIAN/*" -exec chmod 644 {} +
+```
+
+Build DEB:
+```
+fakeroot dpkg-deb --build packaging/deb "Pearl-Linux-${VERSION}.deb"
+```
+
+Set permissions for .deb file:
+```
+chmod 644 "Pearl-Linux-<version-number>.deb"
+```
+
+**Important: Make sure that you replace the version number properly to match the filename.**
 
 ## 🖥️ Windows
 

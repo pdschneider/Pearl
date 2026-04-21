@@ -30,21 +30,21 @@ def create_chat_tab(globals, chat_tab):
 
     current_label = [None]
 
-    chat_frame = ctk.CTkScrollableFrame(chat_tab)
-    chat_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    globals.chat_frame = ctk.CTkScrollableFrame(chat_tab)
+    globals.chat_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Entry Box
     entry_frame = ctk.CTkFrame(chat_tab, fg_color="transparent")
     entry_frame.pack(fill="both", padx=10, pady=5)
 
-    globals.entry_box = ctk.CTkTextbox(entry_frame,
+    globals.input_box = ctk.CTkTextbox(entry_frame,
                               font=fonts.body_font,
                               wrap="word",
                               state="normal",
                               corner_radius=16,
                               height=100)
-    globals.entry_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
-    globals.entry_box.focus_set()
+    globals.input_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
+    globals.input_box.focus_set()
 
     # Send Button
     globals.send_button = ctk.CTkButton(entry_frame,
@@ -82,10 +82,10 @@ def create_chat_tab(globals, chat_tab):
                             pady=5)
 
     # Chat Functions
-    def add_bubble(role, text="", model=None, attachment=None, prompt=None, tokens=0):
+    def add_bubble(globals, role="user", text="", model=None, tokens=0):
         """Appends messages to the chat box."""
         try:
-            bubble_frame = ctk.CTkFrame(chat_frame, corner_radius=6)
+            bubble_frame = ctk.CTkFrame(globals.chat_frame, corner_radius=6)
 
             # Configure and pack chat bubble frame
             if role == "user":
@@ -102,7 +102,7 @@ def create_chat_tab(globals, chat_tab):
                     corner_radius=6)
 
                 # Create and pack assistant name only for assistant messages
-                name_label = ctk.CTkLabel(chat_frame,
+                name_label = ctk.CTkLabel(globals.chat_frame,
                                         text="Pearl",
                                         font=fonts.heading_font)
                 name_label.pack(side="top",
@@ -166,14 +166,14 @@ def create_chat_tab(globals, chat_tab):
         label.bind("<Leave>", on_leave)
         bubble_frame.bind("<Leave>", on_leave)
         entry_frame.bind("<Enter>", on_leave)
-        chat_frame.bind("<Leave>", on_leave)
+        globals.chat_frame.bind("<Leave>", on_leave)
 
         # Shows menu on right click
         label.bind("<Button-3>", on_right_click)
 
-        chat_frame._parent_canvas.after(
+        globals.chat_frame._parent_canvas.after(
             100,
-            lambda: chat_frame._parent_canvas.yview_moveto(1.0))
+            lambda: globals.chat_frame._parent_canvas.yview_moveto(1.0))
 
         return label
 
@@ -191,7 +191,7 @@ def create_chat_tab(globals, chat_tab):
         lines in the entry box upon pressing enter."""
         if globals.still_streaming:
             logging.debug(f"Enter button pressed.")
-            if globals.entry_box.get("1.0", "end").strip():
+            if globals.input_box.get("1.0", "end").strip():
                 if time.time() - globals.last_message_time >= 2:
                     globals.cancel_event.set() if globals.cancel_event else None
                 send_message(globals, ui_elements)
@@ -205,11 +205,11 @@ def create_chat_tab(globals, chat_tab):
     def upon_shift_enter():
         """Ensures Shift+Enter creates a new line
         in the entry box and nothing more."""
-        globals.entry_box.insert(tk.INSERT, "\n")
+        globals.input_box.insert(tk.INSERT, "\n")
         return "break"
 
-    globals.entry_box.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
-    globals.entry_box.bind("<Shift-Return>", lambda e: upon_shift_enter())
+    globals.input_box.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
+    globals.input_box.bind("<Shift-Return>", lambda e: upon_shift_enter())
 
     def hide_all_buttons():
         """Hide all widget buttons."""
@@ -217,12 +217,6 @@ def create_chat_tab(globals, chat_tab):
             row.hide_buttons()
 
     ui_elements = {
-        "entrybox": globals.entry_box,
-        "chat_frame": chat_frame,
-        "add_bubble": add_bubble,
-        "send_button": globals.send_button,
-        "scroll_to_bottom": lambda: chat_frame._parent_canvas.yview_moveto(1.0),
-        "scroll_to_top": lambda: chat_frame._parent_canvas.yview_moveto(0.0)}
+        "add_bubble": lambda *args, **kwargs: add_bubble(*args, **kwargs)}
 
     globals.ui_elements = ui_elements
-

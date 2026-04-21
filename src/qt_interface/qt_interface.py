@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QWi
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from src.qt_interface.qt_components.qt_top_bar import create_top_bar
+from src.qt_interface.qt_chat_page import create_chat_page
 
 
 def create_interface(globals):
@@ -29,13 +30,12 @@ def create_interface(globals):
     globals.window.setLayout(main_layout)
 
     # Create top navigation bar
-    top_bar = create_top_bar(globals, central_widget)
+    top_bar = create_top_bar(globals)
     main_layout.addWidget(top_bar)
 
-    title = QLabel()
-    title.setText("Pearl")
-    title.setAlignment(Qt.AlignCenter)
-    main_layout.addWidget(title)
+    # Add the chat page
+    chat_page = create_chat_page(globals)
+    main_layout.addWidget(chat_page)
 
     # Show window
     globals.window.show()

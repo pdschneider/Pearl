@@ -34,6 +34,10 @@ class Globals:
         self.kokoro_windows = load_kokoro_windows()
         self.refresh_globals()
 
+        # App Path
+        self.app_type = None
+        self.app_path = get_executable_path()
+
         # Current Version
         self.current_version = __version__
         self.latest_version = None
@@ -65,11 +69,11 @@ class Globals:
         self.ollama_title_path_var = None
         self.enable_context_var = None
         self.generate_titles_var = None
+        self.beta_var = None
 
         # Custom Tkinter Widgets
         self.send_button = None
         self.file_button = None
-        self.entry_box = None
 
         # UI variables
         self.root = ctk.CTk()
@@ -79,6 +83,8 @@ class Globals:
         self.attach_tip = None
         self.widget_rows = []
         self.hamburger = None
+        self.input_box = None
+        self.chat_frame = None
 
         # Wizard Buttons
         self.ollama_interactive_download_button = None
@@ -137,6 +143,8 @@ class Globals:
         self.theme_path = None
         self.theme_dict = None
         self.last_message_time = 0.0
+        self.context_length = 2048
+        self.thinking = False
 
         # Tooltips
         self.ollama_web_download_tooltip = None
@@ -176,6 +184,7 @@ class Globals:
         self.still_streaming = False
         self.is_speaking = False
         self.new_chat = True
+        self.context_warning = True
 
         # Sound
         self.source_options = ["Default"]
@@ -212,6 +221,7 @@ class Globals:
         self.saved_x = settings.get("saved_x", -1)
         self.saved_y = settings.get("saved_y", -1)
         self.github_check = settings.get("github_check", False)
+        self.beta = settings.get("beta", False)
         self.language = settings.get("language", "English")
         self.ollama_chat_path = settings.get("ollama_chat_path", "http://localhost:11434/")
         self.ollama_context_path = settings.get("ollama_context_path", "http://localhost:11434/")
@@ -219,6 +229,7 @@ class Globals:
         self.enable_context = settings.get("enable_context", True)
         self.generate_titles = settings.get("generate_titles", True)
         self.title_gen_model = settings.get("title_gen_model", "llama3.2:3b")
+
 
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ctk widgets."""
@@ -235,5 +246,30 @@ def apply_theme(name: str) -> None:
         logging.debug(f"CTk theme found at: {globals.theme_path}")
     except Exception as e:
         logging.warning(f"Could not retrieve CTk active theme due to: {e}")
+
+
+def get_executable_path():
+    """Get the correct path to the app file."""
+    
+    # Check if AppImage
+    if 'APPIMAGE' in os.environ:
+        print(f"Path to executable (AppImage): {os.environ['APPIMAGE']}")
+        return os.environ['APPIMAGE']
+    
+    # Check if .deb
+    elif os.path.realpath(sys.executable).startswith("/usr/") and getattr(sys, 'frozen', False):
+        print(f"Path to executable (.deb/system): {os.path.realpath(sys.executable)}")
+        return os.path.realpath(sys.executable)
+
+    # Check if running in frozen/compiled mode
+    elif getattr(sys, 'frozen', False):
+        print(f"Path to executable (frozen / Inno Setup): {sys.executable}")
+        return sys.executable
+    
+    # Development mode
+    else:
+        script_path = os.path.abspath(sys.argv[0])
+        print(f"Path to executable: {script_path}")
+        return [sys.executable, script_path]
 
 globals = Globals()

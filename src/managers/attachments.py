@@ -4,6 +4,9 @@ import logging
 import os
 import pdfplumber
 from src.utils.toast import show_toast
+from src.connections.ollama import create_model_list, gpu_check
+from rs_bpe.bpe import openai
+from docx import Document
 
 try:
     from pdf2image import convert_from_path
@@ -32,7 +35,34 @@ accepted_filetypes = [".txt", ".csv", ".json",
                       ".text", ".asc", ".properties",
                       ".m3u", ".lst", ".list",
                       ".gitignore", ".gitattributes",
-                      ".pdf"]
+                      ".pdf", ".repo", ".htm",
+                      ".java", ".xhtml", ".scss",
+                      ".sass", ".less", ".vbs",
+                      ".asp", ".ipynb", ".editorconfig",
+                      ".htaccess", ".dockerignore",
+                      ".bashrc", ".bash_aliases",
+                      ".bash_history", ".lynxrc",
+                      ".bash_logout", ".gitconfig",
+                      ".python_history", ".profile",
+                      ".taskrc", ".selected_editor",
+                      ".steampid", ".sweeprc",
+                      ".sweeptimes", ".update-timestamp",
+                      ".wget-hsts", ".windows-serial",
+                      ".xinputrc", ".xsession-errors",
+                      ".zshrc", ".lesshst", ".iss",
+                      ".desktop", ".pid", ".directory",
+                      ".adm", ".admx", ".adml",
+                      ".eml", ".zig", ".nim",
+                      ".erl", ".ex", ".exs",
+                      ".sol", ".vue", ".svelte",
+                      ".tf", ".tfvars", ".f",
+                      ".f90", ".asm", ".s",
+                      ".cmake", ".gradle", ".m",
+                      ".mm", ".vimrc", ".inputrc",
+                      ".npmrc", ".nvmrc", ".yarnrc",
+                      ".eslintrc", ".prettierrc",
+                      ".babelrc", ".pylintrc",
+                      ".flake8", ".gemrc", ".docx"]
 
 def attach_file(globals):
     """Attach a file to a message."""
@@ -57,7 +87,7 @@ def attach_file(globals):
 
     try:
         passed = False
-        max_character_length = 10001
+        max_character_length = 20000
 
         # Open and extract file contents if filetype is accepted, save as global variable
         for i in accepted_filetypes:
@@ -68,15 +98,17 @@ def attach_file(globals):
         # Exit with warning if file type is not supported
         if not passed:
             logging.warning(f"File type not supported: {file}")
-            show_toast(globals, message=f"File type not supported: {file}", _type="error")
+            show_toast(globals, message=f"File type not supported", _type="error")
             return
 
         # Open and read file if passed
         if file.lower().endswith(".pdf"):
             attachment = parse_pdf(globals, file)
+        elif file.lower().endswith(".docx"):
+            attachment = parse_docx(file)
         else:
             with open(file, "r", encoding='utf-8') as f:
-                attachment = f.read(max_character_length).strip()
+                attachment = f.read(max_character_length + 1).strip()
 
         # Exit with warning if file is empty
         if not attachment:
@@ -86,11 +118,40 @@ def attach_file(globals):
             return
 
         # Erase attachment and exit if file is too long
-        if len(attachment) > 10000:
-            logging.warning(f"File attachment too large. Maximum character length: 10,000.")
+        if len(attachment) > 20000:
+            logging.warning(f"File attachment too large. Maximum character length: {max_character_length}.")
             show_toast(
                 globals,
-                message="File too large - Maximum character length: 10,000",
+                message=f"File too long - Maximum character length: {max_character_length}",
+                _type="error")
+            globals.attachment_path = None
+            attachment = ""
+            return
+        
+        # Calculate context length
+        model_data = create_model_list(globals)
+        model_max_context = model_data[globals.active_model]["context_length"]
+
+        # Determine if context length can exceed 64,000
+        is_gpu = gpu_check()
+        if is_gpu:
+            globals.context_length = model_max_context
+        else:
+            globals.context_length = model_max_context if model_max_context < 64000 else 64000
+        logging.debug(f"Max Context Length: {globals.context_length}")
+
+        # Calculate tokens within document
+        encoder = openai.cl100k_base()
+        tokens = encoder.encode(str(attachment))
+        token_count = len(tokens)
+        logging.debug(f"Attachment token length: {token_count}")
+
+        # Exit with warning if file exceeds max tokens
+        if token_count > globals.context_length:
+            logging.warning(f"Attachment exceeds maximum token count - please upload a smaller file or switch to a different model.")
+            show_toast(
+                globals,
+                message="File too long - attachment exceeds maximum token count for this model",
                 _type="error")
             globals.attachment_path = None
             attachment = ""
@@ -159,4 +220,14 @@ def extract_with_ocr(file):
 
     except Exception as e:
         logging.error(f"OCR error on {file}: {e}")
+        return ""
+
+def parse_docx(file):
+    """Parses .docx files to plain text."""
+    try:
+        doc = Document(file)
+        text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+        return text
+    except Exception as e:
+        logging.error(f"Unable to parse .docx file due to: {e}")
         return ""

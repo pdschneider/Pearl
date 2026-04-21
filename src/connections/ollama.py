@@ -12,6 +12,7 @@ from src.utils.toast import show_toast
 from src.utils.save_settings import save_settings
 from PySide6.QtWidgets import QMessageBox
 from tkinter import messagebox
+from rs_bpe.bpe import openai
 
 
 def ollama_version_test(globals):
@@ -481,18 +482,60 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     # Gracefully exit if Ollama is not installed
     if not globals.ollama_active:
         return
+    
+    # logging.debug(f"Full system prompt: {globals.system_prompt}")
 
+    # Determine prompt to be used
     if globals.active_prompt:
         messages_and_prompt = [
             {"role": "system", "content": globals.system_prompt}] + messages
     if messages_and_prompt:
         messages = messages_and_prompt
 
+    # Calculate context length
+    model_data = create_model_list(globals)
+    model_max_context = model_data[globals.active_model]["context_length"]
+
+    # Determine if context length can exceed 64,000
+    is_gpu = gpu_check()
+    if is_gpu:
+        globals.context_length = model_max_context
+    else:
+        globals.context_length = model_max_context if model_max_context < 64000 else 64000
+    logging.debug(f"Max Context Length: {globals.context_length}")
+
+    # Calculate token count for conversation history
+    encoder = openai.cl100k_base()
+    tokens = encoder.encode(str(globals.conversation_history))
+    token_count = len(tokens)
+    logging.debug(f"Conversation token length: {token_count}")
+
+    if globals.context_length < token_count:
+        logging.warning(
+            f"Conversation has exceeded max token count. Pearl will forget earlier parts of the conversation.")
+        if globals.context_warning:
+            show_toast(
+                globals,
+                message="Conversation has exceeded maximum token count for this model - Pearl will forget earlier parts of the conversation")
+        globals.context_warning = False
+
+    # Determine whether model supports thinking
+    capabilities = model_data[globals.active_model]["capabilities"]
+    if "thinking" in capabilities:
+        globals.thinking = True
+    else:
+        globals.thinking = False
+
+    # Generate payload
     url = f"{globals.ollama_chat_path}api/chat"
     payload = {
         "model": model,
         "messages": messages,
-        "stream": True}
+        "stream": True,
+        "think": globals.thinking,
+        "options": {
+            "num_ctx": globals.context_length or 2048
+        }}
     try:
         # Test Ollama first
         ollama_installed = ollama_version_test(globals)
@@ -509,7 +552,8 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             logging.debug(f"Querying Ollama for main chat with prompt '{globals.active_prompt}'")
 
         # Query the Ollama API if Ollama is installed, set flag
-        response = requests.post(url, json=payload, stream=True, timeout=30)
+        got_response = False
+        response = requests.post(url, json=payload, stream=True, timeout=120)
         if response:
             got_response = True
 
@@ -547,12 +591,24 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
                 if got_response:
                     response.close()
                 return
+
             if line:
                 try:
                     chunk = json.loads(line.decode("utf-8"))
                     if chunk.get("done"):
                         break
-                    out_q.put(chunk["message"]["content"])
+                    
+                    # Determine whether it's a thinking or content chunk
+                    msg = chunk.get("message", {})
+                    thinking_chunk = msg.get("thinking")
+                    content_chunk = msg.get("content")
+
+                    # Output text for thinking / content
+                    if thinking_chunk:
+                        out_q.put(thinking_chunk)
+                    if content_chunk:
+                        out_q.put(content_chunk)
+
                 except json.JSONDecodeError:
                     continue
         logging.debug(f"{model} has finished streaming its response.")
@@ -580,8 +636,12 @@ def context_query(globals, model="llama3.2:latest", message=""):
     try:
         response = requests.post(f"{globals.ollama_context_path}api/generate", json={
             "model": model,
-            "prompt": f"Based on this list, determine the best context of the message and return ONLY the word. Nothing else: 'Assistant', 'Therapist', 'Financial', 'Storyteller', 'Conspiracy', 'Meditation', 'Motivation'. The message: ' {message}",
-            "stream": False},
+            "prompt": f"Based on this list, determine the best context of the message and return ONLY the word, nothing else. List: 'Assistant', 'Therapist', 'Financial', 'Storyteller', 'Conspiracy', 'Meditation', 'Motivation', 'Tutor', 'Debate', 'Life', 'Historian', 'Programmer', 'Travel', 'Chef', 'Fitness', 'Gamer', 'Philosopher', 'Poet', 'Comedian'. The message: ' {message}",
+            "stream": False,
+            "options": {
+                "temperature": 0.1,
+                "num_ctx": 2048
+            }},
             timeout=20)
 
         # Exit on failure
@@ -604,7 +664,7 @@ def generate_title(globals, model="llama3.2:latest", message=""):
     
     models_list = get_loaded_models(globals, globals.ollama_title_path)
     if globals.title_gen_model not in models_list:
-        logging.warning(f"Title gen moel not currently loaded at {globals.ollama_title_path}.")
+        logging.warning(f"Title gen model not currently loaded at {globals.ollama_title_path}.")
 
     try:
         response = requests.post(f"{globals.ollama_title_path}api/generate", json={
@@ -626,7 +686,17 @@ def generate_title(globals, model="llama3.2:latest", message=""):
 
 
 def get_model_info(globals, model):
-    """Gets detailed model information for a specific model."""
+    """
+    Gets detailed model information for a specific model.
+    
+        Returns: Dictionary with model info
+                ex: {'architecture': 'llama', 'parameter_count': 3212749888,
+                'parameters': '3.2B', 'embedding_length': 3072,
+                'embedding_length_num': 3072, 'context_length': 131072,
+                'context_length_num': 131072,
+                'system_prompt': 'No system prompt defined', 'family': 'Llama',
+                'quantization': 'Q8_0', 'capabilities': ['completion', 'tools']}
+    """
     # Gracefully exit if Ollama is not installed
     if not globals.ollama_active:
         return
@@ -672,6 +742,7 @@ def get_model_info(globals, model):
             system_prompt = _extract_system(globals, modelfile)
             details = data.get("details", {})
             quantization = details.get("quantization_level", "Unknown")
+            capabilities = data.get("capabilities", [])
             full_dict = {
                 "architecture": arch,
                 "parameter_count": param_count,
@@ -683,8 +754,8 @@ def get_model_info(globals, model):
                 "system_prompt": system_prompt or "No System Prompt",
                 "family": data.get("details", {}).get(
                     "family", "Unknown").capitalize(),
-                "quantization": quantization}
-            logging.info(f"{full_dict}")
+                "quantization": quantization,
+                "capabilities": capabilities}
             return full_dict
         
         # Return empty dict on failed response code
@@ -756,13 +827,23 @@ def get_model_size(globals, model, endpoint="http://localhost:11434/"):
         return 0
 
 
-def create_model_list():
-    """Creates a full dictionary of models with details."""
+def create_model_list(globals):
+    """
+    Creates a full dictionary of models with details.
+    
+        Returns: Dictionary including model names
+                ex: {'llama3.2:3b-instruct-q8_0':
+                {'architecture': 'llama', 'parameter_count': 3212749888,
+                'parameters': '3.2B', 'embedding_length': 3072,
+                'embedding_length_num': 3072, 'context_length': 131072,
+                'context_length_num': 131072, 'system_prompt': 'No system prompt defined',
+                'family': 'Llama', 'quantization': 'Q8_0'}
+    """
     full_model_dict = {}
-    models = get_all_models()
+    models = get_all_models(globals)
 
     for model in models:
-        info = get_model_info(model)
+        info = get_model_info(globals, model)
         full_model_dict[model] = info
 
     return full_model_dict

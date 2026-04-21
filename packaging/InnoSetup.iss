@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "Pearl"
-#define MyAppVersion "0.3.2"
+#define MyAppVersion "0.3.4-beta"
 #define MyAppPublisher "Phillip Schneider"
 #define MyAppURL "https://github.com/pdschneider/Pearl"
 #define MyAppExeName "Pearl.exe"
@@ -14,6 +14,12 @@
 AppId={{DAADE2B7-224D-474C-8CA3-AA4E4413DC71}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+
+; Metadata for the Setup file
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoCopyright=Copyright © 2026 {#MyAppPublisher}. Apache 2.0.
+VersionInfoProductName={#MyAppName}
+
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
@@ -36,7 +42,7 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
 OutputDir=..\dist
 OutputBaseFilename=Pearl-Windows-v{#MyAppVersion}
-SetupIconFile=..\defaults\assets\icon.ico
+SetupIconFile=..\defaults\assets\pearl.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
 

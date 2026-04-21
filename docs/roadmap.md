@@ -55,9 +55,9 @@ This update cycle focuses on user control over the personalization of Pearl. Use
 - [ ] Add regenerate button to assistant messages
 
 ### Other Improvements
-- [ ] Expand the list of available prompts
+- [x] Expand the list of available prompts
 - [ ] Improve the speed and accuracy of context detection via fine-tuning LLM options
-- [ ] Add checks for conversation token length
+- [x] Add checks for conversation token length
 - [ ] Attach prompt to assistant messages
 
 ## 0.5.x - Image Support
@@ -126,7 +126,7 @@ Features:
 - [ ] Import/export chats
 - [ ] Add new chat page
 - [ ] Add support for more TTS
-- [ ] Support .deb builds for Linux users
+- [x] Support .deb builds for Linux users
 
 Setup Page:
 - [ ] Improve install/uninstall scripts
@@ -158,8 +158,8 @@ Windows Specific:
 - [ ] Add support for CPU temp polling on Windows
 - [ ] Fix default tts silently failing after first message
 - [ ] Add audio output selection for Windows
-- [ ] Add Kokoro voice selection for Windows
-- [ ] Add proper install / uninstall scripts for Docker/Kokoro on Windows
+- [x] Add Kokoro voice selection for Windows
+- [x] Add proper install / uninstall scripts for Docker/Kokoro on Windows
 
 ## 📝 Notes
 
