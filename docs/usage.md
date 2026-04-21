@@ -41,7 +41,7 @@ Open Settings from the top menu button. Key areas include:
 ## Troubleshooting
 
 - **Output is slow** → Choose a smaller model or close other open processes
-- **Chat feature doesn't work** → Make sure that Ollama is installed and running with a compatible model (for the best experience use the built in installer script in the onboarding page/wizard)
+- **Pearl doesn't respond** → Make sure that Ollama is installed and running with a compatible model (for the best experience use the built in installer script in the onboarding page/wizard). Sometimes, updating Ollama and restarting your PC fixes it.
 - **Pearl is slow to start** → Try deleting old chats via Settings > General > Delete All Chats
 - **TTS sounds robotic** → For enhanced TTS, Docker + Kokoro must be installed (found in wizard/onboarding page)
 - **Pearl is slow in long conversations** → Start a new conversation or switch to a smaller model

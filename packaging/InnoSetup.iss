@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "Pearl"
-#define MyAppVersion "0.3.2"
+#define MyAppVersion "0.3.3"
 #define MyAppPublisher "Phillip Schneider"
 #define MyAppURL "https://github.com/pdschneider/Pearl"
 #define MyAppExeName "Pearl.exe"

@@ -11,16 +11,22 @@ def detect_context(globals, user_text):
     Parameters:
         globals: Global variables containing all_prompts and all_context
         user_text: The user's input text
+    
+    Variables:
+        user_text: Text sent via the input box
+        (turned into a list of strings separated by spaces)
     """
     prompts_dict = globals.all_prompts
     context_keywords = globals.all_context
 
-    # Exit earlyt if no message was sent
+    # Exit early if no message was sent
     if not user_text:
         return
 
     scores = {name: 0 for name in prompts_dict}
-    user_text = user_text.lower()
+
+    # Separate words into a list for processing
+    user_text = user_text.lower().split()
 
     # Count keyword matches for each prompt
     for prompt_name, keywords in context_keywords.items():
@@ -74,6 +80,7 @@ def detect_context(globals, user_text):
         logging.info(f"Switching to {best_prompt} for next message!")
         with globals.prompt_lock:
             globals.active_prompt = best_prompt
+            globals.system_prompt = globals.all_prompts[f"{globals.active_prompt}"]["prompt"]
 
         # Query context model
         try:
@@ -88,12 +95,14 @@ def detect_context(globals, user_text):
                 if llm_prompt.startswith(best_prompt):
                     with globals.prompt_lock:
                         globals.active_prompt = best_prompt
+                        globals.system_prompt = globals.all_prompts[f"{globals.active_prompt}"]["prompt"]
                     logging.info(f"Context switched to {best_prompt}")
                 else:
                     logging.debug(f"Model choice and keywords not aligned: {best_prompt} vs {context_response}")
                     logging.info(f"Switching back to Assistant prompt...")
                     with globals.prompt_lock:
                         globals.active_prompt = "Assistant"
+                        globals.system_prompt = globals.all_prompts[f"{globals.active_prompt}"]["prompt"]
         
         # Show error on exception
         except Exception as e:
@@ -102,7 +111,8 @@ def detect_context(globals, user_text):
                        message="Unable to reach context model - is Ollama up on that network?",
                        _type="error")
             with globals.prompt_lock:
-                        globals.active_prompt = "Assistant"
+                globals.active_prompt = "Assistant"
+                globals.system_prompt = globals.all_prompts[f"{globals.active_prompt}"]["prompt"]
 
         return best_prompt, prompts_dict.get(best_prompt, {})
 

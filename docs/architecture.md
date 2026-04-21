@@ -49,13 +49,14 @@ Pearl/
 ├── config.py                 # Configuration and settings handling
 ├── version.py                # Version information
 ├── defaults/                 # Default prompts, assets, icons, and configuration files
-├── Interface/                # All GUI-related code
-│   ├── Components/           # Reusable  UI components
-│   ├── Settings/             # Settings pages
-│   └── Setup/                # Initial setup wizard and onboarding screen
-├── Managers/                 # Core business logic managers
-├── Connections/              # Integration with network-related code (ollama, kokoro, github, docker)
-├── Utils/                    # Utility functions, helpers, and shared tools
+├── src/                      # Primary source code
+│   ├── interface/            # All GUI-related code
+│   │   ├── components/       # Reusable  UI components
+│   │   ├── settings/         # Settings pages
+│   │   └── setup/            # Initial setup wizard and onboarding screen
+│   ├── connections           # Integration with network-related code (ollama, kokoro, github, docker)
+│   ├── managers/             # Core logic managers
+│   └── utils/                # Utility functions, helpers, and shared tools
 ├── data/                     # Development mode data storage
 ├── packaging/                # Build configurations, spec files, AppImage resources, Inno Setup scripts
 ├── docs/                     # Documentation files (ARCHITECTURE.md, USAGE.md, etc.)
@@ -133,6 +134,11 @@ deb/
 - globals.ollama_active: Tells whether Ollama is currently installed and active
 - globals.docker_active: Tells whether Docker is currently installed and active
 - globals.kokoro_active: Tells whether Kokoro is currently installed and active
+
+### Main
+- globals.active_model: The currently active LLM by name
+- globals.active_prompt: The name of the active prompt
+- globals.system_prompt: The full active system prompt
 
 ---
 

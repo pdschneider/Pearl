@@ -48,6 +48,7 @@ Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, 
 | [build.md](docs/build.md)              | How to build from source                 |
 | [roadmap.md](docs/roadmap.md)          | Planned features and future direction    |
 | [architecture.md](docs/architecture.md)| Technical architecture (for developers)  |
+| [attachments.md](docs/attachments.md)  | Supported filetypes as attachments       |
 
 ## 📸 View Screenshots
 <details>

@@ -21,6 +21,7 @@ def on_closing():
         save_all_settings(globals, reject_toast=True)
     except Exception as e:
         logging.error(f"Error occurred when saving settings: {e}")
+    globals.root.withdraw()
     globals.root.quit()
     globals.root.destroy()
     if globals.startup_root:

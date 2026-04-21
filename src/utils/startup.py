@@ -418,7 +418,6 @@ def startup(globals):
 
     def setup_context():
         """Makes sure the context file is updated and usable."""
-
         try:
             # Read the contents of the default path and hash it
             default_context_path = load_data_path("config", "context.json", default=True)
@@ -446,11 +445,46 @@ def startup(globals):
                 if os.path.isfile(load_data_path("config", "context.json")):
                     logging.debug(f"Hash mismatch. Removing old context.json...")
                     os.remove(load_data_path("config", "context.json"))
-                logging.info(f"Updating dontext.json...")
+                logging.info(f"Updating context.json...")
                 load_data_path("config", "context.json", default=True)
 
             except Exception as e:
                 logging.warning(f"Unable to update context.json due to: {e}")
+    
+    def setup_prompts():
+        """Makes sure the prompts file is updated and usable."""
+        try:
+            # Read the contents of the default path and hash it
+            default_prompts_path = load_data_path("config", "prompts.json", default=True)
+            with open(default_prompts_path, 'r', encoding='utf-8') as f:
+                default_prompts_file = f.read()
+            hashed_default_prompts_file = hashlib.md5(default_prompts_file.encode()).hexdigest()
+            if not hashed_default_prompts_file:
+                logging.warning(f"No hash for default prompts.json found.")
+
+            # Read the contents of the current user's path and hash it
+            user_prompts_path = load_data_path("config", "prompts.json")
+            with open(user_prompts_path, 'r', encoding='utf-8') as f:
+                user_prompts_file = f.read()
+            hashed_user_prompts_file = hashlib.md5(user_prompts_file.encode()).hexdigest()
+            if not hashed_user_prompts_file:
+                logging.warning(f"No has for user's prompts.json found.")
+
+        except Exception as e:
+            logging.warning(f"Unable to hash prompts.json due to: {e}")
+            return
+
+        # Compare hashes, remove and replace old file if different
+        if hashed_default_prompts_file != hashed_user_prompts_file:
+            try:
+                if os.path.isfile(load_data_path("config", "prompts.json")):
+                    logging.debug(f"Hash mismatch. Removing old prompts.json...")
+                    os.remove(load_data_path("config", "prompts.json"))
+                logging.info(f"Updating prompts.json...")
+                load_data_path("config", "prompts.json", default=True)
+
+            except Exception as e:
+                logging.warning(f"Unable to update prompts.json due to: {e}")
 
     def startup_tasks(globals, tasks_done):
         """Tests dependencies and sets flags."""
@@ -458,6 +492,7 @@ def startup(globals):
         setup_settings()
         setup_themes()
         setup_context()
+        setup_prompts()
         ollama_install_check()
         docker_debian_check()
         docker_ubuntu_check()

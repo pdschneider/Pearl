@@ -1,6 +1,8 @@
 # packaging/version_gen.py
 # Auto-generates version.txt from version.py for PyInstaller Windows builds
+# Also updates Inno Script
 
+import re
 import sys
 from pathlib import Path
 
@@ -54,7 +56,42 @@ VSVersionInfo(
 )
 '''
 
-# Always write version.txt to the project root
+# Also update the Inno Script file with correct information
+inno_script_path = project_root / 'packaging' / 'InnoSetup.iss'
+
+if inno_script_path.exists():
+    with open(inno_script_path, 'r', encoding='utf-8') as f:
+        inno_content = f.read()
+
+    # Update the three defines using the values from version.py
+    inno_content = re.sub(
+        r'^#define MyAppName ".*"',
+        f'#define MyAppName "{__title__}"',
+        inno_content,
+        flags=re.MULTILINE
+    )
+    inno_content = re.sub(
+        r'^#define MyAppVersion ".*"',
+        f'#define MyAppVersion "{__version__}"',
+        inno_content,
+        flags=re.MULTILINE
+    )
+    inno_content = re.sub(
+        r'^#define MyAppPublisher ".*"',
+        f'#define MyAppPublisher "{__author__}"',
+        inno_content,
+        flags=re.MULTILINE
+    )
+
+    with open(inno_script_path, 'w', encoding='utf-8') as f:
+        f.write(inno_content)
+    
+    print(f"✅ Inno Setup script successfully updated")
+    print(f"   Location: {inno_script_path}")
+else:
+    print(f"⚠️  Inno script not found at {inno_script_path}")
+
+# Always write version.txt to the corect location
 version_txt_path = project_root / 'packaging' / 'version.txt'
 
 with open(version_txt_path, 'w', encoding='utf-8') as f:

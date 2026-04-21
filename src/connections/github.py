@@ -10,13 +10,29 @@ from src.utils.load_settings import load_data_path
 
 def version_check(globals):
     """Checks to see which version is most recent."""
+
+    def ver_tuple(v):
+        """Turn "0.3.4-beta" into (0, 3, 4) for correct comparison."""
+        v = v.replace("-beta", "").strip()
+        try:
+            return tuple(int(x) for x in v.split("."))
+        except:
+            return (0, 0, 0)   # safety
+
+    # Determine Endpoint & Headers
     repo = "pdschneider/Pearl"
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    if globals.beta:
+        url = f"https://api.github.com/repos/{repo}/releases"
+    else:
+        url = f"https://api.github.com/repos/{repo}/releases/latest"
     headers = {"Accept": "application/vnd.github+json"}
 
     try:
         # Query github for the version
-        response = requests.get(url, headers=headers, timeout=10)
+        if globals.beta:
+            response = requests.get(url, headers=headers, params={"per_page": 10}, timeout=10)
+        else:
+            response = requests.get(url, headers=headers, timeout=10)
 
         # Gracefully exit if status code is not 200
         if response.status_code != 200:
@@ -25,11 +41,23 @@ def version_check(globals):
             return
 
         # Parse just the version number from data
-        data = response.json()
+        if globals.beta:
+            data = response.json()[0]
+        else:
+            data = response.json()
         globals.latest_version = data["tag_name"].replace('v', '')
+
+        # Determine if newest version is in beta
+        beta = "-beta" in globals.latest_version
+
+        # Pull html and changelog from latest release
         latest_version_url = data["html_url"]
         assets = data["assets"]
         changelog = str(data["body"])
+
+        # Specify changelog not available if empty
+        if not changelog:
+            changelog = "Changelog not available."
 
         # Remove markdown elements from changelog
         changelog = changelog.replace("###", "").replace("##", "")
@@ -51,6 +79,9 @@ def version_check(globals):
                 linux_download_url = download_url
             elif download_url.endswith(".exe"):
                 windows_download_url = download_url
+            else:
+                logging.warning(f"No AppImage or exe files found.")
+                return
 
         # print(f"{data}")  # <-- Prints entire output
 
@@ -59,8 +90,25 @@ def version_check(globals):
             logging.warning(f"Latest version not found.")
             return
 
+        # Is current version in beta?
+        if "-beta" in globals.current_version:
+            current_beta = True
+        else:
+            current_beta = False
+
+        # Convert to numeric tuples so 0.3.9 < 0.3.10 works correctly
+        current_comp = ver_tuple(globals.current_version)
+        latest_comp = ver_tuple(globals.latest_version)
+
         # Check if this is the latest version
-        if globals.current_version < globals.latest_version:
+        if not globals.beta:
+            should_update = current_comp < latest_comp
+        else:
+            # Beta users get next beta OR stable upgrade of same version number
+            should_update = (current_comp < latest_comp) or \
+                            (current_comp == latest_comp and current_beta and not beta)
+
+        if should_update:
             logging.info(
                 f"An update to Pearl is available! Latest Version: {globals.latest_version}")
             

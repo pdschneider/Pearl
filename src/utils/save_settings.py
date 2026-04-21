@@ -11,8 +11,8 @@ def save_all_settings(globals, reject_toast=False):
     Save all settings to JSON files and update globals.
 
     Args:
-        globals (Globals): The global configuration object
-                           containing UI variables and settings.
+        globals: The global configuration object
+                    containing UI variables and settings.
     """
 
     # Load current settings
@@ -26,6 +26,7 @@ def save_all_settings(globals, reject_toast=False):
     current_save_chats = globals.save_chats_var.get()
     current_sink = globals.sink_var.get()
     current_github_check = globals.github_check_var.get()
+    current_beta = globals.beta_var.get()
     current_ollama_chat_path = globals.ollama_chat_path_var.get()
     current_ollama_context_path = globals.ollama_context_path_var.get()
     current_ollama_title_path = globals.ollama_title_path_var.get()
@@ -67,6 +68,7 @@ def save_all_settings(globals, reject_toast=False):
             saved_x=current_x,
             saved_y=current_y,
             github_check=current_github_check,
+            beta=current_beta,
             ollama_chat_path=current_ollama_chat_path,
             ollama_context_path=current_ollama_context_path,
             ollama_title_path=current_ollama_title_path,
@@ -87,6 +89,7 @@ def save_all_settings(globals, reject_toast=False):
     globals.save_chats_var.set(settings["save_chats"])
     globals.sink_var.set(settings["default_sink"])
     globals.github_check_var.set(settings["github_check"])
+    globals.beta_var.set(settings["beta"])
     globals.ollama_chat_path_var.set(settings["ollama_chat_path"])
     globals.ollama_context_path_var.set(settings["ollama_context_path"])
     globals.ollama_title_path_var.set(settings["ollama_title_path"])

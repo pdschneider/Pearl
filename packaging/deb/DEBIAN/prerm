@@ -1,0 +1,9 @@
+#!/bin/sh
+# prerm script for pearl
+
+set -e
+
+# Stop any running instance (use -f for safety — works even if process name is long)
+pkill -f "/usr/bin/pearl" || true
+
+exit 0

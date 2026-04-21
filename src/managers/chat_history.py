@@ -24,6 +24,7 @@ def start_new_conversation(globals):
     globals.chat_history = globals.conversation_history
     globals.conversation_id = str(uuid.uuid4())
     globals.is_new_conversation = True
+    globals.context_warning = True
     with globals.prompt_lock:
         globals.active_prompt = "Assistant"
     globals.created_at = datetime.now().isoformat()
@@ -99,7 +100,7 @@ def save_conversation(globals, user_text=None):
     data = {
         "metadata": {
             "created_at": globals.created_at,
-            "title": f"Untitled Chat_{globals.conversation_id}" if not clean_title else clean_title,
+            "title": clean_title or f"Untitled Chat_{globals.conversation_id}",
             "conversation_id": globals.conversation_id},
             "history": globals.conversation_history}
     

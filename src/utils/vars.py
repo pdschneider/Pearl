@@ -19,3 +19,4 @@ def create_vars(globals):
     globals.ollama_title_path_var = ctk.StringVar(value=globals.ollama_title_path)
     globals.enable_context_var = ctk.BooleanVar(value=globals.enable_context)
     globals.generate_titles_var = ctk.BooleanVar(value=globals.generate_titles)
+    globals.beta_var = ctk.BooleanVar(value=globals.beta)

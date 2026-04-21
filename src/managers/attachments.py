@@ -4,6 +4,8 @@ import logging
 import os
 import pdfplumber
 from src.utils.toast import show_toast
+from src.connections.ollama import create_model_list, gpu_check
+from rs_bpe.bpe import openai
 
 try:
     from pdf2image import convert_from_path
@@ -32,8 +34,23 @@ accepted_filetypes = [".txt", ".csv", ".json",
                       ".text", ".asc", ".properties",
                       ".m3u", ".lst", ".list",
                       ".gitignore", ".gitattributes",
-                      ".pdf"]
-
+                      ".pdf", ".repo", ".htm",
+                      ".java", ".xhtml", ".scss",
+                      ".sass", ".less", ".vbs",
+                      ".asp", ".ipynb", ".editorconfig",
+                      ".htaccess", ".dockerignore",
+                      ".bashrc", ".bash_aliases",
+                      ".bash_history", ".lynxrc",
+                      ".bash_logout", ".gitconfig",
+                      ".python_history", ".profile",
+                      ".taskrc", ".selected_editor",
+                      ".steampid", ".sweeprc",
+                      ".sweeptimes", ".update-timestamp",
+                      ".wget-hsts", ".windows-serial",
+                      ".xinputrc", ".xsession-errors",
+                      ".zshrc", ".lesshst", ".iss",
+                      ".desktop", ".pid", ".directory",
+                      ".adm", ".admx", ".adml"]
 def attach_file(globals):
     """Attach a file to a message."""
     globals.file_attachment = None
@@ -90,7 +107,36 @@ def attach_file(globals):
             logging.warning(f"File attachment too large. Maximum character length: 10,000.")
             show_toast(
                 globals,
-                message="File too large - Maximum character length: 10,000",
+                message="File too long - Maximum character length: 10,000",
+                _type="error")
+            globals.attachment_path = None
+            attachment = ""
+            return
+        
+        # Calculate context length
+        model_data = create_model_list(globals)
+        model_max_context = model_data[globals.active_model]["context_length"]
+
+        # Determine if context length can exceed 64,000
+        is_gpu = gpu_check()
+        if is_gpu:
+            globals.context_length = model_max_context
+        else:
+            globals.context_length = model_max_context if model_max_context < 64000 else 64000
+        logging.debug(f"Max Context Length: {globals.context_length}")
+
+        # Calculate tokens within document
+        encoder = openai.cl100k_base()
+        tokens = encoder.encode(str(attachment))
+        token_count = len(tokens)
+        logging.debug(f"Attachment token length: {token_count}")
+
+        # Exit with warning if file exceeds max tokens
+        if token_count > globals.context_length:
+            logging.warning(f"Attachment exceeds maximum token count - please upload a smaller file or switch to a different model.")
+            show_toast(
+                globals,
+                message="File too long - attachment exceeds maximum token count for this model",
                 _type="error")
             globals.attachment_path = None
             attachment = ""

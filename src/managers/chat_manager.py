@@ -83,6 +83,7 @@ def send_message(globals, ui_elements):
     # Set to defaults for new conversations
     if globals.is_new_conversation:
         start_new_conversation(globals)
+        globals.context_warning = True
 
     # Inspect for context if enabled
     if globals.enable_context:

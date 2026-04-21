@@ -1,0 +1,17 @@
+#!/bin/sh
+# postinst script for pearl
+
+set -e
+
+# Refresh desktop database and icon cache
+if [ -x /usr/bin/update-desktop-database ]; then
+    update-desktop-database /usr/share/applications
+fi
+if [ -x /usr/bin/gtk-update-icon-cache ]; then
+    gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
+fi
+
+# Ensure the real binary is executable
+chmod +x /usr/bin/pearl
+
+exit 0

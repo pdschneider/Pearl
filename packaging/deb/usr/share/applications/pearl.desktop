@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Pearl
+GenericName=AI Chats
+Comment=Private AI chats on the local machine
+Exec=/usr/bin/pearl
+Icon=pearl
+Terminal=false
+Categories=Utility;
+Keywords=ai;chats;local;private
+StartupNotify=true
+StartupWMClass=Pearl
+MimeType=application/x-pearl;
