@@ -118,7 +118,7 @@ def attach_file(globals):
             return
 
         # Erase attachment and exit if file is too long
-        if len(attachment) > 20000:
+        if len(attachment) > 30000:
             logging.warning(f"File attachment too large. Maximum character length: {max_character_length}.")
             show_toast(
                 globals,

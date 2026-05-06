@@ -27,6 +27,8 @@ data/
 .vscode/
 build.sh
 build.ps1
-build_deb.sh
+deploy.sh
+windows.sh
+linux.ps1
 .git/
 .Diricon

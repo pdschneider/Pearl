@@ -4,6 +4,8 @@ from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt
 from src.qt_interface.qt_components.qt_top_bar import create_top_bar
 from src.qt_interface.qt_chat_page import create_chat_page
+from src.qt_interface.qt_components.qt_sidebar import create_sidebar
+from src.qt_interface.qt_settings.qt_settings import create_settings_panel
 
 
 def create_interface(globals):
@@ -33,9 +35,18 @@ def create_interface(globals):
     top_bar = create_top_bar(globals)
     main_layout.addWidget(top_bar)
 
+    # Create animated sidebar
+    sidebar = create_sidebar(globals)
+    sidebar.setParent(central_widget)
+    sidebar.raise_()
+    sidebar.setGeometry(-250, 0, 250, central_widget.height())
+
     # Add the chat page
     chat_page = create_chat_page(globals)
     main_layout.addWidget(chat_page)
+
+    # Create the settings panel
+    create_settings_panel(globals)
 
     # Show window
     globals.window.show()

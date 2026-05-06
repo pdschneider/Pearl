@@ -35,7 +35,7 @@ if __name__ == "__main__":
             globals.root.protocol("WM_DELETE_WINDOW", on_closing)
             globals.root.mainloop()
         except Exception as error:
-            logging.critical(f"Creash in bundled mode!")
+            logging.critical(f"Crash in bundled mode!")
             factory_reset_config(globals, error)
             if globals.root:
                 try:

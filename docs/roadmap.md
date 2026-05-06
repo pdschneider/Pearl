@@ -31,8 +31,8 @@ Updates in the 0.3.x series focus on networking capabilities and model managemen
 - [ ] Guided model downloading with recommendations
 
 ### Other Improvements
-- [ ] Expand documentation with updated README, Build instructions, Roadmap, Architecture, and Usage
-- [ ] Faster and more streamlined in-app Pearl updates
+- [x] Expand documentation with updated README, Build instructions, Roadmap, Architecture, and Usage
+- [x] Faster and more streamlined in-app Pearl updates
 - [ ] Support individual chat deletion
 - [ ] Improve sidebar loading speeds by limiting the loading of previous chats at once
 - [x] Fully integrate Pearl into the Windows desktop environment
@@ -70,7 +70,8 @@ The image support update cycle will focus on adding support for images as file a
 
 ### Other Improvements
 - [ ] Add support for more image types
-- [ ] Add support for .docx/.odf files
+- [x] Add support for .docx files
+- [ ] Add support for .odf files
 
 ## 0.6.x - Speech to Text
 

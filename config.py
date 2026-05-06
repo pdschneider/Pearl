@@ -47,6 +47,7 @@ class Globals:
         # PySide6 Widgets
         self.app = QApplication(sys.argv)
         self.window = QMainWindow()
+        self.sidebar_animation = None
         self.qt_mode = None
 
         # Thread Locks

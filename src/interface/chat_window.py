@@ -82,7 +82,7 @@ def create_chat_tab(globals, chat_tab):
                             pady=5)
 
     # Chat Functions
-    def add_bubble(globals, role="user", text="", model=None, tokens=0):
+    def add_bubble(globals, role="user", text="", model=None, prompt=None, tokens=0):
         """Appends messages to the chat box."""
         try:
             bubble_frame = ctk.CTkFrame(globals.chat_frame, corner_radius=6)

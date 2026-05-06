@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor
 import logging
+from src.qt_interface.qt_components.qt_sidebar import toggle_sidebar
+from src.qt_interface.qt_settings.qt_settings import toggle_settings_panel
 
 def create_top_bar(globals):
     """Creates the top navigation bar."""
@@ -18,6 +20,7 @@ def create_top_bar(globals):
     hamburger_button = QPushButton("☰")
     hamburger_button.setFixedSize(40, 40)
     hamburger_button.setCursor(QCursor(Qt.PointingHandCursor))
+    hamburger_button.clicked.connect(lambda: toggle_sidebar(globals, globals.sidebar))
     top_bar_layout.addWidget(hamburger_button)
 
     # New Chat button
@@ -41,5 +44,6 @@ def create_top_bar(globals):
     settings_button.setFixedSize(40,40)
     settings_button.setCursor(QCursor(Qt.PointingHandCursor))
     top_bar_layout.addWidget(settings_button)
+    settings_button.clicked.connect(lambda: toggle_settings_panel(globals))
 
     return top_bar_widget

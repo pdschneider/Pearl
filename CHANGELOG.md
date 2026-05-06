@@ -2,7 +2,7 @@
 
 All notable changes to **Pearl** will be located in this file.
 
-## [0.3.4] - 2026-00-00
+## [0.3.4] - 2026-05-09
 
 Pearl now ships as a .deb for Linux! For the first time, Linux users can benefit from full desktop integration just like on Windows: pinning Pearl to the dock, seeing the app in the start menu, and a proper uninstall button. This update also adds support for 31 new file types including .docx.
 
@@ -11,13 +11,16 @@ Pearl now ships as a .deb for Linux! For the first time, Linux users can benefit
 - Supports the following file types: .eml, .zig, .nim, .erl, .ex, .exs, .sol, .vue, .svelte, .tf, .tfvars, .f, .f90, .asm, .s, .cmake, .gradle, .m, .mm, .vimrc, .inputrc, .npmrc, .nvmrc, .yarnrc, .eslintrc, .prettierrc, .babelrc, .pylintrc, .flake8, .gemrc, .docx
 
 ### Changed
-- Doubled maximum character length for file uploads
+- Tripled maximum character length for file uploads
 - Rewrote chat logic to work with PySide6 when the new GUI framework is ready
+- Update feature now detects and separates between .deb and .AppImage for Linux users
 
 ### Fixed
 - Fixed bug preventing chats from being deleted
 - Added missing copyright to Windows setup file metadata
 - Fixed broken Beta update channel
+- Restored previous chats functionality from pre-beta version
+- Fixed issue where .deb users could not update from beta releases to the next stable release without uninstalling first
 
 ## [0.3.3] - 2026-04-21
 
