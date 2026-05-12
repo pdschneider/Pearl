@@ -2,6 +2,28 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.3.5-beta] - 2026-05-27
+
+Pearl now includes OCR binaries for Windows users, enabling uploading scanned documents! Other various improvements are also included.
+
+### Added
+- Binaries for Poppler and Tesseract were added for Windows users, enabling file uploads of scanned PDF's
+
+### Changed
+- Changed default model to much more powerful and slightly larger qwen3:4b-instruct-2507-q4_K_M
+- Changed attachment icon to more closely fit industry standard
+- Improved prompt and context keywords
+- Attachments now have a file size limit of 50MB
+- Updated dependencies
+
+### Fixed
+- Fixed issue where app state was considered Development even for .deb builds, breaking app restart logic
+- Pearl's context length is now lower for users with less than 10GB of available RAM, enabling support for lower-end systems
+- Fixed update download error on Windows
+
+### Security
+- Patched 2 high severity vulnerabilities affecting availability and confedentiality of data in the urllib3 dependency by updating to version 2.7.0
+
 ## [0.3.4] - 2026-05-09
 
 Pearl now ships as a .deb for Linux! For the first time, Linux users can benefit from full desktop integration just like on Windows: pinning Pearl to the dock, seeing the app in the start menu, and a proper uninstall button. This update also adds support for 31 new file types including .docx.

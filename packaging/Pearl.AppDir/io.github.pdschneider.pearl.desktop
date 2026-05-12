@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Pearl
-Exec=pearl
+Exec=pearl-gui
 Icon=pearl
 Type=Application
 Categories=Utility;

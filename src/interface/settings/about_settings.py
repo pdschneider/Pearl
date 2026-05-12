@@ -53,7 +53,7 @@ Key Features
 • Optional Kokoro TTS voice output
 
 Requirements
-• Ollama running locally (llama3.2:latest recommended for best compatibility)
+• Ollama running locally (qwen3:4b-instruct-2507-q4_K_M recommended for best compatibility)
 • Kokoro Fast-API server (optional for TTS)
 • Linux (Ubuntu 18.04+) or Windows 10/11
 • Minimum: 4-core CPU, 8 GB RAM, 50 GB+ free space recommended

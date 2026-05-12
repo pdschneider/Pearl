@@ -5,6 +5,6 @@
 set -e
 
 # Stop any running instance (use -f for safety — works even if process name is long)
-pkill -f "/usr/bin/pearl" || true
+pkill -f "/usr/bin/pearl-gui" || true
 
 exit 0

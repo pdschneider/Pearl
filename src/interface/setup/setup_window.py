@@ -47,7 +47,7 @@ def create_setup_tab(globals, setup_tab):
                  will open an interactive terminal where you can install Ollama and your first model (simple).
 
                  If preferred, you can also download Ollama from the Ollama website manually along with a starting model
-                 using the links provided. The recommended starting model is llama3.2:latest (same process, more steps).
+                 using the links provided. The recommended starting model is qwen3:4b-instruct-2507-q4_K_M (same process, more steps).
                  """).pack(fill="x", expand=True, padx=10, pady=10)
 
     # Ollama Buttons

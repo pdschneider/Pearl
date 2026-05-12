@@ -11,13 +11,11 @@ Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, 
 ### ✨ Features
 
 - Private AI chats
-- Dynamic context switching based on keywords
 - Simple setup
-- Saving chats is optional, supporting privacy
+- Supports file uploads
+- Comes with 5 themes
 - Offline use is fully supported after setup
 - Sends no data outside the local machine by default
-- Comes with 5 themes
-- Supports file uploads
 - Utilize any Ollama-compatible device on LAN
 
 ## ⚡ Getting Started
@@ -80,7 +78,7 @@ Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, 
 ***NOTE: All Dependencies can be installed within Pearl - this is the recommended installation method.***
 
 ### ⚙️ Requirements
-- 4-Core CPU
+- 8-Thread CPU
 - 8GB RAM highly recommended
 - Linux Ubuntu 18.04 or later, or Window 10/11
 - 50GB+ Disk Space recommended

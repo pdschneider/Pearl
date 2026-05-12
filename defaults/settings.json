@@ -1,5 +1,5 @@
 {
-    "active_model": "llama3.2:latest",
+    "active_model": "qwen3:4b-instruct-2507-q4_K_M",
     "kokoro_active_voice": "bf_v0isabella",
     "default_active_voice": "",
     "tts_enabled": false,
@@ -9,8 +9,8 @@
     "active_theme": "cosmic_sky",
     "save_chats": true,
     "default_sink": "Default",
-    "context_model": "llama3.2:latest",
-    "title_gen_model": "llama3.2:latest",
+    "context_model": "qwen3:4b-instruct-2507-q4_K_M",
+    "title_gen_model": "qwen3:4b-instruct-2507-q4_K_M",
     "saved_width": 0,
     "saved_height": 0,
     "saved_x": 0,

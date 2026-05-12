@@ -53,10 +53,10 @@ else
     exit 0
 fi
 
-read -p "Install recommended model (llama3.2:latest)? [Y/n] " choice
+read -p "Install recommended model (qwen3:4b)? [Y/n] " choice
 if [[ "$choice" =~ ^[Yy]?$ ]]; then
-    ollama pull llama3.2:latest
-    echo "llama3.2:latest was installed!"
+    ollama pull qwen3:4b-instruct-2507-q4_K_M
+    echo "qwen3:4b was installed!"
     echo ""
 else
     echo "Skipping model install."

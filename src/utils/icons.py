@@ -10,17 +10,17 @@ def load_icons(globals):
         globals.send_icon = CTkImage(
             light_image=Image.open(load_data_path("config", "assets/send.png")),
             dark_image=Image.open(load_data_path("config", "assets/send.png")),
-            size=(35, 35))
+            size=(40, 40))
 
         globals.stop_icon = CTkImage(
             light_image=Image.open(load_data_path("config", "assets/stop-3.png")),
             dark_image=Image.open(load_data_path("config", "assets/stop-3.png")),
-            size=(35, 35))
+            size=(40, 40))
 
         globals.attach_icon = CTkImage(
-            light_image=Image.open(load_data_path("config", "assets/attach-2.png")),
-            dark_image=Image.open(load_data_path("config", "assets/attach-2.png")),
-            size=(35, 35))
+            light_image=Image.open(load_data_path("config", "assets/add-1.png")),
+            dark_image=Image.open(load_data_path("config", "assets/add-1.png")),
+            size=(40, 40))
 
         globals.sound_high_icon = CTkImage(
             light_image=Image.open(load_data_path("config", "assets/sound_high.png")),

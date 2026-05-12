@@ -14,6 +14,8 @@ a = Analysis(
         ('../defaults', 'defaults'),
         ('../CHANGELOG.md', '.'),
         ('../README.md', '.'),
+        ('../bin/Poppler', 'bin/Poppler'),
+        ('../bin/Tesseract', 'bin/Tesseract'),
     ],
     hiddenimports=['pygame', 'requests', 'packaging', 'pkg_resources', 'PIL._tkinter_finder', 'PySide6', 'shiboken6', 'pdfplumber', 'pytesseract'],
     hookspath=[],

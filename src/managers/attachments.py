@@ -3,10 +3,22 @@ from PySide6.QtWidgets import QFileDialog
 import logging
 import os
 import pdfplumber
+import subprocess
+import platform
 from src.utils.toast import show_toast
 from src.connections.ollama import create_model_list, gpu_check
 from rs_bpe.bpe import openai
 from docx import Document
+
+os_name = platform.platform()
+
+# Silence window spam
+if os_name.startswith("Windows"):
+    _original_popen = subprocess.Popen
+    def _popen_nowindow(*args, **kwargs):
+        kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+        return _original_popen(*args, **kwargs)
+    subprocess.Popen = _popen_nowindow
 
 try:
     from pdf2image import convert_from_path
@@ -87,14 +99,23 @@ def attach_file(globals):
 
     try:
         passed = False
-        max_character_length = 20000
+        max_character_length = 20_000
 
         # Open and extract file contents if filetype is accepted, save as global variable
         for i in accepted_filetypes:
             if file.lower().endswith(i):
                 passed = True
                 break
-        
+
+        # Exit if file size is too big
+        max_file_size = 52_428_800  # 50MB
+        file_size = os.path.getsize(globals.attachment_path)
+        logging.debug(f"File Size: {file_size}")
+        if file_size > max_file_size:
+            logging.warning(f"File size too large (Max: {max_file_size})")
+            show_toast(globals, message=f"File size too large (Max: {max_file_size})", _type="error")
+            return
+
         # Exit with warning if file type is not supported
         if not passed:
             logging.warning(f"File type not supported: {file}")
@@ -118,7 +139,7 @@ def attach_file(globals):
             return
 
         # Erase attachment and exit if file is too long
-        if len(attachment) > 30000:
+        if len(attachment) > 30_000:
             logging.warning(f"File attachment too large. Maximum character length: {max_character_length}.")
             show_toast(
                 globals,
@@ -209,7 +230,22 @@ def extract_with_ocr(file):
         logging.warning(f"OCR not available for {file}. Skipping fallback.")
         return ""
     try:
-        images = convert_from_path(file)
+        if os_name.startswith("Windows"):
+            import pdf2image.pdf2image
+            pdf2image.pdf2image.Popen = _popen_nowindow
+            # Point to bundled popplar files
+            kwargs = {}
+            base = os.path.dirname(os.path.abspath(__file__))
+            pytesseract.pytesseract.tesseract_cmd = os.path.join(base, '..', '..', 'bin', 'Tesseract', 'tesseract.exe')
+            # Walk up to project root
+            project_root = os.path.normpath(os.path.join(base, '..', '..'))
+            poppler_bin = os.path.join(project_root, 'bin', 'Poppler', 'Library', 'bin')
+            if os.path.isdir(poppler_bin):
+                kwargs['poppler_path'] = poppler_bin
+    except:
+        logging.error(f"Unable to find Poppler / Tesseract")
+    try:
+        images = convert_from_path(file, **kwargs)  # Convert PDF to list of images
         text_collected = ""
         for image in images:
             text = pytesseract.image_to_string(image)

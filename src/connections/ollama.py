@@ -93,7 +93,7 @@ def pull_model(globals):
             download = QMessageBox.question(
                 None,
                 f"Ollama Not Installed",
-                f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (llama3.2:latest)?",
+                f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (qwen3:4b)?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes)
             
@@ -108,7 +108,7 @@ def pull_model(globals):
             download = messagebox.askyesno(
                 parent=globals.root,
                 title="Ollama Not Installed",
-                message=f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (llama3.2:latest)?"
+                message=f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (qwen3:4b)?"
             )
             if download:
                 ollama_installation(globals)
@@ -116,28 +116,28 @@ def pull_model(globals):
             else:
                 return
 
-    # If Ollama is installed, prompt to download llama3.2:latest
+    # If Ollama is installed, prompt to download qwen3:4b-instruct-2507-q4_K_M
     else:
         logging.warning(f"Ollama must be installed before downloading a model.")
         if globals.qt_mode:
             download = QMessageBox.question(
                 None,
                 f"Model Not Installed",
-                f"The selected model is not installed. Would you like to install the default model (llama3.2:latest)?",
+                f"The selected model is not installed. Would you like to install the default model (qwen3:4b)?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes)
 
             # Exit if user chooses no
             if download != QMessageBox.StandardButton.Yes:
-                logging.warning(f"User chose not to install llama3.2:latest.")
+                logging.warning(f"User chose not to install qwen3:4b.")
                 return
         else:
             download = messagebox.askyesno(
                 parent=globals.root,
                 title="Model Not Installed",
-                message=f"The selected model is not installed. Would you like to install the default model (llama3.2:latest)?")
+                message=f"The selected model is not installed. Would you like to install the default model (qwen3:4b)?")
             if not download:
-                logging.warning(f"User chose not to install llama3.2:latest.")
+                logging.warning(f"User chose not to install qwen3:4b.")
                 return
 
         # Check disk space to ensure at least 4GB
@@ -155,17 +155,17 @@ def pull_model(globals):
             show_toast(globals, message="Must have 4GB of available RAM to install llama3.2", _type="error")
             return
 
-        # Download llama3.2:latest on Linux
+        # Download qwen3:4b-instruct-2507-q4_K_M on Linux
         if globals.os_name.startswith("Linux"):
             download_cmd = """
             #!/bin/bash
 
             set -euo pipefail
 
-            read -p "Install recommended model (llama3.2:latest)? [Y/n] " choice
+            read -p "Install recommended model (qwen3:4b)? [Y/n] " choice
             if [[ "$choice" =~ ^[Yy]?$ ]]; then
-                ollama pull llama3.2:latest
-                echo "llama3.2:latest was installed!"
+                ollama pull qwen3:4b-instruct-2507-q4_K_M
+                echo "qwen3:4b-instruct-2507-q4_K_M was installed!"
                 echo ""
                 echo 'Install finished! Press Enter to close this terminal and return to Pearl...';
                 read -r dummy
@@ -188,10 +188,10 @@ def pull_model(globals):
         elif globals.os_name.startswith("Windows"):
             download_cmd = (
                 # Ask about model (Y/n like bash)
-                "$choice = Read-Host 'Install recommended model llama3.2:latest? [Y/n]'; "
+                "$choice = Read-Host 'Install recommended model qwen3:4b? [Y/n]'; "
                 "if ($choice -eq '' -or $choice -match '^[Yy]') { "
-                "    Write-Host 'Pulling llama3.2:latest ... (may take a few minutes)' -ForegroundColor Cyan; "
-                "    ollama pull llama3.2:latest; "
+                "    Write-Host 'Pulling qwen3:4b-instruct-2507-q4_K_M ... (may take a few minutes)' -ForegroundColor Cyan; "
+                "    ollama pull qwen3:4b-instruct-2507-q4_K_M; "
                 "    Write-Host 'Model installed!' -ForegroundColor Green; "
                 "} else { "
                 "    Write-Host 'Skipping model download.' -ForegroundColor Yellow; "
@@ -273,10 +273,10 @@ def ollama_installation(globals):
     "}; "
 
     # Ask about model (Y/n like bash)
-    "$choice = Read-Host 'Install recommended model llama3.2:latest? [Y/n]'; "
+    "$choice = Read-Host 'Install recommended model qwen3:4b? [Y/n]'; "
     "if ($choice -eq '' -or $choice -match '^[Yy]') { "
-    "    Write-Host 'Pulling llama3.2:latest ... (may take a few minutes)' -ForegroundColor Cyan; "
-    "    ollama pull llama3.2:latest; "
+    "    Write-Host 'Pulling qwen3:4b-instruct-2507-q4_K_M ... (may take a few minutes)' -ForegroundColor Cyan; "
+    "    ollama pull qwen3:4b-instruct-2507-q4_K_M; "
     "    Write-Host 'Model installed!' -ForegroundColor Green; "
     "} else { "
     "    Write-Host 'Skipping model download.' -ForegroundColor Yellow; "
@@ -502,6 +502,10 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
         globals.context_length = model_max_context
     else:
         globals.context_length = model_max_context if model_max_context < 64000 else 64000
+        # Set context length lower if RAM is low
+        free_ram = get_ram_info()['avail_ram_gb']
+        if free_ram < 10:
+            globals.context_length = 32000
     logging.debug(f"Max Context Length: {globals.context_length}")
 
     # Calculate token count for conversation history
@@ -561,16 +565,16 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
         if response.status_code == 404:
             logging.error(f"Error: {response.text}")
             absent_model = response.text.split()[1].replace("'", "")
-            if absent_model == "llama3.2:latest":
+            if absent_model == "qwen3:4b-instruct-2507-q4_K_M":
                 pull_model(globals)
                 out_q.put(
                     f"At least one model must be installed to use Pearl's chat feature.")
                 return
             else:
                 out_q.put(
-                    f"{absent_model} not found. Defaulting to llama3.2:latest.")
-                globals.active_model = "llama3.2:latest"
-                save_settings(active_model="llama3.2:latest")
+                    f"{absent_model} not found. Defaulting to qwen3:4b-instruct-2507-q4_K_M.")
+                globals.active_model = "qwen3:4b-instruct-2507-q4_K_M"
+                save_settings(active_model="qwen3:4b-instruct-2507-q4_K_M")
                 return
 
         # Gracefully return if status code is not 200
@@ -627,7 +631,7 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             response.close()
 
 
-def context_query(globals, model="llama3.2:latest", message=""):
+def context_query(globals, model="qwen3:4b-instruct-2507-q4_K_M", message=""):
     """Query the context model for changes in the conversation."""
     # Gracefully exit if Ollama is not installed or message is empty
     if not globals.ollama_active or not message:
@@ -656,7 +660,7 @@ def context_query(globals, model="llama3.2:latest", message=""):
         logging.error(f"Could not query context model at {globals.ollama_context_path} due to: {e}")
 
 
-def generate_title(globals, model="llama3.2:latest", message=""):
+def generate_title(globals, model="qwen3:4b-instruct-2507-q4_K_M", message=""):
     """Query the context model for changes in the conversation."""
     # Gracefully exit if Ollama is not installed or message is empty
     if not globals.ollama_active or not message:

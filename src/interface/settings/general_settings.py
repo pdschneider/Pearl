@@ -198,8 +198,8 @@ def create_general_settings_tab(globals, general_frame):
 
     # Context Detection
     context_frame = ctk.CTkFrame(general_frame,
-                                  bg_color="transparent",
-                                  fg_color="transparent")
+                                 bg_color="transparent",
+                                 fg_color="transparent")
     context_frame.pack(fill="x", pady=10, padx=10)
 
     ctk.CTkLabel(context_frame,
@@ -211,7 +211,7 @@ def create_general_settings_tab(globals, general_frame):
                                     font=fonts.heading_font)
     context_label.pack(side="left", padx=(0, 12))
     CTkToolTip(context_label,
-               message="Turns on/off context detection",
+               message="Turns on/off context detection\nMay cause inconsistent responses",
                delay=0.8,
                follow=True,
                padx=10,
@@ -221,7 +221,12 @@ def create_general_settings_tab(globals, general_frame):
                     variable=globals.enable_context_var,
                     onvalue=True,
                     text=None,
-                    offvalue=False).pack(side="left", padx=5)
+                    width=0,
+                    offvalue=False).pack(side="left")
+    
+    ctk.CTkLabel(context_frame,
+                 text="*Experimental",
+                 font=fonts.body_font).pack(side="left", padx=6, pady=0)
     
     # Title Generation
     title_gen_frame = ctk.CTkFrame(general_frame,

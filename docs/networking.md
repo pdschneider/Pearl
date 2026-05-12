@@ -30,7 +30,7 @@ sudo systemctl restart ollama
 
 Open Ollama's port for LAN access:
 ```
-sudo ufw allow from 192.168.0.0/16 to any port 11434 comment "Ollama on LAN"
+sudo ufw allow from 192.168.1.0/24 to any port 11434 comment "Ollama on LAN"
 ```
 
 *Note: this IP configuration is for small office home office (SOHO) setups - if on a corporate network, your IP may be different.*

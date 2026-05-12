@@ -70,6 +70,8 @@ def load_data_path(direct=None, filename=None, default=False):
                      "assets/column-chart.png",
                      "assets/operations.png",
                      "assets/tag.png",
+                     "assets/add-1.png",
+                     "assets/add-2.png",
                      "themes/cosmic_sky.json",
                      "themes/pastel_green.json",
                      "themes/blazing_red.json",

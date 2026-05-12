@@ -13,6 +13,6 @@ if [ -x /usr/bin/gtk-update-icon-cache ]; then
 fi
 
 # Ensure the real binary is executable
-chmod +x /usr/bin/pearl
+chmod +x /usr/bin/pearl-gui
 
 exit 0
