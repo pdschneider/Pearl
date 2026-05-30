@@ -62,7 +62,7 @@ def create_wizard(globals):
 
         If preferred, you can also download Ollama from the Ollama website
         manually along with a starting model using the links provided.
-        The recommended starting model is qwen3:4b-instruct-2507-q4_K_M (same process, more steps).
+        The recommended starting model is ministral-3:3b-instruct-2512-q4_K_M (same process, more steps).
         """)
     ollama_layout.addWidget(ollama_instructions)
 

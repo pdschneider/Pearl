@@ -146,6 +146,7 @@ class Globals:
         self.last_message_time = 0.0
         self.context_length = 2048
         self.thinking = False
+        self.available_tools = None
 
         # Tooltips
         self.ollama_web_download_tooltip = None
@@ -165,6 +166,7 @@ class Globals:
         self.assistant_message = ""
         self.file_attachment = None
         self.attachment_path = None
+        self.image_attachment = None
         self.markdown_components = ["***", "___", "**", "__", "~~", "#####", "####", "###"]
         self.conversation_history = []
         self.conversation_id = None

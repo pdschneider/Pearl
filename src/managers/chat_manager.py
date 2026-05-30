@@ -76,9 +76,9 @@ def send_message(globals, ui_elements):
 
     # Append file attachment contents to user text if applicable
     if not clean_text and globals.file_attachment:
-        user_text = f"Refer to the following: {globals.file_attachment}"
+        user_text = f"Describe to the following: {globals.file_attachment}"
     elif clean_text and globals.file_attachment:
-        user_text = clean_text + f"Refer to the following: {globals.file_attachment}"
+        user_text = clean_text + f" Refer to the following: {globals.file_attachment}"
     elif clean_text and not globals.file_attachment:
         user_text = clean_text
     else:
@@ -109,8 +109,13 @@ def send_message(globals, ui_elements):
     globals.file_attachment = None
 
     # Tack on user text and attachment (if applicable) to conversation history
-    messages = globals.conversation_history + [{"role": "user",
-                                                "content": user_text}]
+    if not globals.image_attachment:
+        messages = globals.conversation_history + [{"role": "user",
+                                                    "content": user_text}]
+    else:
+        messages = globals.conversation_history + [{"role": "user",
+                                                    "content": user_text,
+                                                    "images": [globals.image_attachment]}]
     
     # Query Ollama in a thread
     threading.Thread(target=chat_stream,
@@ -169,8 +174,9 @@ def send_message(globals, ui_elements):
                         return
                     
                     # Scrub markdown elements from response (for TTS)
-                    for component in globals.markdown_components:
-                        globals.assistant_message.replace(component, "")
+                    if isinstance(item, str):
+                        for component in globals.markdown_components:
+                            globals.assistant_message.replace(component, "")
 
                     # Health Check
                     if globals.os_name.startswith("Linux"):
@@ -223,17 +229,18 @@ def send_message(globals, ui_elements):
 
                 if globals.current_response_id == local_id:
                     # Scrub markdown while text is streaming
-                    globals.assistant_message += item.replace(
-                        "***", "").replace(
-                            "___", "").replace(
-                                "**", "").replace(
-                                    "__", "").replace(
-                                        "*", "").replace(
-                                            "_", "").replace(
-                                                "~~", "").replace(
-                                                    "#####", "").replace(
-                                                        "####", "").replace(
-                                                            "###", "")
+                    if isinstance(item, str):
+                        globals.assistant_message += item.replace(
+                            "***", "").replace(
+                                "___", "").replace(
+                                    "**", "").replace(
+                                        "__", "").replace(
+                                            "*", "").replace(
+                                                "_", "").replace(
+                                                    "~~", "").replace(
+                                                        "#####", "").replace(
+                                                            "####", "").replace(
+                                                                "###", "")
                     if globals.assistant_label:
                         if globals.qt_mode:
                             globals.assistant_label.setText(

@@ -2,18 +2,24 @@
 
 All notable changes to **Pearl** will be located in this file.
 
-## [0.3.5-beta] - 2026-05-27
+## [0.3.5] - 2026-5-30
 
-Pearl now includes OCR binaries for Windows users, enabling uploading scanned documents! Other various improvements are also included.
+Pearl now supports image uploads, tool calls, and includes OCR binaries for Windows users, enabling uploading scanned documents! Other various improvements are also included.
 
 ### Added
+- Image upload support
+- Tool call support
+- Pearl can now generate cryptographically secure passwords
 - Binaries for Poppler and Tesseract were added for Windows users, enabling file uploads of scanned PDF's
+- Pearl logic for later implementation of custom model
+- New file types supported: .jpg, .jpeg, .png, .gif
 
 ### Changed
-- Changed default model to much more powerful and slightly larger qwen3:4b-instruct-2507-q4_K_M
+- Changed default model to more powerful and slightly larger ministral-3:3b-instruct-2512-q4_K_M
 - Changed attachment icon to more closely fit industry standard
 - Improved prompt and context keywords
 - Attachments now have a file size limit of 50MB
+- Various bug fixes and improvements
 - Updated dependencies
 
 ### Fixed
@@ -21,8 +27,11 @@ Pearl now includes OCR binaries for Windows users, enabling uploading scanned do
 - Pearl's context length is now lower for users with less than 10GB of available RAM, enabling support for lower-end systems
 - Fixed update download error on Windows
 
+### Deprecated
+- Context detection is deprecated and will be removed in a later release
+
 ### Security
-- Patched 2 high severity vulnerabilities affecting availability and confedentiality of data in the urllib3 dependency by updating to version 2.7.0
+- Patched 2 high severity vulnerabilities affecting availability and confidentiality of data in the urllib3 dependency by updating to version 2.7.0
 
 ## [0.3.4] - 2026-05-09
 

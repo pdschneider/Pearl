@@ -5,6 +5,7 @@ import os
 import pdfplumber
 import subprocess
 import platform
+import base64
 from src.utils.toast import show_toast
 from src.connections.ollama import create_model_list, gpu_check
 from rs_bpe.bpe import openai
@@ -74,7 +75,9 @@ accepted_filetypes = [".txt", ".csv", ".json",
                       ".npmrc", ".nvmrc", ".yarnrc",
                       ".eslintrc", ".prettierrc",
                       ".babelrc", ".pylintrc",
-                      ".flake8", ".gemrc", ".docx"]
+                      ".flake8", ".gemrc", ".docx",
+                      ".jpg", ".jpeg", ".png",
+                      ".gif"]
 
 def attach_file(globals):
     """Attach a file to a message."""
@@ -107,6 +110,12 @@ def attach_file(globals):
                 passed = True
                 break
 
+        # Exit with warning if file type is not supported
+        if not passed:
+            logging.warning(f"File type not supported: {file}")
+            show_toast(globals, message=f"File type not supported", _type="error")
+            return
+
         # Exit if file size is too big
         max_file_size = 52_428_800  # 50MB
         file_size = os.path.getsize(globals.attachment_path)
@@ -116,18 +125,19 @@ def attach_file(globals):
             show_toast(globals, message=f"File size too large (Max: {max_file_size})", _type="error")
             return
 
-        # Exit with warning if file type is not supported
-        if not passed:
-            logging.warning(f"File type not supported: {file}")
-            show_toast(globals, message=f"File type not supported", _type="error")
-            return
-
-        # Open and read file if passed
+        # Open and read file
         if file.lower().endswith(".pdf"):
+            logging.debug(f"Parsing PDF file...")
             attachment = parse_pdf(globals, file)
         elif file.lower().endswith(".docx"):
+            logging.debug(f"Parsing docx file...")
             attachment = parse_docx(file)
+        elif file.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
+            globals.image_attachment = globals.attachment_path
+            attachment = "Image Attached"
+            logging.debug(f"Image Attachment: {globals.image_attachment}")
         else:
+            logging.debug(f"Reading plain text file...")
             with open(file, "r", encoding='utf-8') as f:
                 attachment = f.read(max_character_length + 1).strip()
 
@@ -177,6 +187,11 @@ def attach_file(globals):
             globals.attachment_path = None
             attachment = ""
             return
+        
+        # Turn image into readable format
+        if globals.image_attachment:
+            with open(globals.image_attachment, "rb") as f:
+                globals.image_attachment = base64.b64encode(f.read()).decode('utf-8')
 
     # Exit on exception
     except UnicodeDecodeError:

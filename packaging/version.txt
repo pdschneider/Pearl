@@ -20,12 +20,12 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'Phillip Schneider'),
           StringStruct('FileDescription', 'Personal Everything Assistant Running Locally'),
-          StringStruct('FileVersion', '0.3.5-beta'),
+          StringStruct('FileVersion', '0.3.5'),
           StringStruct('InternalName', 'Pearl'),
           StringStruct('LegalCopyright', 'Copyright © 2026 Phillip Schneider. Apache 2.0.'),
           StringStruct('OriginalFilename', 'Pearl.exe'),
           StringStruct('ProductName', 'Pearl'),
-          StringStruct('ProductVersion', '0.3.5-beta'),
+          StringStruct('ProductVersion', '0.3.5'),
           StringStruct('Comments', 'Personal Everything Assistant Running Locally'),
         ])
       ]),

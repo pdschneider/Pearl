@@ -10,6 +10,7 @@ from datetime import datetime
 from src.utils.hardware import get_disk_space, get_ram_info, get_gpu_info
 from src.utils.toast import show_toast
 from src.utils.save_settings import save_settings
+from src.managers.tools import generate_password
 from PySide6.QtWidgets import QMessageBox
 from tkinter import messagebox
 from rs_bpe.bpe import openai
@@ -93,7 +94,7 @@ def pull_model(globals):
             download = QMessageBox.question(
                 None,
                 f"Ollama Not Installed",
-                f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (qwen3:4b)?",
+                f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (ministral-3)?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes)
             
@@ -108,7 +109,7 @@ def pull_model(globals):
             download = messagebox.askyesno(
                 parent=globals.root,
                 title="Ollama Not Installed",
-                message=f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (qwen3:4b)?"
+                message=f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (ministral-3)?"
             )
             if download:
                 ollama_installation(globals)
@@ -116,28 +117,28 @@ def pull_model(globals):
             else:
                 return
 
-    # If Ollama is installed, prompt to download qwen3:4b-instruct-2507-q4_K_M
+    # If Ollama is installed, prompt to download ministral-3:3b-instruct-2512-q4_K_M
     else:
         logging.warning(f"Ollama must be installed before downloading a model.")
         if globals.qt_mode:
             download = QMessageBox.question(
                 None,
                 f"Model Not Installed",
-                f"The selected model is not installed. Would you like to install the default model (qwen3:4b)?",
+                f"The selected model is not installed. Would you like to install the default model (ministral-3)?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes)
 
             # Exit if user chooses no
             if download != QMessageBox.StandardButton.Yes:
-                logging.warning(f"User chose not to install qwen3:4b.")
+                logging.warning(f"User chose not to install ministral-3.")
                 return
         else:
             download = messagebox.askyesno(
                 parent=globals.root,
                 title="Model Not Installed",
-                message=f"The selected model is not installed. Would you like to install the default model (qwen3:4b)?")
+                message=f"The selected model is not installed. Would you like to install the default model (ministral-3)?")
             if not download:
-                logging.warning(f"User chose not to install qwen3:4b.")
+                logging.warning(f"User chose not to install ministral-3.")
                 return
 
         # Check disk space to ensure at least 4GB
@@ -155,17 +156,17 @@ def pull_model(globals):
             show_toast(globals, message="Must have 4GB of available RAM to install llama3.2", _type="error")
             return
 
-        # Download qwen3:4b-instruct-2507-q4_K_M on Linux
+        # Download ministral-3:3b-instruct-2512-q4_K_M on Linux
         if globals.os_name.startswith("Linux"):
             download_cmd = """
             #!/bin/bash
 
             set -euo pipefail
 
-            read -p "Install recommended model (qwen3:4b)? [Y/n] " choice
+            read -p "Install recommended model (ministral-3)? [Y/n] " choice
             if [[ "$choice" =~ ^[Yy]?$ ]]; then
-                ollama pull qwen3:4b-instruct-2507-q4_K_M
-                echo "qwen3:4b-instruct-2507-q4_K_M was installed!"
+                ollama pull ministral-3:3b-instruct-2512-q4_K_M
+                echo "ministral-3:3b-instruct-2512-q4_K_M was installed!"
                 echo ""
                 echo 'Install finished! Press Enter to close this terminal and return to Pearl...';
                 read -r dummy
@@ -188,10 +189,10 @@ def pull_model(globals):
         elif globals.os_name.startswith("Windows"):
             download_cmd = (
                 # Ask about model (Y/n like bash)
-                "$choice = Read-Host 'Install recommended model qwen3:4b? [Y/n]'; "
+                "$choice = Read-Host 'Install recommended model ministral-3? [Y/n]'; "
                 "if ($choice -eq '' -or $choice -match '^[Yy]') { "
-                "    Write-Host 'Pulling qwen3:4b-instruct-2507-q4_K_M ... (may take a few minutes)' -ForegroundColor Cyan; "
-                "    ollama pull qwen3:4b-instruct-2507-q4_K_M; "
+                "    Write-Host 'Pulling ministral-3:3b-instruct-2512-q4_K_M ... (may take a few moments)' -ForegroundColor Cyan; "
+                "    ollama pull ministral-3:3b-instruct-2512-q4_K_M; "
                 "    Write-Host 'Model installed!' -ForegroundColor Green; "
                 "} else { "
                 "    Write-Host 'Skipping model download.' -ForegroundColor Yellow; "
@@ -273,10 +274,10 @@ def ollama_installation(globals):
     "}; "
 
     # Ask about model (Y/n like bash)
-    "$choice = Read-Host 'Install recommended model qwen3:4b? [Y/n]'; "
+    "$choice = Read-Host 'Install recommended model ministral-3? [Y/n]'; "
     "if ($choice -eq '' -or $choice -match '^[Yy]') { "
-    "    Write-Host 'Pulling qwen3:4b-instruct-2507-q4_K_M ... (may take a few minutes)' -ForegroundColor Cyan; "
-    "    ollama pull qwen3:4b-instruct-2507-q4_K_M; "
+    "    Write-Host 'Pulling ministral-3:3b-instruct-2512-q4_K_M ... (may take a few minutes)' -ForegroundColor Cyan; "
+    "    ollama pull ministral-3:3b-instruct-2512-q4_K_M; "
     "    Write-Host 'Model installed!' -ForegroundColor Green; "
     "} else { "
     "    Write-Host 'Skipping model download.' -ForegroundColor Yellow; "
@@ -460,7 +461,7 @@ def unload_model(globals, model):
         if response.status_code == 200:
             start_time = time.time()
             while time.time() - start_time < 10:
-                if model not in get_loaded_models():
+                if model not in get_loaded_models(globals):
                     logging.info(f"Unloaded {model}")
                     show_toast(globals, message=f"{model} unloaded")
                     return True
@@ -486,11 +487,12 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     # logging.debug(f"Full system prompt: {globals.system_prompt}")
 
     # Determine prompt to be used
-    if globals.active_prompt:
-        messages_and_prompt = [
-            {"role": "system", "content": globals.system_prompt}] + messages
-    if messages_and_prompt:
-        messages = messages_and_prompt
+    if "pearl" not in globals.active_model.lower():
+        if globals.active_prompt:
+            messages_and_prompt = [
+                {"role": "system", "content": globals.system_prompt}] + messages
+        if messages_and_prompt:
+            messages = messages_and_prompt
 
     # Calculate context length
     model_data = create_model_list(globals)
@@ -530,6 +532,24 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     else:
         globals.thinking = False
 
+    # Define available tools
+    globals.available_tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_password",
+            "description": "Generates a random secure password.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "length": {"type": "integer", "description": "Length of the password in characters."}
+                },
+                "required": []
+            }
+        }
+    }
+    ]
+
     # Generate payload
     url = f"{globals.ollama_chat_path}api/chat"
     payload = {
@@ -537,9 +557,10 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
         "messages": messages,
         "stream": True,
         "think": globals.thinking,
+        "tools": globals.available_tools or [],
         "options": {
-            "num_ctx": globals.context_length or 2048
-        }}
+            "num_ctx": globals.context_length or 2048}
+        }
     try:
         # Test Ollama first
         ollama_installed = ollama_version_test(globals)
@@ -553,7 +574,8 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             return
 
         with globals.prompt_lock:
-            logging.debug(f"Querying Ollama for main chat with prompt '{globals.active_prompt}'")
+            if "pearl" not in globals.active_model.lower():
+                logging.debug(f"Querying Ollama for main chat with prompt '{globals.active_prompt}'")
 
         # Query the Ollama API if Ollama is installed, set flag
         got_response = False
@@ -565,16 +587,16 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
         if response.status_code == 404:
             logging.error(f"Error: {response.text}")
             absent_model = response.text.split()[1].replace("'", "")
-            if absent_model == "qwen3:4b-instruct-2507-q4_K_M":
+            if absent_model == "ministral-3:3b-instruct-2512-q4_K_M":
                 pull_model(globals)
                 out_q.put(
                     f"At least one model must be installed to use Pearl's chat feature.")
                 return
             else:
                 out_q.put(
-                    f"{absent_model} not found. Defaulting to qwen3:4b-instruct-2507-q4_K_M.")
-                globals.active_model = "qwen3:4b-instruct-2507-q4_K_M"
-                save_settings(active_model="qwen3:4b-instruct-2507-q4_K_M")
+                    f"{absent_model} not found. Defaulting to ministral-3:3b-instruct-2512-q4_K_M.")
+                globals.active_model = "ministral-3:3b-instruct-2512-q4_K_M"
+                save_settings(active_model="ministral-3:3b-instruct-2512-q4_K_M")
                 return
 
         # Gracefully return if status code is not 200
@@ -582,6 +604,10 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             out_q.put(
                 f"Ollama error {response.status_code}: {response.text}\n")
             return
+
+        # Create tool call lists
+        tool_calls_received = []
+        tool_results = []
 
         # Output text in a stream
         for line in response.iter_lines():
@@ -606,16 +632,70 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
                     msg = chunk.get("message", {})
                     thinking_chunk = msg.get("thinking")
                     content_chunk = msg.get("content")
+                    tool_calls = msg.get("tool_calls")
 
                     # Output text for thinking / content
                     if thinking_chunk:
                         out_q.put(thinking_chunk)
                     if content_chunk:
                         out_q.put(content_chunk)
+                    if tool_calls:
+                        for tool_call in tool_calls:
+                            function_name = tool_call.get("function", {}).get("name")
+                            function_args = tool_call.get("function", {}).get("arguments",{})
+
+                            tool_calls_received.append(tool_call)
+            
+                        if function_name:
+                            logging.info(f"Used tool: {function_name}")
+                            logging.info(f"Arguments: {function_args}")
+
+                        if function_name == "generate_password":
+                            result = generate_password(**function_args)
+                            tool_results.append({
+                                "role": "tool",
+                                "name": function_name,
+                                "content": str(result)
+                            })
 
                 except json.JSONDecodeError:
                     continue
+
         logging.debug(f"{model} has finished streaming its response.")
+
+        # If we got tool calls, re-query with results
+        if tool_calls_received and tool_results:
+            logging.info("Re-querying with tool results...")
+            
+            # Add assistant message with tool calls
+            messages.append({
+                "role": "assistant",
+                "tool_calls": tool_calls_received
+            })
+            
+            # Add tool results
+            messages.extend(tool_results)
+            
+            # Re-query Ollama
+            payload["messages"] = messages
+            response2 = requests.post(url, json=payload, stream=True, timeout=120)
+            
+            # Stream the second response
+            for line2 in response2.iter_lines():
+                if cancel_event.is_set():
+                    break
+                if line2:
+                    try:
+                        chunk = json.loads(line2.decode("utf-8"))
+                        if chunk.get("done"):
+                            break
+                        msg = chunk.get("message", {})
+                        content_chunk = msg.get("content")
+                        if content_chunk:
+                            out_q.put(content_chunk)
+                    except json.JSONDecodeError:
+                        continue
+            response2.close()
 
     except requests.ConnectionError:
         out_q.put("Cannot reach Ollama — is it running?\n")
@@ -625,13 +705,14 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
         out_q.put(f"Error: {e}\n")
     finally:
         globals.message_end_time = datetime.now().isoformat()
+        globals.image_attachment = None
         out_q.put(None)
         # Close only if response was given
         if got_response:
             response.close()
 
 
-def context_query(globals, model="qwen3:4b-instruct-2507-q4_K_M", message=""):
+def context_query(globals, model="ministral-3:3b-instruct-2512-q4_K_M", message=""):
     """Query the context model for changes in the conversation."""
     # Gracefully exit if Ollama is not installed or message is empty
     if not globals.ollama_active or not message:
@@ -660,7 +741,7 @@ def context_query(globals, model="qwen3:4b-instruct-2507-q4_K_M", message=""):
         logging.error(f"Could not query context model at {globals.ollama_context_path} due to: {e}")
 
 
-def generate_title(globals, model="qwen3:4b-instruct-2507-q4_K_M", message=""):
+def generate_title(globals, model="ministral-3:3b-instruct-2512-q4_K_M", message=""):
     """Query the context model for changes in the conversation."""
     # Gracefully exit if Ollama is not installed or message is empty
     if not globals.ollama_active or not message:
