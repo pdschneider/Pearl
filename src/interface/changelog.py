@@ -75,12 +75,12 @@ def markdown_to_plain(md: str) -> list[tuple[str, tuple]]:
     return lines_out
 
 
-def create_changelog_tab(globals, changelog_tab):
+def create_changelog_tab(globs, changelog_tab):
     """
     Creates the tab to display setup instructions for new users.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     setup_tab: The main frame of the setup window
     """
 
@@ -123,14 +123,14 @@ def create_changelog_tab(globals, changelog_tab):
     ctk.CTkButton(
         btn_frame,
         text="Back",
-        command=lambda: continue_to_chat(globals),
+        command=lambda: continue_to_chat(globs),
     ).pack(side="top", padx=5)
 
-    def continue_to_chat(globals):
-        globals.app_title.configure(text="Pearl at your service!")
+    def continue_to_chat(globs):
+        globs.app_title.configure(text="Pearl at your service!")
         # Map chat page
-        app_pages = [globals.chat_page, globals.setup_page, globals.settings_page, globals.changelog]
+        app_pages = [globs.chat_page, globs.setup_page, globs.settings_page, globs.changelog]
         for page in app_pages:
             if page:
                 page.pack_forget()
-        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
+        globs.chat_page.pack(fill="both", expand=True, padx=10, pady=0)

@@ -5,24 +5,25 @@ import os
 import json
 import hashlib
 import sys
+import platform
 from logging.handlers import TimedRotatingFileHandler
 import tkinter as tk
 import customtkinter as ctk
 from src.connections.ollama import ollama_test, load_model, get_loaded_models
 from src.utils.hardware import get_hardware_stats
-from src.utils.load_settings import load_data_path, load_settings
+from src.utils.load import load_data_path, load_settings
 from src.connections.docker import docker_check
 from src.connections.kokoro import kokoro_test
-from src.connections.github import version_check
+from src.connections.updater import version_check
 from src.utils.icons import load_icons
 
 
-def startup(globals):
+def startup(globs):
     """
     Starts up the program with a progress bar.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
     """
     tasks_done = threading.Event()
 
@@ -177,6 +178,16 @@ def startup(globals):
                 data["generate_titles"] = True
                 changed = True
                 logging.info(f"Added missing or nonconforming 'generate_titles' key to settings.json")
+            if "dynamic_window_size" not in data or not isinstance(data["dynamic_window_size"], bool):
+                data["dynamic_window_size"] = True
+                changed = True
+                logging.info(
+                    f"Added missing or nonconforming 'dynamic_window_size' key to settings.json")
+            if "legacy_mode" not in data or not isinstance(data["legacy_mode"], bool):
+                data["dynamic_window_size"] = True
+                changed = True
+                logging.info(
+                    f"Added missing or nonconforming 'legacy_mode' key to settings.json")
 
             # Write to file
             if changed:
@@ -490,30 +501,43 @@ def startup(globals):
             except Exception as e:
                 logging.warning(f"Unable to update prompts.json due to: {e}")
 
-    def get_exec_type():
-        """Get the correct executable type."""
+    def get_executable_path(globs):
+        """Get the correct path to the app file."""
         
-        # Script path (ex: /usr/bin/pearl)
-        script_path = os.path.abspath(sys.argv[0])
+        # Script path (ex: /usr/bin/spawn)
+        script_path = os.path.abspath(sys.argv[0])  # Run From (pwd + binary name)
+        script_path_2 = sys.executable  # Actual Binary Path
 
         # Check if AppImage
         if 'APPIMAGE' in os.environ:
-            logging.debug(f"Path to executable (AppImage): {os.environ['APPIMAGE']}")
-            return "AppImage"
+            globs.app_type = "AppImage"
+            globs.app_path = os.environ['APPIMAGE']
+            logging.debug(f"Path to executable (AppImage): {globs.app_path}")
+            logging.debug(f"App Type: {globs.app_type}")
+        
         # Check if .deb
-        elif script_path.startswith("/usr/bin/pearl") or script_path.startswith("/usr/local/bin/pearl"):
-            logging.debug(f"Path to executable (.deb/system): {os.path.realpath(sys.executable)} | Path to script: {script_path}")
-            return "Deb"
-        # Check if running in frozen/compiled mode
-        elif getattr(sys, 'frozen', False):
-            logging.debug(f"Path to executable (frozen / Inno Setup): {sys.executable}")
-            return "Exe"
-        # Development mode
-        else:
-            logging.debug(f"Path to executable: {sys.executable} | Path to script: {script_path}")
-            return "Development"
+        elif (script_path_2.startswith("/usr/bin/pearl-gui") or
+            script_path_2.startswith("/usr/local/bin/pearl-gui")):
+            globs.app_type = "Deb"
+            globs.app_path = script_path
+            logging.debug(f"Path to executable (.deb/system): {os.path.realpath(sys.executable)} | Path to script: {script_path_2}")
+            logging.debug(f"App Type: {globs.app_type}")
 
-    def startup_tasks(globals, tasks_done):
+        # Check if running as an .exe
+        elif platform.platform().startswith("Windows") and ('onefile' in sys.executable.lower() or '_MEIPASS' in sys.executable):
+            globs.app_type = "Exe"
+            globs.app_path = script_path
+            logging.debug(f"Path to executable (frozen / Inno Setup): {sys.executable} | Path to Script: {script_path}")
+            logging.debug(f"App Type: {globs.app_type}")
+        
+        # Fallback to Development Mode
+        else:
+            globs.app_type = "Development"
+            globs.app_path = [sys.executable, script_path]
+            logging.debug(f"Path to executable: {script_path}")
+            logging.debug(f"App Type: {globs.app_type}")
+
+    def startup_tasks(globs, tasks_done):
         """Tests dependencies and sets flags."""
         setup_logging()
         setup_settings()
@@ -525,28 +549,28 @@ def startup(globals):
         docker_ubuntu_check()
         docker_windows_check()
         kokoro_windows_check()
-        load_icons(globals)
-        globals.app_type = get_exec_type()
+        load_icons(globs)
+        get_executable_path(globs)
         logging.info(f"Python Version: {sys.version}")
-        logging.info(f"Pearl Version: {globals.current_version}")
-        logging.info(f"Executable Type: {globals.app_type}")
+        logging.info(f"Pearl Version: {globs.current_version}")
+        logging.info(f"Executable Type: {globs.app_type}")
         try:
             # Test for Ollama
-            ollama_success = ollama_test(globals)
+            ollama_success = ollama_test(globs)
             if ollama_success:
-                loaded_models = get_loaded_models(globals, endpoint=globals.ollama_chat_path)
-                if globals.active_model not in loaded_models:
+                loaded_models = get_loaded_models(globs, endpoint=globs.ollama_chat_path)
+                if globs.active_model not in loaded_models:
                     logging.debug(f"Attempting to load initial model....")
                     # Loads the active model before GUI is built
-                    load_model(globals, globals.active_model)
+                    load_model(globs, globs.active_model)
         except Exception as e:
             logging.error(f"Initial Ollama setup failed due to: {e}")
 
         # Test for Docker & Kokoro
         try:
-            docker_success = docker_check(globals)
+            docker_success = docker_check(globs)
             if docker_success:
-                kokoro_test(globals)
+                kokoro_test(globs)
         except Exception as e:
             logging.error(f"Initial Docker + Kokoro setup failed due to {e}")
 
@@ -560,12 +584,12 @@ def startup(globals):
         tasks_done.set()
 
     # Perform startup tasks
-    thread = threading.Thread(target=startup_tasks, args=(globals, tasks_done), daemon=True)
+    thread = threading.Thread(target=startup_tasks, args=(globs, tasks_done), daemon=True)
     thread.start()
 
     # Check is version is most recent
-    if globals.github_check:
-        version_check(globals)
+    if globs.github_check:
+        version_check(globs)
 
     # Wait up to 1 second for quick completion
     thread.join(1.0)
@@ -573,16 +597,16 @@ def startup(globals):
         return
 
     # Create the loading window
-    globals.startup_root = ctk.CTk()
-    globals.startup_root.title("Loading Pearl...")
-    screen_width = globals.startup_root.winfo_screenwidth()
-    screen_height = globals.startup_root.winfo_screenheight()
+    globs.startup_root = ctk.CTk()
+    globs.startup_root.title("Loading Pearl...")
+    screen_width = globs.startup_root.winfo_screenwidth()
+    screen_height = globs.startup_root.winfo_screenheight()
     x = (screen_width - 900) // 2
     y = (screen_height - 850) // 2
-    globals.startup_root.geometry(f"300x100+{x}+{y}")
+    globs.startup_root.geometry(f"300x100+{x}+{y}")
 
     # Create progress bar
-    progress_bar = ctk.CTkProgressBar(globals.startup_root, mode="indeterminate")
+    progress_bar = ctk.CTkProgressBar(globs.startup_root, mode="indeterminate")
     progress_bar.pack(padx=10, pady=10, fill="x")
     progress_bar.start()
 
@@ -590,23 +614,23 @@ def startup(globals):
     def close_startup_window():
         """Closes the progress bar window."""
         progress_bar.stop()
-        if globals.startup_root:
-            globals.startup_root.quit()
+        if globs.startup_root:
+            globs.startup_root.quit()
 
     def check_if_done():
         """Periodically checks to see if loading is finished."""
         if tasks_done.is_set():
             close_startup_window()
         else:
-            if globals.startup_root:
-                globals.startup_root.after(100, check_if_done)
+            if globs.startup_root:
+                globs.startup_root.after(100, check_if_done)
 
     # Set up polling loop
-    if globals.startup_root:
-        globals.startup_root.after(100, check_if_done)
+    if globs.startup_root:
+        globs.startup_root.after(100, check_if_done)
 
     # Destroy loading screen
     try:
-        globals.startup_root.mainloop()
+        globs.startup_root.mainloop()
     except tk.TclError:
         pass #  Ignores callback errors

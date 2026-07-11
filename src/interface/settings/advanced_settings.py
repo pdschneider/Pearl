@@ -16,12 +16,12 @@ import logging
 import sys
 
 
-def create_advanced_tab(globals, advanced_frame):
+def create_advanced_tab(globs, advanced_frame):
     """
     Creates the advanced tab and initializes widgets.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     advanced_frame: The main frame of the advanced tab
     """
 
@@ -38,7 +38,7 @@ def create_advanced_tab(globals, advanced_frame):
 
     ctk.CTkLabel(options_frame,
                  text=None,
-                 image=globals.preferences_icon).grid(
+                 image=globs.preferences_icon).grid(
                      row=0, column=0, padx=6, sticky="w")
 
     logging_label = ctk.CTkLabel(options_frame,
@@ -58,7 +58,7 @@ def create_advanced_tab(globals, advanced_frame):
         ctk.CTkRadioButton(options_frame,
                            text=level,
                            value=level,
-                           variable=globals.logging_var).grid(
+                           variable=globs.logging_var).grid(
                                row=0, column=col, padx=0, sticky="w")
         col += 1
 
@@ -70,7 +70,7 @@ def create_advanced_tab(globals, advanced_frame):
 
     def open_logs():
         """Opens the logs folder."""
-        if globals.os_name.startswith("Windows"):
+        if globs.os_name.startswith("Windows"):
             logging.debug(f"Opening logs folder on Windows...")
             os.startfile(load_data_path("cache", "logs"))
         else:
@@ -80,7 +80,7 @@ def create_advanced_tab(globals, advanced_frame):
     
     def open_chats():
         """Opens the chats folder."""
-        if globals.os_name.startswith("Windows"):
+        if globs.os_name.startswith("Windows"):
             logging.debug(f"Opening chats folder on Windows...")
             os.startfile(load_data_path("local", "chats"))
         else:
@@ -90,7 +90,7 @@ def create_advanced_tab(globals, advanced_frame):
     
     def open_config():
         """Opens the settings folder."""
-        if globals.os_name.startswith("Windows"):
+        if globs.os_name.startswith("Windows"):
             logging.debug(f"Opening settings folder on Windows...")
             os.startfile(load_data_path("config"))
         else:
@@ -100,7 +100,7 @@ def create_advanced_tab(globals, advanced_frame):
 
     ctk.CTkLabel(folders_frame,
                  text=None,
-                 image=globals.note_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.note_icon).pack(side="left", padx=6, pady=0)
 
     ctk.CTkLabel(folders_frame,
                  text="Open Logs",
@@ -114,7 +114,7 @@ def create_advanced_tab(globals, advanced_frame):
 
     ctk.CTkLabel(folders_frame,
                  text=None,
-                 image=globals.chats_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.chats_icon).pack(side="left", padx=6, pady=0)
 
     ctk.CTkLabel(folders_frame,
                  text="Open Chats",
@@ -128,7 +128,7 @@ def create_advanced_tab(globals, advanced_frame):
 
     ctk.CTkLabel(folders_frame,
                  text=None,
-                 image=globals.config_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.config_icon).pack(side="left", padx=6, pady=0)
 
     ctk.CTkLabel(folders_frame,
                  text="Open Config",
@@ -154,7 +154,7 @@ def create_advanced_tab(globals, advanced_frame):
 
     ctk.CTkLabel(top_deletion_frame,
                 text=None,
-                image=globals.pearl_icon).pack(side="left", padx=6, pady=0)
+                image=globs.pearl_icon).pack(side="left", padx=6, pady=0)
 
     ctk.CTkLabel(top_deletion_frame,
                 text="Factory Reset",
@@ -163,14 +163,14 @@ def create_advanced_tab(globals, advanced_frame):
     reset_pearl_button = ctk.CTkButton(top_deletion_frame,
                                 text="Reset",
                                 width=20,
-                                command=lambda: total_factory_reset(globals))
+                                command=lambda: total_factory_reset(globs))
     reset_pearl_button.pack(side="left", padx=(0, 12))
     reset_pearl_button.configure(fg_color="#d62828", hover_color="#ff3b30")
 
-    if globals.ollama_active:
+    if globs.ollama_active:
         ctk.CTkLabel(top_deletion_frame,
                     text=None,
-                    image=globals.ollama_icon).pack(side="left", padx=6, pady=0)
+                    image=globs.ollama_icon).pack(side="left", padx=6, pady=0)
 
         ctk.CTkLabel(top_deletion_frame,
                     text="Uninstall Ollama",
@@ -179,7 +179,7 @@ def create_advanced_tab(globals, advanced_frame):
         uninstall_ollama_button = ctk.CTkButton(top_deletion_frame,
                                     text="Uninstall",
                                     width=20,
-                                    command=lambda: uninstall_ollama(globals))
+                                    command=lambda: uninstall_ollama(globs))
         uninstall_ollama_button.pack(side="left", padx=(0, 12))
         uninstall_ollama_button.configure(fg_color="#d62828", hover_color="#ff3b30")
 
@@ -188,10 +188,10 @@ def create_advanced_tab(globals, advanced_frame):
                                 fg_color="transparent")
     bottom_deletion_frame.pack(anchor="w", pady=5)
 
-    if globals.docker_active:
+    if globs.docker_active:
         ctk.CTkLabel(bottom_deletion_frame,
                     text=None,
-                    image=globals.docker_icon).pack(side="left", padx=6, pady=0)
+                    image=globs.docker_icon).pack(side="left", padx=6, pady=0)
 
         ctk.CTkLabel(bottom_deletion_frame,
                     text="Uninstall Docker",
@@ -200,14 +200,14 @@ def create_advanced_tab(globals, advanced_frame):
         uninstall_docker_button = ctk.CTkButton(bottom_deletion_frame,
                                     text="Uninstall",
                                     width=20,
-                                    command=lambda: uninstall_docker(globals))
+                                    command=lambda: uninstall_docker(globs))
         uninstall_docker_button.pack(side="left", padx=(0, 12))
         uninstall_docker_button.configure(fg_color="#d62828", hover_color="#ff3b30")
 
-    if globals.kokoro_active and globals.os_name.startswith("Linux"):
+    if globs.kokoro_active and globs.os_name.startswith("Linux"):
         ctk.CTkLabel(bottom_deletion_frame,
                     text=None,
-                    image=globals.kokoro_icon).pack(side="left", padx=6, pady=0)
+                    image=globs.kokoro_icon).pack(side="left", padx=6, pady=0)
 
         ctk.CTkLabel(bottom_deletion_frame,
                     text="Uninstall Kokoro",
@@ -216,7 +216,7 @@ def create_advanced_tab(globals, advanced_frame):
         uninstall_kokoro_button = ctk.CTkButton(bottom_deletion_frame,
                                     text="Uninstall",
                                     width=20,
-                                    command=lambda: uninstall_kokoro(globals))
+                                    command=lambda: uninstall_kokoro(globs))
         uninstall_kokoro_button.pack(side="left", padx=(0, 12))
         uninstall_kokoro_button.configure(fg_color="#d62828", hover_color="#ff3b30")
 
@@ -228,21 +228,23 @@ def create_advanced_tab(globals, advanced_frame):
 
     ctk.CTkButton(save_button_frame,
                   text="Save Settings",
-                  command=lambda: save_button(globals)).pack()
+                  command=lambda: save_button(globs)).pack()
 
-    def save_button(globals):
+    def save_button(globs):
         """Saves and prompts for restart if required."""
         prompt_restart = False
-        if globals.github_check != globals.github_check_var.get():
+        if globs.github_check != globs.github_check_var.get():
             prompt_restart = True
-        elif globals.active_theme != globals.theme_var.get():
+        elif globs.active_theme != globs.theme_var.get():
             prompt_restart = True
-        elif globals.beta != globals.beta_var.get():
+        elif globs.beta != globs.beta_var.get():
             prompt_restart = True
-        save_all_settings(globals)
+        elif globs.legacy_mode != globs.legacy_mode_var.get():
+            prompt_restart = True
+        save_all_settings(globs)
 
         if prompt_restart:
-            if globals.qt_mode:
+            if not globs.legacy_mode:
                 reply = QMessageBox.question(
                     None,
                     "Restart Pearl?",
@@ -250,13 +252,13 @@ def create_advanced_tab(globals, advanced_frame):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.Yes)
                 if reply == QMessageBox.StandardButton.Yes:
-                    subprocess.Popen(globals.app_path)
+                    subprocess.Popen(globs.app_path)
                     sys.exit(0)
             else:
                     reply = messagebox.askyesno(
-                        parent=globals.root,
+                        parent=globs.root,
                         title="Restart Pearl",
                         message="Would you like restart Pearl to apply all changes?")
                     if reply:
-                        subprocess.Popen(globals.app_path)
+                        subprocess.Popen(globs.app_path)
                         sys.exit(0)

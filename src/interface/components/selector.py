@@ -5,16 +5,16 @@ from src.connections.ollama import get_all_models, get_loaded_models, unload_mod
 
 
 class Treeview:
-    def __init__(self, globals_obj, parent, all_models=None):
+    def __init__(self, globs_obj, parent, all_models=None):
         """Initializes class variables."""
-        self.globals = globals_obj
+        self.globs = globs_obj
         self.parent = parent
         self._rows = []
         self._selected = set()
         self._last_idx = None
         self._rename_bind_id = None
         if all_models is None:
-            self.all_models = lambda: get_all_models(self.globals, self.globals.ollama_chat_path)
+            self.all_models = lambda: get_all_models(self.globs, self.globs.ollama_chat_path)
         elif callable(all_models):
             self.all_models = all_models
         else:
@@ -43,7 +43,7 @@ class Treeview:
             logging.warning(f"Skipping model tree build - no models found.")
             return
 
-        loaded = get_loaded_models(self.globals, self.globals.ollama_chat_path)
+        loaded = get_loaded_models(self.globs, self.globs.ollama_chat_path)
         try:
             for idx, model in enumerate(sorted(models)):
                 row = ctk.CTkFrame(self.selection_frame,
@@ -54,7 +54,7 @@ class Treeview:
                 label = ctk.CTkLabel(row, text=model, anchor="w")
                 label.pack(side="left", padx=12, pady=8, fill="x", expand=True)
                 self._rows.append((row, model))
-                if model == self.globals.active_model:
+                if model == self.globs.active_model:
                     label.configure(fg_color="red")
 
                 if model in loaded:
@@ -71,7 +71,7 @@ class Treeview:
 
     def _apply_highlight(self, row, on=True):
         """Highlights a specific row."""
-        row.configure(fg_color=self.globals.theme_dict["CTkScrollableFrame"]["bg_color"] if on else "transparent")
+        row.configure(fg_color=self.globs.theme_dict["CTkScrollableFrame"]["bg_color"] if on else "transparent")
 
     def _on_row_click(self, event, idx, filename):
         """Triggers selection of an item upon click"""
@@ -88,7 +88,7 @@ class Treeview:
 
     def _unload_handler(self, event, model):
         """Handles unloading of models."""
-        unload_model(self.globals, model)
+        unload_model(self.globs, model)
         self.refresh()
         return "break"
 
@@ -107,14 +107,14 @@ class Treeview:
         self._rows.clear()
         self.selection_clear()
 
-        models = get_all_models(self.globals, self.globals.ollama_chat_path)
+        models = get_all_models(self.globs, self.globs.ollama_chat_path)
 
         # Skip building models tree if no models are found
         if not models:
             logging.warning(f"Skipping model tree build - no models found.")
             return
 
-        loaded = get_loaded_models(self.globals, self.globals.ollama_chat_path)
+        loaded = get_loaded_models(self.globs, self.globs.ollama_chat_path)
         try:
             for idx, model in enumerate(sorted(models)):
                 row = ctk.CTkFrame(self.selection_frame,

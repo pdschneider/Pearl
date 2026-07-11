@@ -1,4 +1,4 @@
-# Managers/chat_history.py
+# src/managers/chat_history.py
 import json
 import uuid
 import logging
@@ -18,52 +18,52 @@ except Exception as e:
     logging.error(f"Unable to create chats folder due to: {e}")
 
 
-def start_new_conversation(globals):
+def start_new_conversation(globs):
     """Reverts variables for a new conversation."""
-    globals.conversation_history = []
-    globals.chat_history = globals.conversation_history
-    globals.conversation_id = str(uuid.uuid4())
-    globals.is_new_conversation = True
-    globals.context_warning = True
-    with globals.prompt_lock:
-        globals.active_prompt = "Assistant"
-    globals.created_at = datetime.now().isoformat()
-    logging.debug(f"Started new conversation with ID: {globals.conversation_id}")
+    globs.conversation_history = []
+    globs.chat_history = globs.conversation_history
+    globs.conversation_id = str(uuid.uuid4())
+    globs.is_new_conversation = True
+    globs.context_warning = True
+    with globs.prompt_lock:
+        globs.active_prompt = "Assistant"
+    globs.created_at = datetime.now().isoformat()
+    logging.debug(f"Started new conversation with ID: {globs.conversation_id}")
 
 
-def add_message(globals, role, content, model=None, tokens=0, **kwargs):
+def add_message(globs, role, content, model=None, tokens=0, **kwargs):
     """Builds each message to save to chat file"""
     message = {"role": role, "content": content, "message_id": str(uuid.uuid4()), **kwargs}
     if message["role"] == "assistant":
-        globals.current_response_id = message["message_id"]
-        logging.debug(f"Current message ID: {globals.current_response_id}")
-    if globals.message_start_time:
-        message["start_time"] = globals.message_start_time
-    if globals.message_end_time:
-        message["end_time"] = globals.message_end_time
-    if globals.attachment_path:
-        message["attachment"] = globals.attachment_path
+        globs.current_response_id = message["message_id"]
+        logging.debug(f"Current message ID: {globs.current_response_id}")
+    if globs.message_start_time:
+        message["start_time"] = globs.message_start_time
+    if globs.message_end_time:
+        message["end_time"] = globs.message_end_time
+    if globs.attachment_path:
+        message["attachment"] = globs.attachment_path
     if model:
         message["model"] = model
-    if globals.active_prompt and role == "assistant":
-        with globals.prompt_lock:
-            message["prompt"] = globals.active_prompt
+    if globs.active_prompt and role == "assistant":
+        with globs.prompt_lock:
+            message["prompt"] = globs.active_prompt
     if tokens and tokens != 0:
         message["tokens"] = tokens
     try:
-        globals.conversation_history.append(message)
+        globs.conversation_history.append(message)
     except Exception as e:
         logging.error(f"Could not write message to chat file due to: {e}")
     
-    globals.message_start_time = None
-    globals.message_end_time = None
+    globs.message_start_time = None
+    globs.message_end_time = None
 
 
-def save_conversation(globals, user_text=None):
+def save_conversation(globs, user_text=None):
     """Saves conversation history per message"""
 
     # Exits early if conversation history is empty
-    if not globals.conversation_history:
+    if not globs.conversation_history:
         logging.debug("No history to save; skipping.")
         return
     
@@ -72,50 +72,50 @@ def save_conversation(globals, user_text=None):
     logging.debug(f"Free disk space: {free_space}")
     if free_space < 1:
         logging.warning(f"Free disk space must be at least 1GB to save chats.")
-        show_toast(globals, message="Must have 1GB of free disk space to save chats", _type="error")
+        show_toast(globs, message="Must have 1GB of free disk space to save chats", _type="error")
         return
 
     # Sets conversation ID if none available
-    if globals.conversation_id is None:
-        globals.conversation_id = str(uuid.uuid4())
+    if globs.conversation_id is None:
+        globs.conversation_id = str(uuid.uuid4())
 
     # Determine filename
-    filename = os.path.join(chat_dir, f"chat_{globals.conversation_id}.json")
+    filename = os.path.join(chat_dir, f"chat_{globs.conversation_id}.json")
 
     # Have LLM determine chat title
     clean_title = ""
     try:
-        if globals.is_new_conversation and user_text and globals.generate_titles:
+        if globs.is_new_conversation and user_text and globs.generate_titles:
             logging.debug(f"Querying LLM for chat title...")
-            chat_title = generate_title(globals, model=globals.context_model, message=user_text)
+            chat_title = generate_title(globs, model=globs.context_model, message=user_text)
             clean_title = str(chat_title).replace("Title:", "").strip()[:50]
             logging.debug(f"Chat Title: {clean_title}")
     except Exception as e:
         logging.error(f"Unable to query LLM for chat title due to: {e}")
-        show_toast(globals,
+        show_toast(globs,
                        message="Unable to reach title generation model - is Ollama up on that network?",
                        _type="error")
 
     # Compile data
     data = {
         "metadata": {
-            "created_at": globals.created_at,
-            "title": clean_title or f"Untitled Chat_{globals.conversation_id}",
-            "conversation_id": globals.conversation_id},
-            "history": globals.conversation_history}
+            "created_at": globs.created_at,
+            "title": clean_title or f"Untitled Chat_{globs.conversation_id}",
+            "conversation_id": globs.conversation_id},
+            "history": globs.conversation_history}
     
     # Save to file
     try:
         with open(filename, 'w') as f:
             json.dump(data, f, indent=4)
         logging.debug(f"Conversation saved/updated to {filename}")
-        globals.is_new_conversation = False
+        globs.is_new_conversation = False
     except Exception as e:
         logging.error(f"Failed to save conversation to {filename}: {e}")
-        globals.is_new_conversation = False
+        globs.is_new_conversation = False
 
 
-def load_conversations(globals):
+def load_conversations(globs):
     """
     Loads all saved conversations from the chat directory,
     sorted by created_at descending.
@@ -170,22 +170,22 @@ def load_conversations(globals):
     return conversations
 
 
-def load_specific_conversation(globals, conversation_id):
+def load_specific_conversation(globs, conversation_id):
     """
-    Loads a specific conversation by ID into globals.
+    Loads a specific conversation by ID into globs.
     
-    Sets globals.chat_history and globals.conversation_history
+    Sets globs.chat_history and globs.conversation_history
     """
     chat_dir = os.path.normpath(load_data_path("local", "chats"))
     filename = os.path.join(chat_dir, f"chat_{conversation_id}.json")
     try:
         with open(filename, 'r') as f:
             data = json.load(f)
-            globals.conversation_id = data["metadata"]["conversation_id"]
-            globals.created_at = data["metadata"]["created_at"]
-            globals.conversation_history = data["history"]
-            globals.chat_history = data["history"]
-            globals.is_new_conversation = False
+            globs.conversation_id = data["metadata"]["conversation_id"]
+            globs.created_at = data["metadata"]["created_at"]
+            globs.conversation_history = data["history"]
+            globs.chat_history = data["history"]
+            globs.is_new_conversation = False
             logging.info(f"Loaded conversation {conversation_id}")
     except Exception as e:
         logging.error(f"Failed to load conversation {conversation_id}: {e}")

@@ -16,49 +16,49 @@ from tkinter import messagebox
 from rs_bpe.bpe import openai
 
 
-def ollama_version_test(globals):
+def ollama_version_test(globs):
     """Tests Ollama only to see if it is installed."""
     try:
         # Set if Ollama version has already been displayed
-        print_version = True if not globals.ollama_version else False
+        print_version = True if not globs.ollama_version else False
 
         # Bypass version check if chat path does not point to localhost
-        if globals.ollama_chat_path != "http://localhost:11434/":
-            if not globals.ollama_version:
-                globals.ollama_version = "Bypassed"
+        if globs.ollama_chat_path != "http://localhost:11434/":
+            if not globs.ollama_version:
+                globs.ollama_version = "Bypassed"
             return True
 
         # Run ollama --version in terminal
         version_test = subprocess.run("ollama --version", shell=True, capture_output=True, timeout=2)
         if version_test.returncode == 0:
-            globals.ollama_version = version_test.stdout.decode('utf-8').strip().split()[3]
+            globs.ollama_version = version_test.stdout.decode('utf-8').strip().split()[3]
             if print_version:
-                logging.info(f"Ollama Version: {globals.ollama_version}")
+                logging.info(f"Ollama Version: {globs.ollama_version}")
             return True
 
         # Return false if command returns with non-success version code
         else:
-            globals.ollama_active = False
+            globs.ollama_active = False
             return False
 
     # Gracefully return false on exceptions
     except Exception as e:
         logging.error(
             f"Ollama not installed or not active. Chat features unavailable. Error: {e}")
-        globals.ollama_active = False
+        globs.ollama_active = False
         return False
 
 
-def ollama_test(globals):
+def ollama_test(globs):
     """Tests Ollama to set flag for active/inactive."""
     try:
         # Simple version test to start
-        version = ollama_version_test(globals)
+        version = ollama_version_test(globs)
 
         # Assume active if chat path doesn't point to localhost
-        if globals.ollama_chat_path != "http://localhost:11434/":
+        if globs.ollama_chat_path != "http://localhost:11434/":
             logging.warning(f"Chat path not pointing to local machine - assuming active.")
-            globals.ollama_active = True
+            globs.ollama_active = True
             return True
 
         # Return if Ollama version check fails
@@ -70,7 +70,7 @@ def ollama_test(globals):
         basic_test = subprocess.run("ollama ps", shell=True, capture_output=True, timeout=4)
         if basic_test.returncode == 0:
             socket.create_connection(("localhost", 11434), timeout=1).close()
-            globals.ollama_active = True
+            globs.ollama_active = True
             return True
         else:
             logging.warning(f"Ollama is installed but not running. Chat features unavailable.")
@@ -83,13 +83,13 @@ def ollama_test(globals):
         return False
 
 
-def pull_model(globals):
+def pull_model(globs):
     """Downloads the default model if not present."""
-    test = ollama_test(globals)
+    test = ollama_test(globs)
 
     # If Ollama is not installed, offer to install it
     if not test:
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             logging.warning(f"Ollama must be installed before downloading a model.")
             download = QMessageBox.question(
                 None,
@@ -100,19 +100,19 @@ def pull_model(globals):
             
             # If user selects yes, download Ollama, if no, return
             if download == QMessageBox.StandardButton.Yes:
-                ollama_installation(globals)
+                ollama_installation(globs)
                 return
             else:
                 return
         else:
             logging.warning(f"Ollama must be installed before downloading a model.")
             download = messagebox.askyesno(
-                parent=globals.root,
+                parent=globs.root,
                 title="Ollama Not Installed",
                 message=f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (ministral-3)?"
             )
             if download:
-                ollama_installation(globals)
+                ollama_installation(globs)
                 return
             else:
                 return
@@ -120,7 +120,7 @@ def pull_model(globals):
     # If Ollama is installed, prompt to download ministral-3:3b-instruct-2512-q4_K_M
     else:
         logging.warning(f"Ollama must be installed before downloading a model.")
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             download = QMessageBox.question(
                 None,
                 f"Model Not Installed",
@@ -134,7 +134,7 @@ def pull_model(globals):
                 return
         else:
             download = messagebox.askyesno(
-                parent=globals.root,
+                parent=globs.root,
                 title="Model Not Installed",
                 message=f"The selected model is not installed. Would you like to install the default model (ministral-3)?")
             if not download:
@@ -146,18 +146,18 @@ def pull_model(globals):
         logging.debug(f"Free disk space: {free_space}")
         if free_space < 4:
             logging.warning(f"Free disk space must be at least 4GB to install llama3.2.")
-            show_toast(globals, message="Must have 4GB of free disk space to install Ollama", _type="error")
+            show_toast(globs, message="Must have 4GB of free disk space to install Ollama", _type="error")
             return
 
         # Check available RAM to ensure at least 4GB
         free_ram = get_ram_info()['avail_ram_gb']
         if free_ram < 4:
             logging.warning(f"Available RAM must be at least 4GB to install llama3.2.")
-            show_toast(globals, message="Must have 4GB of available RAM to install llama3.2", _type="error")
+            show_toast(globs, message="Must have 4GB of available RAM to install llama3.2", _type="error")
             return
 
         # Download ministral-3:3b-instruct-2512-q4_K_M on Linux
-        if globals.os_name.startswith("Linux"):
+        if globs.os_name.startswith("Linux"):
             download_cmd = """
             #!/bin/bash
 
@@ -186,7 +186,7 @@ def pull_model(globals):
                     f"{download_cmd}"])
             except Exception as e:
                 logging.error(f"Unable to open gnome-terminal and run download script due to: {e}")
-        elif globals.os_name.startswith("Windows"):
+        elif globs.os_name.startswith("Windows"):
             download_cmd = (
                 # Ask about model (Y/n like bash)
                 "$choice = Read-Host 'Install recommended model ministral-3? [Y/n]'; "
@@ -213,7 +213,7 @@ def pull_model(globals):
             subprocess.Popen(cmd_line, shell=True)
         else:
             logging.warning(f"Only Windows and Linux are supported for model downloads.")
-            if globals.qt_mode:
+            if not globs.legacy_mode:
                 QMessageBox.warning(
                         None,
                         "OS Not Supported",
@@ -222,14 +222,14 @@ def pull_model(globals):
                         QMessageBox.StandardButton.Ok)
             else:
                 messagebox.showwarning(
-                    parent=globals.root,
+                    parent=globs.root,
                     title="OS Not Supported",
                     message=f"Only Windows and Linux are supported for in-app model downloads. Install models on Ollama.com instead.")
 
-def ollama_installation(globals):
+def ollama_installation(globs):
     """Install Ollama and any desired models."""
     # Do an initial check to see if Ollama is already installed.
-    test = ollama_version_test(globals)
+    test = ollama_version_test(globs)
     if test:
         logging.warning(f"Ollama is already active and running. No need to install.")
         QMessageBox.warning(
@@ -245,20 +245,20 @@ def ollama_installation(globals):
     logging.debug(f"Free disk space: {free_space}")
     if free_space < 10:
         logging.warning(f"Free disk space must be at least 10GB to install Ollama.")
-        show_toast(globals, message="Must have 10GB of free disk space to install Ollama", _type="error")
+        show_toast(globs, message="Must have 10GB of free disk space to install Ollama", _type="error")
         return
 
     # Install Ollama on Linux
-    if globals.os_name.startswith("Linux"):
+    if globs.os_name.startswith("Linux"):
         subprocess.Popen([
             "gnome-terminal",
             "--",
             "bash", "-c",
-            f"{globals.ollama_sh}"
+            f"{globs.ollama_sh}"
         ])
 
     # Install on Windows
-    elif globals.os_name.startswith("Windows"):
+    elif globs.os_name.startswith("Windows"):
         ps_command = (
     # Download + install Ollama
     "irm https://ollama.com/install.ps1 | iex; "
@@ -299,7 +299,7 @@ def ollama_installation(globals):
         subprocess.Popen(cmd_line, shell=True)
     else:
         logging.warning(f"Only Windows and Linux are supported for interactive install.")
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             QMessageBox.warning(
                         None,
                         "OS Not Supported",
@@ -308,30 +308,30 @@ def ollama_installation(globals):
                         QMessageBox.StandardButton.Ok)
         else:
             messagebox.showwarning(
-                parent=globals.root,
+                parent=globs.root,
                 title="OS Not Supported",
                 message=f"Only Windows and Linux are supported for interactive install. Use the web installer instead.")
 
     # Test again to see if it worked
-    test = ollama_version_test(globals)
+    test = ollama_version_test(globs)
     if test:
         logging.info(f"Ollama was successfully installed!")
     else:
         logging.warning(f"Ollama does not appear to be installed.")
 
 
-def uninstall_ollama(globals):
+def uninstall_ollama(globs):
     """Fully uninstalls Ollama."""
     # Test if Ollama is actually installed
-    ollama_installed = ollama_version_test(globals)
+    ollama_installed = ollama_version_test(globs)
 
     # If Ollama is not installed, skip
     if not ollama_installed:
         logging.warning(f"Ollama not installed — no need to uninstall.")
-        show_toast(globals, message="Ollama not installed — no need to uninstall")
+        show_toast(globs, message="Ollama not installed — no need to uninstall")
         return
 
-    if globals.os_name.startswith("Linux"):
+    if globs.os_name.startswith("Linux"):
         uninstall_cmd = (
             """
             echo "Uninstalling Ollama..."
@@ -352,24 +352,24 @@ def uninstall_ollama(globals):
             "bash", "-c",
             f"{uninstall_cmd}"
         ])
-    elif globals.os_name.startswith("Windows"):
+    elif globs.os_name.startswith("Windows"):
         logging.debug(f"Opening Windows uninstall program window...")
         subprocess.run("start appwiz.cpl", shell=True)
     else:
         logging.warning(f"Uninstall only supported on Linux and Windows.")
-        show_toast(globals, message="Uninstall only supported on Linux and Windows.", _type="error")
+        show_toast(globs, message="Uninstall only supported on Linux and Windows.", _type="error")
 
 
-def get_all_models(globals, endpoint="http://localhost:11434/"):
+def get_all_models(globs, endpoint="http://localhost:11434/"):
     """Fetch list of available model names from Ollama API"""
     # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    if not globs.ollama_active:
         return
 
     try:
         # Test that Ollama is installed first
-        test = ollama_version_test(globals)
-        if not test or not globals.ollama_active:
+        test = ollama_version_test(globs)
+        if not test or not globs.ollama_active:
             logging.warning(f"Unable to retrieve models - Ollama not installed.")
             return []
 
@@ -385,16 +385,16 @@ def get_all_models(globals, endpoint="http://localhost:11434/"):
         return []
 
 
-def get_loaded_models(globals, endpoint="http://localhost:11434/"):
+def get_loaded_models(globs, endpoint="http://localhost:11434/"):
     """Fetch list of currently loaded models from Ollama API"""
     # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    if not globs.ollama_active:
         return
 
     try:
         # Test that Ollama is installed first
-        test = ollama_version_test(globals)
-        if not test or not globals.ollama_active:
+        test = ollama_version_test(globs)
+        if not test or not globs.ollama_active:
             logging.warning(f"Unable to retrieve models - Ollama not installed.")
             return []
 
@@ -410,18 +410,18 @@ def get_loaded_models(globals, endpoint="http://localhost:11434/"):
         return []
 
 
-def load_model(globals, model, endpoint="http://localhost:11434/"):
+def load_model(globs, model, endpoint="http://localhost:11434/"):
     """Load a model into memory with a 20-second timeout."""
     # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    if not globs.ollama_active:
         return
 
     # Gracefully return if RAM is too low
-    ram_test = ram_check(globals, model)
+    ram_test = ram_check(globs, model)
     if not ram_test:
         return
 
-    def _load_in_thread(globals, model):
+    def _load_in_thread(globs, model):
         """Loads the model in a thread to speed up start time & GUI."""
         payload = {"model": model,
                "prompt": "",
@@ -429,13 +429,13 @@ def load_model(globals, model, endpoint="http://localhost:11434/"):
                "keep_alive": "30m"}
         try:
             response = requests.post(
-                f"{globals.ollama_chat_path}api/generate", json=payload, timeout=10)
+                f"{globs.ollama_chat_path}api/generate", json=payload, timeout=10)
             logging.debug(
                 f"Sent request to {model}. Response code: {response.status_code}")
             if response.status_code == 200:
                 start_time = time.time()
                 while time.time() - start_time < 20:
-                    if model in get_loaded_models(globals):
+                    if model in get_loaded_models(globs):
                         logging.info(f"{model} loaded!")
                         return True
                     time.sleep(1)
@@ -445,25 +445,25 @@ def load_model(globals, model, endpoint="http://localhost:11434/"):
             logging.error(f"Failed to load {model}: {e}")
             return False
     
-    threading.Thread(target=lambda: _load_in_thread(globals, model), daemon=True).start()
+    threading.Thread(target=lambda: _load_in_thread(globs, model), daemon=True).start()
 
 
-def unload_model(globals, model):
+def unload_model(globs, model):
     """Unload a model from memory"""
     # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    if not globs.ollama_active:
         return
 
     payload = {"model": model, "prompt": "", "keep_alive": 0, "stream": False}
     try:
         response = requests.post(
-            f"{globals.ollama_chat_path}api/generate", json=payload)
+            f"{globs.ollama_chat_path}api/generate", json=payload)
         if response.status_code == 200:
             start_time = time.time()
             while time.time() - start_time < 10:
-                if model not in get_loaded_models(globals):
+                if model not in get_loaded_models(globs):
                     logging.info(f"Unloaded {model}")
-                    show_toast(globals, message=f"{model} unloaded")
+                    show_toast(globs, message=f"{model} unloaded")
                     return True
                 time.sleep(0.5)
             logging.info(f"Timeout unloading {model}")
@@ -473,7 +473,7 @@ def unload_model(globals, model):
         return False
 
 
-def chat_stream(globals, model, messages, out_q, cancel_event):
+def chat_stream(globs, model, messages, out_q, cancel_event):
     """
     Stream response from Ollama using the proper /chat endpoint.
 
@@ -481,59 +481,59 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     [{"role": "user"|"assistant"|"system", "content": "..."}, ...]
     """
     # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    if not globs.ollama_active:
         return
     
-    # logging.debug(f"Full system prompt: {globals.system_prompt}")
+    # logging.debug(f"Full system prompt: {globs.system_prompt}")
 
     # Determine prompt to be used
-    if "pearl" not in globals.active_model.lower():
-        if globals.active_prompt:
+    if "pearl" not in globs.active_model.lower():
+        if globs.active_prompt:
             messages_and_prompt = [
-                {"role": "system", "content": globals.system_prompt}] + messages
+                {"role": "system", "content": globs.system_prompt}] + messages
         if messages_and_prompt:
             messages = messages_and_prompt
 
     # Calculate context length
-    model_data = create_model_list(globals)
-    model_max_context = model_data[globals.active_model]["context_length"]
+    model_data = create_model_list(globs)
+    model_max_context = model_data[globs.active_model]["context_length"]
 
     # Determine if context length can exceed 64,000
     is_gpu = gpu_check()
     if is_gpu:
-        globals.context_length = model_max_context
+        globs.context_length = model_max_context
     else:
-        globals.context_length = model_max_context if model_max_context < 64000 else 64000
+        globs.context_length = model_max_context if model_max_context < 64000 else 64000
         # Set context length lower if RAM is low
         free_ram = get_ram_info()['avail_ram_gb']
         if free_ram < 10:
-            globals.context_length = 32000
-    logging.debug(f"Max Context Length: {globals.context_length}")
+            globs.context_length = 32000
+    logging.debug(f"Max Context Length: {globs.context_length}")
 
     # Calculate token count for conversation history
     encoder = openai.cl100k_base()
-    tokens = encoder.encode(str(globals.conversation_history))
+    tokens = encoder.encode(str(globs.conversation_history))
     token_count = len(tokens)
     logging.debug(f"Conversation token length: {token_count}")
 
-    if globals.context_length < token_count:
+    if globs.context_length < token_count:
         logging.warning(
             f"Conversation has exceeded max token count. Pearl will forget earlier parts of the conversation.")
-        if globals.context_warning:
+        if globs.context_warning:
             show_toast(
-                globals,
+                globs,
                 message="Conversation has exceeded maximum token count for this model - Pearl will forget earlier parts of the conversation")
-        globals.context_warning = False
+        globs.context_warning = False
 
     # Determine whether model supports thinking
-    capabilities = model_data[globals.active_model]["capabilities"]
+    capabilities = model_data[globs.active_model]["capabilities"]
     if "thinking" in capabilities:
-        globals.thinking = True
+        globs.thinking = True
     else:
-        globals.thinking = False
+        globs.thinking = False
 
     # Define available tools
-    globals.available_tools = [
+    globs.available_tools = [
     {
         "type": "function",
         "function": {
@@ -551,19 +551,19 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     ]
 
     # Generate payload
-    url = f"{globals.ollama_chat_path}api/chat"
+    url = f"{globs.ollama_chat_path}api/chat"
     payload = {
         "model": model,
         "messages": messages,
         "stream": True,
-        "think": globals.thinking,
-        "tools": globals.available_tools or [],
+        "think": globs.thinking,
+        "tools": globs.available_tools or [],
         "options": {
-            "num_ctx": globals.context_length or 2048}
+            "num_ctx": globs.context_length or 2048}
         }
     try:
         # Test Ollama first
-        ollama_installed = ollama_version_test(globals)
+        ollama_installed = ollama_version_test(globs)
 
         # Exit gracefully if Ollama is not installed
         if not ollama_installed:
@@ -573,9 +573,9 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             got_response = False
             return
 
-        with globals.prompt_lock:
-            if "pearl" not in globals.active_model.lower():
-                logging.debug(f"Querying Ollama for main chat with prompt '{globals.active_prompt}'")
+        with globs.prompt_lock:
+            if "pearl" not in globs.active_model.lower():
+                logging.debug(f"Querying Ollama for main chat with prompt '{globs.active_prompt}'")
 
         # Query the Ollama API if Ollama is installed, set flag
         got_response = False
@@ -588,14 +588,14 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             logging.error(f"Error: {response.text}")
             absent_model = response.text.split()[1].replace("'", "")
             if absent_model == "ministral-3:3b-instruct-2512-q4_K_M":
-                pull_model(globals)
+                pull_model(globs)
                 out_q.put(
                     f"At least one model must be installed to use Pearl's chat feature.")
                 return
             else:
                 out_q.put(
                     f"{absent_model} not found. Defaulting to ministral-3:3b-instruct-2512-q4_K_M.")
-                globals.active_model = "ministral-3:3b-instruct-2512-q4_K_M"
+                globs.active_model = "ministral-3:3b-instruct-2512-q4_K_M"
                 save_settings(active_model="ministral-3:3b-instruct-2512-q4_K_M")
                 return
 
@@ -615,7 +615,7 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
             if cancel_event.is_set():
                 logging.debug(
                     f"Cancel event triggered during Ollama chat stream.")
-                globals.message_end_time = datetime.now().isoformat()
+                globs.message_end_time = datetime.now().isoformat()
                 out_q.put(None)
                 # Close only if response was given
                 if got_response:
@@ -704,22 +704,22 @@ def chat_stream(globals, model, messages, out_q, cancel_event):
     except Exception as e:
         out_q.put(f"Error: {e}\n")
     finally:
-        globals.message_end_time = datetime.now().isoformat()
-        globals.image_attachment = None
+        globs.message_end_time = datetime.now().isoformat()
+        globs.image_attachment = None
         out_q.put(None)
         # Close only if response was given
         if got_response:
             response.close()
 
 
-def context_query(globals, model="ministral-3:3b-instruct-2512-q4_K_M", message=""):
+def context_query(globs, model="ministral-3:3b-instruct-2512-q4_K_M", message=""):
     """Query the context model for changes in the conversation."""
     # Gracefully exit if Ollama is not installed or message is empty
-    if not globals.ollama_active or not message:
+    if not globs.ollama_active or not message:
         return
 
     try:
-        response = requests.post(f"{globals.ollama_context_path}api/generate", json={
+        response = requests.post(f"{globs.ollama_context_path}api/generate", json={
             "model": model,
             "prompt": f"Based on this list, determine the best context of the message and return ONLY the word, nothing else. List: 'Assistant', 'Therapist', 'Financial', 'Storyteller', 'Conspiracy', 'Meditation', 'Motivation', 'Tutor', 'Debate', 'Life', 'Historian', 'Programmer', 'Travel', 'Chef', 'Fitness', 'Gamer', 'Philosopher', 'Poet', 'Comedian'. The message: ' {message}",
             "stream": False,
@@ -738,21 +738,21 @@ def context_query(globals, model="ministral-3:3b-instruct-2512-q4_K_M", message=
         return response.json()["response"]
 
     except Exception as e:
-        logging.error(f"Could not query context model at {globals.ollama_context_path} due to: {e}")
+        logging.error(f"Could not query context model at {globs.ollama_context_path} due to: {e}")
 
 
-def generate_title(globals, model="ministral-3:3b-instruct-2512-q4_K_M", message=""):
+def generate_title(globs, model="ministral-3:3b-instruct-2512-q4_K_M", message=""):
     """Query the context model for changes in the conversation."""
     # Gracefully exit if Ollama is not installed or message is empty
-    if not globals.ollama_active or not message:
+    if not globs.ollama_active or not message:
         return
     
-    models_list = get_loaded_models(globals, globals.ollama_title_path)
-    if globals.title_gen_model not in models_list:
-        logging.warning(f"Title gen model not currently loaded at {globals.ollama_title_path}.")
+    models_list = get_loaded_models(globs, globs.ollama_title_path)
+    if globs.title_gen_model not in models_list:
+        logging.warning(f"Title gen model not currently loaded at {globs.ollama_title_path}.")
 
     try:
-        response = requests.post(f"{globals.ollama_title_path}api/generate", json={
+        response = requests.post(f"{globs.ollama_title_path}api/generate", json={
             "model": model,
             "prompt": f"Based on this message, determine an appropriate title for the chat, staying under 50 characters. Do NOT give any exposition. Your entire response should be the chat title itself (spaces between words is okay). Message: {message}",
             "stream": False},
@@ -767,10 +767,10 @@ def generate_title(globals, model="ministral-3:3b-instruct-2512-q4_K_M", message
         return response.json()["response"]
 
     except Exception as e:
-        logging.error(f"Could not generate chat title at {globals.ollama_title_path} due to: {e}")
+        logging.error(f"Could not generate chat title at {globs.ollama_title_path} due to: {e}")
 
 
-def get_model_info(globals, model):
+def get_model_info(globs, model):
     """
     Gets detailed model information for a specific model.
     
@@ -783,7 +783,7 @@ def get_model_info(globals, model):
                 'quantization': 'Q8_0', 'capabilities': ['completion', 'tools']}
     """
     # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    if not globs.ollama_active:
         return
 
     # Create empty dictionary to return on failure
@@ -801,7 +801,7 @@ def get_model_info(globals, model):
     # Query Ollama for model info
     try:
         response = requests.post(
-            f"{globals.ollama_chat_path}api/show", json={"name": model}, timeout=5)
+            f"{globs.ollama_chat_path}api/show", json={"name": model}, timeout=5)
         if response.status_code == 200:
             data = response.json()
             model_info = data.get("model_info", {})
@@ -824,7 +824,7 @@ def get_model_info(globals, model):
             ctx_str = model_info.get(ctx_key, "Unknown")
             ctx_num = int(ctx_str) if ctx_str != "Unknown" else 2048
             modelfile = data.get("modelfile", "")
-            system_prompt = _extract_system(globals, modelfile)
+            system_prompt = _extract_system(globs, modelfile)
             details = data.get("details", {})
             quantization = details.get("quantization_level", "Unknown")
             capabilities = data.get("capabilities", [])
@@ -852,10 +852,10 @@ def get_model_info(globals, model):
         return empty_dict
 
 
-def _extract_system(globals, modelfile):
+def _extract_system(globs, modelfile):
     """Extracts the system prompt from model details"""
     # Gracefully exit if Ollama is not installed
-    if not globals.ollama_active:
+    if not globs.ollama_active:
         return "No System Prompt"
 
     lines = modelfile.splitlines()
@@ -876,13 +876,13 @@ def _extract_system(globals, modelfile):
     return '\n'.join(system_lines).strip() or "No system prompt defined"
 
 
-def get_model_size(globals, model, endpoint="http://localhost:11434/"):
+def get_model_size(globs, model, endpoint="http://localhost:11434/"):
     """Fetch list of available model names from Ollama API"""
     # Gracefully exit if Ollama is not installed
     try:
         # Test that Ollama is installed first
-        test = ollama_version_test(globals)
-        if not test or not globals.ollama_active:
+        test = ollama_version_test(globs)
+        if not test or not globs.ollama_active:
             logging.warning(f"Unable to retrieve model size - Ollama not installed.")
             return 0
 
@@ -912,7 +912,7 @@ def get_model_size(globals, model, endpoint="http://localhost:11434/"):
         return 0
 
 
-def create_model_list(globals):
+def create_model_list(globs):
     """
     Creates a full dictionary of models with details.
     
@@ -925,10 +925,10 @@ def create_model_list(globals):
                 'family': 'Llama', 'quantization': 'Q8_0'}
     """
     full_model_dict = {}
-    models = get_all_models(globals)
+    models = get_all_models(globs)
 
     for model in models:
-        info = get_model_info(globals, model)
+        info = get_model_info(globs, model)
         full_model_dict[model] = info
 
     return full_model_dict
@@ -953,13 +953,13 @@ def gpu_check():
         return False
     
 
-def ram_check(globals, model):
+def ram_check(globs, model):
     """Checks to see if there is enough RAM to load a model."""
     # Determine if GPU can be used in calculation
     use_gpu = gpu_check
 
     # Fetch model size
-    model_size = get_model_size(globals, model)
+    model_size = get_model_size(globs, model)
 
     # Fetch available RAM
     available_ram = get_ram_info()['avail_ram_gb'] + 1
@@ -974,7 +974,7 @@ def ram_check(globals, model):
     else:
         logging.warning(f"Not enough RAM, skipping...")
         # Display a messagebox letting the user know they need more RAM
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             QMessageBox.warning(
                 None,
                 "Not Enough RAM",
@@ -984,7 +984,7 @@ def ram_check(globals, model):
             return False
         else:
             messagebox.showwarning(
-                parent=globals.root,
+                parent=globs.root,
                 title="Not Enough RAM",
                 message=f"Not enough RAM for this model - free up space to load.")
             return False

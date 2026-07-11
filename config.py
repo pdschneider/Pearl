@@ -8,8 +8,10 @@ import platform
 import pyttsx3
 import threading
 from PySide6.QtWidgets import QApplication, QMainWindow
-from version import __version__
-from src.utils.load_settings import (load_prompts,
+from version import (__version__, __title__,
+                     __lower_title__, __binary_name__,
+                     __author__, __description__)
+from src.utils.load import (load_prompts,
                                  load_settings,
                                  load_context,
                                  load_data_path,
@@ -20,10 +22,10 @@ from src.utils.load_settings import (load_prompts,
                                  load_kokoro_windows)
 
 
-class Globals:
+class Globs:
     """Class to store global variables"""
     def __init__(self):
-        """Initializes settings variables from refresh_globals."""
+        """Initializes settings variables from refresh_globs."""
 
         # Information loaded from files
         self.all_prompts = load_prompts()
@@ -32,7 +34,7 @@ class Globals:
         self.docker_ubuntu = load_docker_ubuntu()
         self.docker_windows = load_docker_windows()
         self.kokoro_windows = load_kokoro_windows()
-        self.refresh_globals()
+        self.refresh_globs()
 
         # App Path
         self.app_type = None
@@ -44,11 +46,26 @@ class Globals:
         self.ollama_version = None
         self.docker_version = None
 
+        # Other Info
+        self.title = __title__
+        self.lower_title = __lower_title__
+        self.binary_name = __binary_name__
+        self.author = __author__
+        self.desciption = __description__
+
         # PySide6 Widgets
         self.app = QApplication(sys.argv)
         self.window = QMainWindow()
         self.sidebar_animation = None
-        self.qt_mode = None
+        self.windows_checkbox = None
+        self.githuck_check_checkbox = None
+        self.beta_checkbox = None
+        self.dim_overlay = None
+        self.changelog_panel = None
+        self.settings_panel = None
+        self.about_panel = None
+        self.logging_level_box = None
+        self.chat_content = None
 
         # Thread Locks
         self.speaking_lock = threading.Lock()
@@ -71,6 +88,8 @@ class Globals:
         self.enable_context_var = None
         self.generate_titles_var = None
         self.beta_var = None
+        self.dynamic_window_size_var = None
+        self.legacy_mode_var = None
 
         # Custom Tkinter Widgets
         self.send_button = None
@@ -126,6 +145,8 @@ class Globals:
         self.stats_icon = None
         self.operations_icon = None
         self.title_icon = None
+        self.windows_icon = None
+        self.note_icon = None
 
         # Pages
         self.main_frame = None
@@ -201,7 +222,7 @@ class Globals:
         self.current_response_id = None
         self.os_name = platform.system()
 
-    def refresh_globals(self):
+    def refresh_globs(self):
         """Reloads all settings from disk and updates the class."""
         settings = load_settings()
         self.all_prompts = load_prompts()
@@ -232,21 +253,23 @@ class Globals:
         self.enable_context = settings.get("enable_context", True)
         self.generate_titles = settings.get("generate_titles", True)
         self.title_gen_model = settings.get("title_gen_model", "llama3.2:3b")
+        self.dynamic_window_size = settings.get("dynamic_window_size", True)
+        self.legacy_mode = settings.get("legacy_mode", True)
 
 
 def apply_theme(name: str) -> None:
     """Loads the user's chosen theme and applies it to ctk widgets."""
     try:
-        globals.theme_path = os.path.normpath(
+        globs.theme_path = os.path.normpath(
             os.path.join(load_data_path(direct="config"),
-                         f"themes/{globals.active_theme}.json"))
+                         f"themes/{globs.active_theme}.json"))
         try:
-            with open(globals.theme_path, 'r') as f:
-                globals.theme_dict = json.load(f)
+            with open(globs.theme_path, 'r') as f:
+                globs.theme_dict = json.load(f)
         except:
             logging.warning(f"Unable to load theme into dictionary.")
-        ctk.set_default_color_theme(globals.theme_path)
-        logging.debug(f"CTk theme found at: {globals.theme_path}")
+        ctk.set_default_color_theme(globs.theme_path)
+        logging.debug(f"CTk theme found at: {globs.theme_path}")
     except Exception as e:
         logging.warning(f"Could not retrieve CTk active theme due to: {e}")
 
@@ -276,4 +299,4 @@ def get_executable_path():
         print(f"Path to executable: {script_path}")
         return [sys.executable, script_path]
 
-globals = Globals()
+globs = Globs()

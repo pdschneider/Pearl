@@ -17,7 +17,7 @@ ENV/
 .venv/
 pearl_venv/
 
-# All __pycache__ folders (recursive)
+# All __pycache__ folders
 __pycache__/
 
 # Specific project excludes

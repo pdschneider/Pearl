@@ -79,10 +79,10 @@ accepted_filetypes = [".txt", ".csv", ".json",
                       ".jpg", ".jpeg", ".png",
                       ".gif"]
 
-def attach_file(globals):
+def attach_file(globs):
     """Attach a file to a message."""
-    globals.file_attachment = None
-    globals.attachment_path = None
+    globs.file_attachment = None
+    globs.attachment_path = None
 
     # Open dialog box for filepath
     file, filter = QFileDialog.getOpenFileName(
@@ -97,7 +97,7 @@ def attach_file(globals):
         return
 
     # Store file path in global variable
-    globals.attachment_path = file
+    globs.attachment_path = file
     logging.info(f"Attached file: {file}")
 
     try:
@@ -113,29 +113,29 @@ def attach_file(globals):
         # Exit with warning if file type is not supported
         if not passed:
             logging.warning(f"File type not supported: {file}")
-            show_toast(globals, message=f"File type not supported", _type="error")
+            show_toast(globs, message=f"File type not supported", _type="error")
             return
 
         # Exit if file size is too big
         max_file_size = 52_428_800  # 50MB
-        file_size = os.path.getsize(globals.attachment_path)
+        file_size = os.path.getsize(globs.attachment_path)
         logging.debug(f"File Size: {file_size}")
         if file_size > max_file_size:
             logging.warning(f"File size too large (Max: {max_file_size})")
-            show_toast(globals, message=f"File size too large (Max: {max_file_size})", _type="error")
+            show_toast(globs, message=f"File size too large (Max: {max_file_size})", _type="error")
             return
 
         # Open and read file
         if file.lower().endswith(".pdf"):
             logging.debug(f"Parsing PDF file...")
-            attachment = parse_pdf(globals, file)
+            attachment = parse_pdf(globs, file)
         elif file.lower().endswith(".docx"):
             logging.debug(f"Parsing docx file...")
             attachment = parse_docx(file)
         elif file.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
-            globals.image_attachment = globals.attachment_path
+            globs.image_attachment = globs.attachment_path
             attachment = "Image Attached"
-            logging.debug(f"Image Attachment: {globals.image_attachment}")
+            logging.debug(f"Image Attachment: {globs.image_attachment}")
         else:
             logging.debug(f"Reading plain text file...")
             with open(file, "r", encoding='utf-8') as f:
@@ -143,33 +143,33 @@ def attach_file(globals):
 
         # Exit with warning if file is empty
         if not attachment:
-            globals.attachment_path = None
+            globs.attachment_path = None
             logging.warning(f"File is empty: {file}")
-            show_toast(globals, message=f"File is empty: {file}", _type="error")
+            show_toast(globs, message=f"File is empty: {file}", _type="error")
             return
 
         # Erase attachment and exit if file is too long
         if len(attachment) > 30_000:
             logging.warning(f"File attachment too large. Maximum character length: {max_character_length}.")
             show_toast(
-                globals,
+                globs,
                 message=f"File too long - Maximum character length: {max_character_length}",
                 _type="error")
-            globals.attachment_path = None
+            globs.attachment_path = None
             attachment = ""
             return
         
         # Calculate context length
-        model_data = create_model_list(globals)
-        model_max_context = model_data[globals.active_model]["context_length"]
+        model_data = create_model_list(globs)
+        model_max_context = model_data[globs.active_model]["context_length"]
 
         # Determine if context length can exceed 64,000
         is_gpu = gpu_check()
         if is_gpu:
-            globals.context_length = model_max_context
+            globs.context_length = model_max_context
         else:
-            globals.context_length = model_max_context if model_max_context < 64000 else 64000
-        logging.debug(f"Max Context Length: {globals.context_length}")
+            globs.context_length = model_max_context if model_max_context < 64000 else 64000
+        logging.debug(f"Max Context Length: {globs.context_length}")
 
         # Calculate tokens within document
         encoder = openai.cl100k_base()
@@ -178,49 +178,49 @@ def attach_file(globals):
         logging.debug(f"Attachment token length: {token_count}")
 
         # Exit with warning if file exceeds max tokens
-        if token_count > globals.context_length:
+        if token_count > globs.context_length:
             logging.warning(f"Attachment exceeds maximum token count - please upload a smaller file or switch to a different model.")
             show_toast(
-                globals,
+                globs,
                 message="File too long - attachment exceeds maximum token count for this model",
                 _type="error")
-            globals.attachment_path = None
+            globs.attachment_path = None
             attachment = ""
             return
         
         # Turn image into readable format
-        if globals.image_attachment:
-            with open(globals.image_attachment, "rb") as f:
-                globals.image_attachment = base64.b64encode(f.read()).decode('utf-8')
+        if globs.image_attachment:
+            with open(globs.image_attachment, "rb") as f:
+                globs.image_attachment = base64.b64encode(f.read()).decode('utf-8')
 
     # Exit on exception
     except UnicodeDecodeError:
-        globals.attachment_path = None
-        show_toast(globals, message="Cannot read file — wrong encoding or binary file", _type="error")
+        globs.attachment_path = None
+        show_toast(globs, message="Cannot read file — wrong encoding or binary file", _type="error")
         return
     except Exception as e:
-        globals.attachment_path = None
+        globs.attachment_path = None
         logging.warning(f"Could not attach file due to: {e}")
         show_toast(
-            globals,
+            globs,
             message=f"Could not attach file - Likely an unsupported file type with the wrong extension",
             _type="error")
         return
     
     # Set global variable and  disable button
-    globals.file_attachment = attachment
-    globals.file_button.configure(state="disabled")
-    globals.attach_tip.configure(message="File Already Attached")
+    globs.file_attachment = attachment
+    globs.file_button.configure(state="disabled")
+    globs.attach_tip.configure(message="File Already Attached")
 
 
-def parse_pdf(globals, file):
+def parse_pdf(globs, file):
     """Parse text from a PDF."""
     text_collected = ""
     try:
         with pdfplumber.open(file) as pdf:
             if len(pdf.pages) > 50:
                 logging.warning(f"PDF files can only be 50 pages or less.")
-                show_toast(globals, message="Only 50 page or less PDF files are supported.", _type="error")
+                show_toast(globs, message="Only 50 page or less PDF files are supported.", _type="error")
                 return
             for page in pdf.pages:
                 text = page.extract_text(layout=True) or ""

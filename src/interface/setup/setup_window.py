@@ -9,12 +9,12 @@ from src.connections.kokoro import install_kokoro
 from src.utils.refresher import refresh_gui
 
 
-def create_setup_tab(globals, setup_tab):
+def create_setup_tab(globs, setup_tab):
     """
     Creates the tab to display setup instructions for new users.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     setup_tab: The main frame of the setup window
     """
     setup_frame = ctk.CTkScrollableFrame(setup_tab)
@@ -54,19 +54,19 @@ def create_setup_tab(globals, setup_tab):
     ollama_buttons_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
     ollama_buttons_frame.pack(padx=10, pady=10, side="top")
 
-    globals.ollama_interactive_download_button = ctk.CTkButton(
+    globs.ollama_interactive_download_button = ctk.CTkButton(
         ollama_buttons_frame,
         text="Install Ollama",
         state="normal",
-        command=lambda: ollama_installation(globals))
-    globals.ollama_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
+        command=lambda: ollama_installation(globs))
+    globs.ollama_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
 
-    globals.ollama_web_download_button = ctk.CTkButton(
+    globs.ollama_web_download_button = ctk.CTkButton(
         ollama_buttons_frame,
         text="Web Download",
         state="normal",
         command=lambda: webbrowser.open("https://ollama.com/download"))
-    globals.ollama_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
+    globs.ollama_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
 
     models_download_button = ctk.CTkButton(
         ollama_buttons_frame,
@@ -114,19 +114,19 @@ def create_setup_tab(globals, setup_tab):
     docker_buttons_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
     docker_buttons_frame.pack(padx=10, pady=10)
 
-    globals.docker_interactive_download_button = ctk.CTkButton(
+    globs.docker_interactive_download_button = ctk.CTkButton(
         docker_buttons_frame,
         text="Install Docker",
         state="normal",
-        command=lambda: docker_installation(globals))
-    globals.docker_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
+        command=lambda: docker_installation(globs))
+    globs.docker_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
 
-    globals.docker_web_download_button = ctk.CTkButton(
+    globs.docker_web_download_button = ctk.CTkButton(
         docker_buttons_frame,
         text="Web Download",
         command=lambda: webbrowser.open(
             "https://www.docker.com/get-started/"))
-    globals.docker_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
+    globs.docker_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
 
     # Kokoro Frame
     kokoro_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
@@ -157,20 +157,20 @@ def create_setup_tab(globals, setup_tab):
     kokoro_buttons_frame = ctk.CTkFrame(setup_frame, fg_color="transparent")
     kokoro_buttons_frame.pack(padx=10, pady=10)
 
-    globals.kokoro_interactive_download_button = ctk.CTkButton(
+    globs.kokoro_interactive_download_button = ctk.CTkButton(
         kokoro_buttons_frame,
         text="Install Kokoro",
         state="normal",
-        command=lambda: install_kokoro(globals))
-    globals.kokoro_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
+        command=lambda: install_kokoro(globs))
+    globs.kokoro_interactive_download_button.grid(row=0, column=0, padx=5, sticky="ew")
 
-    globals.kokoro_web_download_button = ctk.CTkButton(
+    globs.kokoro_web_download_button = ctk.CTkButton(
         kokoro_buttons_frame,
         text="Web Download",
         state="normal",
         command=lambda: webbrowser.open(
             "https://github.com/remsky/Kokoro-FastAPI"))
-    globals.kokoro_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
+    globs.kokoro_web_download_button.grid(row=0, column=1, padx=5, sticky="ew")
 
     # Continue Buttons Frame
     continue_buttons_frame = ctk.CTkFrame(setup_tab, fg_color="transparent")
@@ -178,25 +178,25 @@ def create_setup_tab(globals, setup_tab):
 
     ctk.CTkButton(continue_buttons_frame,
                   text="Continue",
-                  command=lambda: continue_to_chat(globals)).pack(padx=5, pady=5)
+                  command=lambda: continue_to_chat(globs)).pack(padx=5, pady=5)
 
     def refresh_button_states():
         """Refreshes button states and adds/removes tooltips"""
-        if globals.ollama_active:
+        if globs.ollama_active:
             # Disable download button and offer tooltip when Ollama is installed
-            globals.ollama_interactive_download_button.configure(state="disabled")
-            globals.ollama_web_download_button.configure(state="disabled")
+            globs.ollama_interactive_download_button.configure(state="disabled")
+            globs.ollama_web_download_button.configure(state="disabled")
 
-            globals.ollama_web_download_tooltip = CTkToolTip(
-                globals.ollama_web_download_button,
+            globs.ollama_web_download_tooltip = CTkToolTip(
+                globs.ollama_web_download_button,
                 message="Ollama already installed!",
                 delay=0.3,
                 follow=True,
                 padx=10,
                 pady=5)
 
-            globals.ollama_interactive_download_tooltip = CTkToolTip(
-                globals.ollama_interactive_download_button,
+            globs.ollama_interactive_download_tooltip = CTkToolTip(
+                globs.ollama_interactive_download_button,
                 message="Ollama already installed!",
                 delay=0.3,
                 follow=True,
@@ -204,20 +204,20 @@ def create_setup_tab(globals, setup_tab):
                 pady=5)
         else:
             # Enable ollama download buttons and offer tooltips when Ollama is not installed
-            if globals.os_name.startswith("Linux"):
-                globals.ollama_interactive_download_button.configure(state="normal")
-            globals.ollama_web_download_button.configure(state="normal")
-            globals.ollama_web_download_tooltip = CTkToolTip(
-                globals.ollama_web_download_button,
+            if globs.os_name.startswith("Linux"):
+                globs.ollama_interactive_download_button.configure(state="normal")
+            globs.ollama_web_download_button.configure(state="normal")
+            globs.ollama_web_download_tooltip = CTkToolTip(
+                globs.ollama_web_download_button,
                 message="https://ollama.com/download",
                 delay=0.3,
                 follow=True,
                 padx=10,
                 pady=5
             )
-            if globals.os_name.startswith("Linux"):
-                globals.ollama_interactive_download_tooltip = CTkToolTip(
-                    globals.ollama_interactive_download_button,
+            if globs.os_name.startswith("Linux"):
+                globs.ollama_interactive_download_tooltip = CTkToolTip(
+                    globs.ollama_interactive_download_button,
                     message="Opens a new Terminal Window",
                     delay=0.3,
                     follow=True,
@@ -226,58 +226,58 @@ def create_setup_tab(globals, setup_tab):
                 )
 
         # Offer tooltip for kokoro indicating installation is not necessary
-        if globals.kokoro_active:
-            globals.kokoro_web_download_button.configure(state="disabled")
+        if globs.kokoro_active:
+            globs.kokoro_web_download_button.configure(state="disabled")
             kokoro_download_tooltip = CTkToolTip(
-                globals.kokoro_web_download_button,
+                globs.kokoro_web_download_button,
                 message="Kokoro already installed!",
                 delay=0.3,
                 follow=True,
                 padx=10,
                 pady=5)
         else:
-            globals.kokoro_web_download_button.configure(state="normal")
-            globals.kokoro_download_tooltip = CTkToolTip(
-                globals.kokoro_web_download_button,
+            globs.kokoro_web_download_button.configure(state="normal")
+            globs.kokoro_download_tooltip = CTkToolTip(
+                globs.kokoro_web_download_button,
                 message="https://github.com/remsky/Kokoro-FastAPI",
                 delay=0.3,
                 follow=True,
                 padx=10,
                 pady=5)
 
-        if globals.docker_version:
-            globals.docker_web_download_button.configure(state="disabled")
-            if globals.os_name.startswith("Linux"):
-                globals.docker_interactive_download_button.configure(state="disabled")
-            globals.docker_web_download_tooltip = CTkToolTip(
-                globals.docker_web_download_button,
+        if globs.docker_version:
+            globs.docker_web_download_button.configure(state="disabled")
+            if globs.os_name.startswith("Linux"):
+                globs.docker_interactive_download_button.configure(state="disabled")
+            globs.docker_web_download_tooltip = CTkToolTip(
+                globs.docker_web_download_button,
                 message="Docker already installed!",
                 delay=0.3,
                 follow=True,
                 padx=10,
                 pady=5)
-            if globals.os_name.startswith("Linux"):
-                globals.docker_interactive_download_tooltip = CTkToolTip(
-                    globals.docker_interactive_download_button,
+            if globs.os_name.startswith("Linux"):
+                globs.docker_interactive_download_tooltip = CTkToolTip(
+                    globs.docker_interactive_download_button,
                     message="Docker already installed!",
                     delay=0.3,
                     follow=True,
                     padx=10,
                     pady=5)
         else:
-            globals.docker_web_download_button.configure(state="normal")
-            if globals.os_name.startswith("Linux"):
-                globals.docker_interactive_download_button.configure(state="normal")
-            globals.docker_web_download_tooltip = CTkToolTip(
-                globals.docker_web_download_button,
+            globs.docker_web_download_button.configure(state="normal")
+            if globs.os_name.startswith("Linux"):
+                globs.docker_interactive_download_button.configure(state="normal")
+            globs.docker_web_download_tooltip = CTkToolTip(
+                globs.docker_web_download_button,
                 message="https://www.docker.com/get-started/",
                 delay=0.3,
                 follow=True,
                 padx=10,
                 pady=5)
-            if globals.os_name.startswith("Linux"):
-                globals.docker_interactive_download_tooltip = CTkToolTip(
-                    globals.docker_interactive_download_button,
+            if globs.os_name.startswith("Linux"):
+                globs.docker_interactive_download_tooltip = CTkToolTip(
+                    globs.docker_interactive_download_button,
                     message="Opens a new Terminal Window",
                     delay=0.3,
                     follow=True,
@@ -286,23 +286,23 @@ def create_setup_tab(globals, setup_tab):
 
     refresh_button_states()
 
-    def configure_widgets(globals):
+    def configure_widgets(globs):
         """Configure chat window widgets to enable when Ollama is active."""
-        if globals.ollama_active:
-            globals.send_button.configure(state="normal")
-            globals.file_button.configure(state="normal")
-            globals.entry_box.configure(state="normal")
+        if globs.ollama_active:
+            globs.send_button.configure(state="normal")
+            globs.file_button.configure(state="normal")
+            globs.entry_box.configure(state="normal")
 
-    def continue_to_chat(globals):
+    def continue_to_chat(globs):
         """Forgets setup and settings pages to return
         the user to a clean chat page"""
-        globals.app_title.configure(text="Pearl at your service!")
-        refresh_gui(globals)
+        globs.app_title.configure(text="Pearl at your service!")
+        refresh_gui(globs)
         # Map chat page
-        app_pages = [globals.chat_page, globals.setup_page, globals.settings_page, globals.changelog]
+        app_pages = [globs.chat_page, globs.setup_page, globs.settings_page, globs.changelog]
         for page in app_pages:
             if page:
                 page.pack_forget()
-        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
+        globs.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
         refresh_button_states()
-        configure_widgets(globals)
+        configure_widgets(globs)

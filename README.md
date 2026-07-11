@@ -23,6 +23,7 @@ Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, 
 1. **Download** the latest release for your platform:
    - Windows: [`Pearl.exe`](https://github.com/pdschneider/Pearl/releases)
    - Linux: [`Pearl.AppImage`](https://github.com/pdschneider/Pearl/releases)
+            [`Pearl.deb`](https://github.com/pdschneider/Pearl/releases)
 
 2. **Run the app** (first time only):
    - The onboarding wizard will guide you through setup

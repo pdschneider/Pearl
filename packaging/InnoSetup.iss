@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "Pearl"
-#define MyAppVersion "0.3.5"
+#define MyAppVersion "0.4.0-beta"
 #define MyAppPublisher "Phillip Schneider"
 #define MyAppURL "https://github.com/pdschneider/Pearl"
 #define MyAppExeName "Pearl.exe"
@@ -11,7 +11,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{DAADE2B7-224D-474C-8CA3-AA4E4413DC71}
+AppId={{DAADE2B7-224D-474C-8CA3-AA4E4413DC71}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 
@@ -19,6 +19,10 @@ AppVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoCopyright=Copyright © 2026 {#MyAppPublisher}. Apache 2.0.
 VersionInfoProductName={#MyAppName}
+
+; Close Application Prior to Install
+CloseApplications=force
+RestartApplications=yes
 
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -63,3 +67,25 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
+[Code]
+function PreviousInstallationExists(): Boolean;
+var
+  RegPath: String;
+begin
+  RegPath := ExpandConstant('SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{#SetupSetting("AppId")}_is1');
+  
+  Result := RegKeyExists(HKEY_CURRENT_USER, RegPath) or 
+            RegKeyExists(HKEY_LOCAL_MACHINE, RegPath);
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  if PreviousInstallationExists() then
+  begin
+    case PageID of
+      wpWelcome, wpLicense, wpReady:
+        Result := True;
+    end;
+  end;
+end;

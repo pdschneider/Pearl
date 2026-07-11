@@ -7,39 +7,39 @@ import requests
 import socket
 from src.utils.hardware import get_disk_space, get_ram_info
 from src.utils.toast import show_toast
-from src.utils.load_settings import load_data_path
+from src.utils.load import load_data_path
 from src.connections.docker import docker_check
 from PySide6.QtWidgets import QMessageBox
 from tkinter import messagebox
 
 
 # Kokoro
-def kokoro_test(globals):
+def kokoro_test(globs):
     """Tests Kokoro to set flag for active/inactive."""
-    print_success = True if not globals.kokoro_active else False
-    print_failure = True if globals.kokoro_active else False
+    print_success = True if not globs.kokoro_active else False
+    print_failure = True if globs.kokoro_active else False
     # Set Kokoro flag to true upon success
     try:
         socket.create_connection(("localhost", 8880), timeout=2).close()
         if print_success:
             logging.info(f"Kokokro found!")
-        globals.kokoro_active = True
+        globs.kokoro_active = True
         return True
     # Set Kokoro flag to false upon error
     except Exception as e:
         if print_failure:
             logging.error(
                 f"Kokoro not installed. TTS features will be unavailable.")
-        globals.kokoro_active = False
+        globs.kokoro_active = False
         return False
 
 
-def fetch_tts_models(globals):
+def fetch_tts_models(globs):
     """loads possible Kokoro models"""
-    if globals.kokoro_active:
+    if globs.kokoro_active:
         try:
             logging.debug(f"Attempting to load Kokoro voice list...")
-            voices = requests.get("http://localhost:8880/v1/audio/voices")
+            voices = requests.get("http://localhost:8880/v1/audio/voices", timeout=5)
             if voices.status_code == 200:
                 return voices.json()["voices"]
             else:
@@ -52,12 +52,12 @@ def fetch_tts_models(globals):
             return {}
 
 
-def fetch_current_language_models(globals):
+def fetch_current_language_models(globs):
     """loads Kokoro models of the current language selection."""
-    if globals.kokoro_active:
+    if globs.kokoro_active:
         try:
             english_voices = ["af_", "am_", "bf_", "bm_"]
-            voice_list = fetch_tts_models(globals)
+            voice_list = fetch_tts_models(globs)
             remove_list = []
 
             # Make a list of off-language voices
@@ -81,13 +81,13 @@ def fetch_current_language_models(globals):
         return {}
 
 
-def install_kokoro(globals):
+def install_kokoro(globs):
     """Installs Kokoro via the terminal."""
 
     # Return early if Kokoro is already up and running
-    if globals.kokoro_active:
+    if globs.kokoro_active:
         logging.warning(f"Kokoro is already up and running - no need to install!")
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             QMessageBox.warning(
                         None,
                         "Kokoro Already Installed",
@@ -97,19 +97,19 @@ def install_kokoro(globals):
             return
         else:
             messagebox.showwarning(
-                parent=globals.root,
+                parent=globs.root,
                 title="Kokoro Already Installed",
                 message="Kokoro is already active and running. No need to install!")
         return
 
     # Check if Docker is up and running
-    docker_check(globals)
+    docker_check(globs)
 
     # If Docker is not installed, exit
-    if not globals.docker_active:
+    if not globs.docker_active:
         logging.warning(f"Docker must be installed and running before downloading Kokoro.")
-        logging.debug(f"Docker Version: {globals.docker_version} | Docker Active? {globals.docker_active}")
-        show_toast(globals, message="Docker must be installed before downloading Kokoro", _type="error")
+        logging.debug(f"Docker Version: {globs.docker_version} | Docker Active? {globs.docker_active}")
+        show_toast(globs, message="Docker must be installed before downloading Kokoro", _type="error")
         return
 
     # Check disk space to ensure at least 8GB
@@ -117,7 +117,7 @@ def install_kokoro(globals):
     logging.debug(f"Free disk space: {free_space}")
     if free_space < 8:
         logging.warning(f"Free disk space must be at least 8GB to install Kokoro.")
-        show_toast(globals, message="Must have at least 8GB of free disk space to install Kokoro", _type="error")
+        show_toast(globs, message="Must have at least 8GB of free disk space to install Kokoro", _type="error")
         return
 
     # Check available RAM to ensure at least 7GB
@@ -125,7 +125,7 @@ def install_kokoro(globals):
     logging.debug(f"RAM: {free_ram}")
     if free_ram < 7:
         logging.warning(f"Available RAM must be at least 7GB to install Kokoro.")
-        show_toast(globals, message="Must have at least 7GB of available RAM to install Kokoro", _type="error")
+        show_toast(globs, message="Must have at least 7GB of available RAM to install Kokoro", _type="error")
         return
 
     # Get path for Kokoro install
@@ -134,7 +134,7 @@ def install_kokoro(globals):
         # Exit if spaces are present in path, would break command otherwise
         if " " in path:
             logging.warning(f"Path may not include spaces: {path}")
-            show_toast(globals, message=f"Path may not include spaces: {path}", _type="error")
+            show_toast(globs, message=f"Path may not include spaces: {path}", _type="error")
             return
         # Create path if it doesn't already exist
         elif not os.path.isdir(path):
@@ -145,7 +145,7 @@ def install_kokoro(globals):
         return
 
     # Install Docker on Linux
-    if globals.os_name.startswith("Linux"):
+    if globs.os_name.startswith("Linux"):
         cmd = """
             echo "Press Enter to Install Kokoro..."
             read -r dummy
@@ -173,13 +173,13 @@ def install_kokoro(globals):
             logging.error(f"Could not install Kokoro due to: {e}")
     
     # Install Kokoro on Windows
-    elif globals.os_name.startswith("Windows"):
+    elif globs.os_name.startswith("Windows"):
         try:
             cmd_line = (
                 'start "" powershell.exe '
                 '-NoProfile '
                 '-ExecutionPolicy Bypass '
-                f'-File "{globals.kokoro_windows}"')
+                f'-File "{globs.kokoro_windows}"')
 
             subprocess.Popen(cmd_line, shell=True)
         except Exception as e:
@@ -190,14 +190,14 @@ def install_kokoro(globals):
         logging.warning(f"Only Linux is supported for Kokoro's interactive install.")
 
 
-def uninstall_kokoro(globals):
+def uninstall_kokoro(globs):
     """Uninstalls Kokoro-FastAPI."""
-    kokoro_installed = kokoro_test(globals)
+    kokoro_installed = kokoro_test(globs)
 
     # Exit early if Kokoro is not installed
     if not kokoro_installed:
         logging.warning(f"Kokoro not installed — no need to uninstall.")
-        show_toast(globals, message="Kokoro not installed — no need to uninstall")
+        show_toast(globs, message="Kokoro not installed — no need to uninstall")
         return
     
     # Get Kokoro image and container ID's
@@ -216,7 +216,7 @@ def uninstall_kokoro(globals):
         logging.error(f"Could not find Kokoro ID's due to: {e}")
         return
 
-    if globals.os_name.startswith("Linux"):
+    if globs.os_name.startswith("Linux"):
         cmd = (
             """
             echo "Press Enter to uninstall Kokoro..."
@@ -244,12 +244,12 @@ def uninstall_kokoro(globals):
             "bash", "-c",
             f"{cmd}"
         ])
-    elif globals.os_name.startswith("Windows"):
+    elif globs.os_name.startswith("Windows"):
         logging.debug(f"Kokoro uninstall coming to Windows soon!")
-        show_toast(globals, message="Kokoro uninstall coming to Windows soon!")
+        show_toast(globs, message="Kokoro uninstall coming to Windows soon!")
     else:
         logging.warning(f"Uninstall only supported on Linux and Windows.")
-        show_toast(globals, message="Uninstall only supported on Linux and Windows.", _type="error")
+        show_toast(globs, message="Uninstall only supported on Linux and Windows.", _type="error")
 
     # Remove Kokoro from configuration
     try:
@@ -268,6 +268,6 @@ def uninstall_kokoro(globals):
                 logging.error(f"Unable to remove path.")
             else:
                 logging.info(f"Successfully removed Kokoro-FastAPI folder!")
-                show_toast(globals, message="Successfully removed Kokoro-FastAPI folder!")
+                show_toast(globs, message="Successfully removed Kokoro-FastAPI folder!")
     except Exception as e:
         logging.error(f"Could not load Kokoro-FastAPI directory path due to: {e}")

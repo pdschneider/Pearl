@@ -9,16 +9,16 @@ import sys
 from src.utils.save_settings import save_all_settings
 from src.connections.kokoro import fetch_current_language_models
 from src.managers.sound_manager import get_sink_menu
-from src.utils.load_settings import load_data_path
+from src.utils.load import load_data_path
 import src.utils.fonts as fonts
 
 
-def create_sound_tab(globals, sound_tab):
+def create_sound_tab(globs, sound_tab):
     """
     Creates the general settings tab and initializes widgets.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     sound_tab: The main frame of the speech settings window.
     """
 
@@ -41,7 +41,7 @@ def create_sound_tab(globals, sound_tab):
 
     ctk.CTkLabel(enable_tts_frame,
                  text=None,
-                 image=globals.sound_high_icon).pack(
+                 image=globs.sound_high_icon).pack(
                      side="left", padx=6, pady=0)
 
     enable_tts_button = ctk.CTkLabel(enable_tts_frame,
@@ -56,7 +56,7 @@ def create_sound_tab(globals, sound_tab):
                pady=5)
 
     ctk.CTkCheckBox(enable_tts_frame,
-                    variable=globals.tts_var,
+                    variable=globs.tts_var,
                     text=None,
                     onvalue=True,
                     offvalue=False).pack(side="left", padx=5)
@@ -68,12 +68,12 @@ def create_sound_tab(globals, sound_tab):
     sound_frame.pack(fill="both", padx=10, pady=10)
 
     # Dynamically build the source list
-    if globals.kokoro_active:
-        globals.source_options.append("Kokoro")
+    if globs.kokoro_active:
+        globs.source_options.append("Kokoro")
 
     ctk.CTkLabel(sound_frame,
                  text=None,
-                 image=globals.phone_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.phone_icon).pack(side="left", padx=6, pady=0)
 
     tts_source_label = ctk.CTkLabel(sound_frame,
                                     text="TTS Source",
@@ -87,17 +87,17 @@ def create_sound_tab(globals, sound_tab):
                pady=5)
 
     ctk.CTkComboBox(sound_frame,
-                    variable=globals.tts_source_var,
-                    values=globals.source_options,
+                    variable=globs.tts_source_var,
+                    values=globs.source_options,
                     width=150,
                     state="readonly").pack(side="left", padx=5)
 
     # TTS Voices Box
-    if globals.kokoro_active:
+    if globs.kokoro_active:
         available_voices = {}
 
         # Create dictionary mapping human-readable names to Kokoro-readable names
-        for model in fetch_current_language_models(globals):
+        for model in fetch_current_language_models(globs):
             new_model = model[3:]
             available_voices[model] = new_model.capitalize()
 
@@ -117,12 +117,12 @@ def create_sound_tab(globals, sound_tab):
             """Dynamically updates voice combobox."""
             selected_label = voice_label_var.get()
             voice_name = label_to_voice.get(selected_label, "Heart")
-            globals.kokoro_active_voice_var.set(voice_name)
+            globs.kokoro_active_voice_var.set(voice_name)
 
         # Watches voice combobox for changes, udpates on change
         voice_label_var.trace("w", update_voice_var)
 
-        initial_voice = globals.kokoro_active_voice_var.get()
+        initial_voice = globs.kokoro_active_voice_var.get()
         initial_label = next(
             (label for label, voice in label_to_voice.items() if voice == initial_voice), "Heart")
         voice_label_var.set(initial_label)
@@ -137,34 +137,34 @@ def create_sound_tab(globals, sound_tab):
         tts_source_combobox.pack(side="left", padx=5)
 
     # Speakers Frame
-    if globals.os_name.startswith("Linux"):
-        globals.speakers_frame = ctk.CTkFrame(options_frame,
+    if globs.os_name.startswith("Linux"):
+        globs.speakers_frame = ctk.CTkFrame(options_frame,
                                     bg_color="transparent",
                                     fg_color="transparent")
-        globals.speakers_frame.pack(fill="both", padx=10, pady=10)
+        globs.speakers_frame.pack(fill="both", padx=10, pady=10)
 
-        ctk.CTkLabel(globals.speakers_frame,
+        ctk.CTkLabel(globs.speakers_frame,
                     text=None,
-                    image=globals.speaker_icon).pack(side="left", padx=6, pady=0)
+                    image=globs.speaker_icon).pack(side="left", padx=6, pady=0)
 
-        globals.sink_list = get_sink_menu()
-        sink_labels = [entry["label"] for entry in globals.sink_list]
-        label_to_pulse = {entry["label"]: entry["pulse_name"] for entry in globals.sink_list}
+        globs.sink_list = get_sink_menu()
+        sink_labels = [entry["label"] for entry in globs.sink_list]
+        label_to_pulse = {entry["label"]: entry["pulse_name"] for entry in globs.sink_list}
 
         label_var = ctk.StringVar()
 
         def update_sink_var(*args):
             selected_label = label_var.get()
             pulse_name = label_to_pulse.get(selected_label, "Default")
-            globals.sink_var.set(pulse_name)
+            globs.sink_var.set(pulse_name)
 
         label_var.trace("w", update_sink_var)
 
-        initial_pulse = globals.sink_var.get()
+        initial_pulse = globs.sink_var.get()
         initial_label = next((label for label, pulse in label_to_pulse.items() if pulse == initial_pulse), "Default")
         label_var.set(initial_label)
 
-        sound_output_label = ctk.CTkLabel(globals.speakers_frame,
+        sound_output_label = ctk.CTkLabel(globs.speakers_frame,
                                             text="Sound Output",
                                             font=fonts.heading_font)
         sound_output_label.pack(side="left", padx=5)
@@ -175,19 +175,19 @@ def create_sound_tab(globals, sound_tab):
                     padx=10,
                     pady=5)
 
-        ctk.CTkComboBox(globals.speakers_frame,
+        ctk.CTkComboBox(globs.speakers_frame,
                         variable=label_var,
                         values=sink_labels,
                         width=250,
                         state="readonly").pack(side="left", padx=5)
 
-        globals.speakers_frame.pack(fill="both", padx=10, pady=10)
+        globs.speakers_frame.pack(fill="both", padx=10, pady=10)
 
         # Dynamically update voice selection box
         def update_voice_combobox(*_):
             """Dynamically updates the voice selection box."""
             try:
-                if globals.kokoro_active and globals.tts_source_var.get() == "Kokoro":
+                if globs.kokoro_active and globs.tts_source_var.get() == "Kokoro":
                     tts_source_combobox.pack(side="left", padx=5)
                 else:
                     tts_source_combobox.pack_forget()
@@ -195,10 +195,10 @@ def create_sound_tab(globals, sound_tab):
                 logging.error(f"Unable to update Kokoro voice dropdown due to: {e}")
 
         # Update box only if Kokoro is active
-        if globals.kokoro_active:
+        if globs.kokoro_active:
             update_voice_combobox()
 
-        globals.tts_source_var.trace_add("write", update_voice_combobox)
+        globs.tts_source_var.trace_add("write", update_voice_combobox)
 
     # Save Button Frame
     save_button_frame = ctk.CTkFrame(sound_tab,
@@ -208,21 +208,23 @@ def create_sound_tab(globals, sound_tab):
 
     ctk.CTkButton(save_button_frame,
                   text="Save Settings",
-                  command=lambda: save_button(globals)).pack()
+                  command=lambda: save_button(globs)).pack()
 
-    def save_button(globals):
+    def save_button(globs):
         """Saves and prompts for restart if required."""
         prompt_restart = False
-        if globals.github_check != globals.github_check_var.get():
+        if globs.github_check != globs.github_check_var.get():
             prompt_restart = True
-        elif globals.active_theme != globals.theme_var.get():
+        elif globs.active_theme != globs.theme_var.get():
             prompt_restart = True
-        elif globals.beta != globals.beta_var.get():
+        elif globs.beta != globs.beta_var.get():
             prompt_restart = True
-        save_all_settings(globals)
+        elif globs.legacy_mode != globs.legacy_mode_var.get():
+            prompt_restart = True
+        save_all_settings(globs)
 
         if prompt_restart:
-            if globals.qt_mode:
+            if not globs.legacy_mode:
                 reply = QMessageBox.question(
                     None,
                     "Restart Pearl?",
@@ -230,13 +232,13 @@ def create_sound_tab(globals, sound_tab):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.Yes)
                 if reply == QMessageBox.StandardButton.Yes:
-                    subprocess.Popen(globals.app_path)
+                    subprocess.Popen(globs.app_path)
                     sys.exit(0)
             else:
                     reply = messagebox.askyesno(
-                        parent=globals.root,
+                        parent=globs.root,
                         title="Restart Pearl",
                         message="Would you like restart Pearl to apply all changes?")
                     if reply:
-                        subprocess.Popen(globals.app_path)
+                        subprocess.Popen(globs.app_path)
                         sys.exit(0)

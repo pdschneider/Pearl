@@ -9,16 +9,16 @@ import subprocess
 import logging
 import sys
 from src.utils.save_settings import save_all_settings
-from src.utils.load_settings import load_data_path
+from src.utils.load import load_data_path
 from src.utils.toast import show_toast
 
 
-def create_general_settings_tab(globals, general_frame):
+def create_general_settings_tab(globs, general_frame):
     """
     Creates the general settings tab and initializes widgets.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     general_frame: The main frame
                     of the general settings window
     """
@@ -37,7 +37,7 @@ def create_general_settings_tab(globals, general_frame):
     # Save Chats
     ctk.CTkLabel(save_chats_frame,
                  text=None,
-                 image=globals.chat_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.chat_icon).pack(side="left", padx=6, pady=0)
 
     save_chats_label = ctk.CTkLabel(save_chats_frame,
                                     text="Save Chats",
@@ -51,7 +51,7 @@ def create_general_settings_tab(globals, general_frame):
                pady=5)
 
     ctk.CTkCheckBox(save_chats_frame,
-                    variable=globals.save_chats_var,
+                    variable=globs.save_chats_var,
                     onvalue=True,
                     text=None,
                     offvalue=False).pack(side="left", padx=5)
@@ -64,7 +64,7 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkLabel(language_frame,
                  text=None,
-                 image=globals.en_language_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.en_language_icon).pack(side="left", padx=6, pady=0)
 
     language_label = ctk.CTkLabel(language_frame,
                                     text="Language",
@@ -78,7 +78,7 @@ def create_general_settings_tab(globals, general_frame):
                pady=5)
 
     ctk.CTkComboBox(language_frame,
-                    variable=globals.language_var,
+                    variable=globs.language_var,
                     values=["English"],
                     state="readonly",
                     width=150).pack(side="left")
@@ -104,18 +104,18 @@ def create_general_settings_tab(globals, general_frame):
     def update_theme_var(*args):
         selected_label = label_var.get()
         theme_name = label_to_theme.get(selected_label, "Cosmic Sky")
-        globals.theme_var.set(theme_name)
+        globs.theme_var.set(theme_name)
 
     label_var.trace("w", update_theme_var)
 
-    initial_theme = globals.theme_var.get()
+    initial_theme = globs.theme_var.get()
     initial_label = next(
         (label for label, theme in label_to_theme.items() if theme == initial_theme), "Cosmic Sky")
     label_var.set(initial_label)
 
     ctk.CTkLabel(theme_frame,
                  text=None,
-                 image=globals.theme_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.theme_icon).pack(side="left", padx=6, pady=0)
 
     ctk.CTkLabel(theme_frame,
                  text="Theme",
@@ -139,7 +139,7 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkLabel(version_frame,
                  text=None,
-                 image=globals.notification_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.notification_icon).pack(side="left", padx=6, pady=0)
 
     version_check_label = ctk.CTkLabel(version_frame,
                                     text="Check for Updates",
@@ -153,7 +153,7 @@ def create_general_settings_tab(globals, general_frame):
                pady=5)
 
     ctk.CTkCheckBox(version_frame,
-                    variable=globals.github_check_var,
+                    variable=globs.github_check_var,
                     onvalue=True,
                     text=None,
                     width=0,
@@ -186,7 +186,7 @@ def create_general_settings_tab(globals, general_frame):
                pady=5)
 
     ctk.CTkCheckBox(beta_frame,
-                    variable=globals.beta_var,
+                    variable=globs.beta_var,
                     onvalue=True,
                     text=None,
                     width=0,
@@ -204,7 +204,7 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkLabel(context_frame,
                  text=None,
-                 image=globals.operations_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.operations_icon).pack(side="left", padx=6, pady=0)
 
     context_label = ctk.CTkLabel(context_frame,
                                     text="Context Detection",
@@ -218,7 +218,7 @@ def create_general_settings_tab(globals, general_frame):
                pady=5)
 
     ctk.CTkCheckBox(context_frame,
-                    variable=globals.enable_context_var,
+                    variable=globs.enable_context_var,
                     onvalue=True,
                     text=None,
                     width=0,
@@ -236,7 +236,7 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkLabel(title_gen_frame,
                  text=None,
-                 image=globals.title_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.title_icon).pack(side="left", padx=6, pady=0)
 
     context_label = ctk.CTkLabel(title_gen_frame,
                                     text="Generate Chat Titles",
@@ -250,7 +250,7 @@ def create_general_settings_tab(globals, general_frame):
                pady=5)
 
     ctk.CTkCheckBox(title_gen_frame,
-                    variable=globals.generate_titles_var,
+                    variable=globs.generate_titles_var,
                     onvalue=True,
                     text=None,
                     offvalue=False).pack(side="left", padx=5)
@@ -264,7 +264,7 @@ def create_general_settings_tab(globals, general_frame):
     def delete_chats():
         # Create a messagebox asking for confirmation
         logging.debug(f"Attempting to delete chats...")
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             reply = QMessageBox.question(
                 None,
                 "Delete Chats",
@@ -275,27 +275,27 @@ def create_general_settings_tab(globals, general_frame):
                 try:
                     shutil.rmtree(load_data_path("local", "chats"))
                     logging.info(f"Chats deleted!")
-                    show_toast(globals, "Conversations deleted!")
+                    show_toast(globs, "Conversations deleted!")
                 except Exception as e:
                     logging.error(f"Unable to delete chats due to: {e}")
-                    show_toast(globals, "Could not delete conversations", _type="error")
+                    show_toast(globs, "Could not delete conversations", _type="error")
         else:
             reply = messagebox.askyesno(
-                parent=globals.root,
+                parent=globs.root,
                 title="Delete Chats?",
                 message="Would you like to delete all saved chats?")
             if reply:
                 try:
                     shutil.rmtree(load_data_path("local", "chats"))
                     logging.info(f"Chats deleted!")
-                    show_toast(globals, "Conversations deleted!")
+                    show_toast(globs, "Conversations deleted!")
                 except Exception as e:
                     logging.error(f"Unable to delete chats due to: {e}")
-                    show_toast(globals, "Could not delete conversations", _type="error")
+                    show_toast(globs, "Could not delete conversations", _type="error")
 
     ctk.CTkLabel(deletion_frame,
                  text=None,
-                 image=globals.delete_icon).pack(side="left", padx=6, pady=0)
+                 image=globs.delete_icon).pack(side="left", padx=6, pady=0)
 
     ctk.CTkLabel(deletion_frame,
                  text="Delete All Chats",
@@ -308,6 +308,62 @@ def create_general_settings_tab(globals, general_frame):
     delete_chats_button.configure(fg_color="#d62828", hover_color="#ff3b30")
     delete_chats_button.pack(side="left")
 
+    # Window Resize
+    window_frame = ctk.CTkFrame(general_frame,
+                                 bg_color="transparent",
+                                 fg_color="transparent")
+    window_frame.pack(fill="x", pady=10, padx=10)
+
+    ctk.CTkLabel(window_frame,
+                 text=None,
+                 image=globs.windows_icon).pack(side="left", padx=6, pady=0)
+
+    window_size_label = ctk.CTkLabel(window_frame,
+                                    text="Save Window Placement",
+                                    font=fonts.heading_font)
+    window_size_label.pack(side="left", padx=(0, 12))
+    CTkToolTip(window_size_label,
+               message="Loads Invoice Buddy where\nit was last time",
+               delay=0.8,
+               follow=True,
+               padx=10,
+               pady=5)
+
+    ctk.CTkCheckBox(window_frame,
+                    variable=globs.dynamic_window_size_var,
+                    onvalue=True,
+                    text=None,
+                    width=0,
+                    offvalue=False).pack(side="left")
+
+    # Legacy Mode
+    legacy_frame = ctk.CTkFrame(general_frame,
+                                 bg_color="transparent",
+                                 fg_color="transparent")
+    legacy_frame.pack(fill="x", pady=10, padx=10)
+
+    legacy_label = ctk.CTkLabel(legacy_frame,
+                                text="Legacy Mode",
+                                font=fonts.heading_font)
+    legacy_label.pack(side="left", padx=(0, 12))
+    CTkToolTip(legacy_label,
+               message="Use Legacy GUI",
+               delay=0.8,
+               follow=True,
+               padx=10,
+               pady=5)
+
+    ctk.CTkCheckBox(legacy_frame,
+                    variable=globs.legacy_mode_var,
+                    onvalue=True,
+                    text=None,
+                    width=0,
+                    offvalue=False).pack(side="left")
+    
+    ctk.CTkLabel(legacy_frame,
+                 text="*Requires restart",
+                 font=fonts.body_font).pack(side="left", padx=6, pady=0)
+
     # Save Button Frame
     save_button_frame = ctk.CTkFrame(general_frame,
                                      bg_color="transparent",
@@ -316,21 +372,23 @@ def create_general_settings_tab(globals, general_frame):
 
     ctk.CTkButton(save_button_frame,
                   text="Save Settings",
-                  command=lambda: save_button(globals)).pack()
+                  command=lambda: save_button(globs)).pack()
 
-    def save_button(globals):
+    def save_button(globs):
         """Saves and prompts for restart if required."""
         prompt_restart = False
-        if globals.github_check != globals.github_check_var.get():
+        if globs.github_check != globs.github_check_var.get():
             prompt_restart = True
-        elif globals.active_theme != globals.theme_var.get():
+        elif globs.active_theme != globs.theme_var.get():
             prompt_restart = True
-        elif globals.beta != globals.beta_var.get():
+        elif globs.beta != globs.beta_var.get():
             prompt_restart = True
-        save_all_settings(globals)
+        elif globs.legacy_mode != globs.legacy_mode_var.get():
+            prompt_restart = True
+        save_all_settings(globs)
 
         if prompt_restart:
-            if globals.qt_mode:
+            if not globs.legacy_mode:
                 reply = QMessageBox.question(
                     None,
                     "Restart Pearl?",
@@ -338,13 +396,13 @@ def create_general_settings_tab(globals, general_frame):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.Yes)
                 if reply == QMessageBox.StandardButton.Yes:
-                    subprocess.Popen(globals.app_path)
+                    subprocess.Popen(globs.app_path)
                     sys.exit(0)
             else:
                 reply = messagebox.askyesno(
-                    parent=globals.root,
+                    parent=globs.root,
                     title="Restart Pearl",
                     message="Would you like restart Pearl to apply all changes?")
                 if reply:
-                    subprocess.Popen(globals.app_path)
+                    subprocess.Popen(globs.app_path)
                     sys.exit(0)

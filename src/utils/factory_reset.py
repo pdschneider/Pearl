@@ -4,7 +4,7 @@ import sys
 import os
 import logging
 from PySide6.QtWidgets import QMessageBox
-from src.utils.load_settings import load_data_path
+from src.utils.load import load_data_path
 
 
 def factory_reset_config(globals, error=None):
@@ -40,7 +40,7 @@ If this issue persists, send a report to bugs@phillipplays.com.""")
         sys.exit(0)
 
 
-def total_factory_reset(globals):
+def total_factory_reset(globs):
     """Completely wipes all Pearl-related data."""
     answer = QMessageBox.question(
         None,

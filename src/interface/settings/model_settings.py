@@ -11,20 +11,20 @@ from src.interface.components.selector import Treeview
 from PySide6.QtWidgets import QMessageBox
 
 
-def create_models_tab(globals, models_frame):
+def create_models_tab(globs, models_frame):
     """
     Creates the Models tab frame and initializes widgets.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     models_frame: The main frame of the models settings tab
     """
 
-    model_selector = Treeview(globals,
+    model_selector = Treeview(globs,
                               models_frame,
-                              all_models=lambda: get_all_models(globals, globals.ollama_chat_path))
+                              all_models=lambda: get_all_models(globs, globs.ollama_chat_path))
 
-    def load_selected(globals):
+    def load_selected(globs):
         """Loads selected model into memory"""
         logging.debug(f"Initiating model load...")
         available_ram = get_ram_info()
@@ -50,15 +50,15 @@ def create_models_tab(globals, models_frame):
                 return
 
             model_name = sel[0]
-            if model_name not in get_loaded_models(globals, globals.ollama_chat_path):
+            if model_name not in get_loaded_models(globs, globs.ollama_chat_path):
                 logging.debug(f"Attempting to load {model_name}...")
-                load_model(globals, model_name)
+                load_model(globs, model_name)
                 time.sleep(2)
                 refresh_tree()
             else:
                 logging.debug(f"{model_name} is already loaded!")
 
-    def set_selected(globals):
+    def set_selected(globs):
         """Sets selected model as active model"""
         logging.debug(f"Attempting to select model...")
         sel = model_selector.selection()
@@ -73,7 +73,7 @@ def create_models_tab(globals, models_frame):
 
         # Display a warning letting the user know they need more available RAM
         if available_ram != {}:
-            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globals, globals.ollama_chat_path):
+            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globs, globs.ollama_chat_path):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 QMessageBox.warning(
@@ -85,21 +85,21 @@ def create_models_tab(globals, models_frame):
                 return
 
         # Set chosen model as active model and save settings
-        if globals.active_model != model_name:
-            globals.active_model = model_name
+        if globs.active_model != model_name:
+            globs.active_model = model_name
             save_settings(active_model=model_name)
-            show_toast(globals, message=f"{model_name} set as active model")
+            show_toast(globs, message=f"{model_name} set as active model")
 
             # Sleep for 2 seconds, then refresh, ensuring model is loaded
-            if model_name not in get_loaded_models(globals, globals.ollama_chat_path):
-                load_selected(globals)
+            if model_name not in get_loaded_models(globs, globs.ollama_chat_path):
+                load_selected(globs)
                 time.sleep(2)
                 refresh_tree()
         else:
             logging.debug(
-                f"{globals.active_model} is already the selected model.")
+                f"{globs.active_model} is already the selected model.")
 
-    def set_context(globals):
+    def set_context(globs):
         """Sets the model for context detection."""
         logging.debug(f"Attempting to select context model...")
         sel = model_selector.selection()
@@ -114,7 +114,7 @@ def create_models_tab(globals, models_frame):
 
         # Display a warning letting the user know they need more RAM
         if available_ram != {}:
-            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globals, globals.ollama_chat_path):
+            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globs, globs.ollama_chat_path):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 QMessageBox.warning(
@@ -126,21 +126,21 @@ def create_models_tab(globals, models_frame):
                 return
 
         # Set chosen model as context model and save settings
-        if globals.context_model != model_name:
-            globals.context_model = model_name
+        if globs.context_model != model_name:
+            globs.context_model = model_name
             save_settings(context_model=model_name)
-            show_toast(globals, message=f"{model_name} set as context model")
+            show_toast(globs, message=f"{model_name} set as context model")
 
             # Sleep for 2 seconds, then refresh, ensuring model is loaded
-            if model_name not in get_loaded_models(globals, globals.ollama_chat_path):
-                load_selected(globals)
+            if model_name not in get_loaded_models(globs, globs.ollama_chat_path):
+                load_selected(globs)
                 time.sleep(2)
                 refresh_tree()
         else:
             logging.debug(
-                f"{globals.context_model} is already the context model.")
+                f"{globs.context_model} is already the context model.")
     
-    def set_title_gen(globals):
+    def set_title_gen(globs):
         """Sets the model for generating titles."""
         logging.debug(f"Attempting to select title gen model...")
         sel = model_selector.selection()
@@ -155,7 +155,7 @@ def create_models_tab(globals, models_frame):
 
         # Display a warning letting the user know they need more RAM
         if available_ram != {}:
-            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globals, globals.ollama_chat_path):
+            if available_ram["avail_ram_gb"] < 1.0 and model_name not in get_loaded_models(globs, globs.ollama_chat_path):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 QMessageBox.warning(
@@ -167,19 +167,19 @@ def create_models_tab(globals, models_frame):
                 return
 
         # Set chosen model as context model and save settings
-        if globals.title_gen_model != model_name:
-            globals.title_gen_model = model_name
+        if globs.title_gen_model != model_name:
+            globs.title_gen_model = model_name
             save_settings(title_gen_model=model_name)
-            show_toast(globals, message=f"{model_name} set as title generation model")
+            show_toast(globs, message=f"{model_name} set as title generation model")
 
             # Sleep for 2 seconds, then refresh, ensuring model is loaded
-            if model_name not in get_loaded_models(globals, globals.ollama_chat_path):
-                load_selected(globals)
+            if model_name not in get_loaded_models(globs, globs.ollama_chat_path):
+                load_selected(globs)
                 time.sleep(2)
                 refresh_tree()
         else:
             logging.debug(
-                f"{globals.title_gen_model} is already the title generation model.")
+                f"{globs.title_gen_model} is already the title generation model.")
 
     # Buttons
     buttons_frame = ctk.CTkFrame(models_frame,
@@ -190,7 +190,7 @@ def create_models_tab(globals, models_frame):
     # Load button
     load_button = ctk.CTkButton(buttons_frame,
                                 text="Load",
-                                command=lambda: load_selected(globals))
+                                command=lambda: load_selected(globs))
     load_button.grid(row=0, column=0, padx=5)
     CTkToolTip(load_button,
                message="Loads a model\n into memory",
@@ -202,7 +202,7 @@ def create_models_tab(globals, models_frame):
     # Select button
     select_button = ctk.CTkButton(buttons_frame,
                                   text="Select Chats Model",
-                                  command=lambda: set_selected(globals))
+                                  command=lambda: set_selected(globs))
     select_button.grid(row=0, column=1, padx=5)
     CTkToolTip(select_button,
                message="Selects a model\n to be used",
@@ -214,7 +214,7 @@ def create_models_tab(globals, models_frame):
     # Context set button
     context_button = ctk.CTkButton(buttons_frame,
                                    text="Set Context Model",
-                                   command=lambda: set_context(globals))
+                                   command=lambda: set_context(globs))
     context_button.grid(row=0, column=2, padx=5)
     CTkToolTip(context_button,
                message="Selects the context model\n which is used for dynamic\n prompt switching",
@@ -226,7 +226,7 @@ def create_models_tab(globals, models_frame):
     # Title Generation set button
     title_gen_button = ctk.CTkButton(buttons_frame,
                                    text="Set Title Gen Model",
-                                   command=lambda: set_title_gen(globals))
+                                   command=lambda: set_title_gen(globs))
     title_gen_button.grid(row=0, column=3, padx=5)
     CTkToolTip(title_gen_button,
                message="Selects the model\n which is used for\n generating titles",
@@ -236,7 +236,7 @@ def create_models_tab(globals, models_frame):
                pady=5)
 
     def refresh_tree():
-        if globals.ollama_active:
+        if globs.ollama_active:
             try:
                 model_selector.refresh()
             except Exception as e:

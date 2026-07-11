@@ -2,7 +2,34 @@
 
 All notable changes to **Pearl** will be located in this file.
 
-## [0.3.5] - 2026-5-30
+## [0.4.0-beta] - 2026-08-06
+
+This update allows users to choose between legacy mode and the new Qt-based GUI framework! It also bumps the minor version due to a combination of the new UI, image upload support, and tool call support from the last release!
+
+### Added
+- Users can now switch between legacy mode and the modern Qt-based GUI framework (Still in Development - expect bugs)
+- Due to a dependency update, the legacy mode scrollable chat window now supports mouse wheel scroll on Linux
+- Sha256 Checksums are now published with release notes
+
+### Changed
+- Settings now use lowercase folder names
+- Upgraded from Python 3.12.3 to Python 3.13.15 on Linux
+- Various Qt-GUI UI improvements
+- Temp files now cache, speeding up re-launches on Linux
+- Windows users upgrading from previous versions no longer have to go through as many pages of the installation wizard each upgrade
+- Updated dependencies
+
+### Fixed
+- App type is now correctly discovered
+- Changed internal 'globals' to 'globs' to fix namespace issues
+- Fixed AppImage crash issue due to improper binary name
+- During Windows installs, application now closes whether or not it responds to graceful shutdown commands - correcting a rare error during the installation process
+- Fixed extremely slow startup on conditions where Kokoro is installed but not set up properly
+
+### Security
+- Patched multiple vulnerabilities by updating dependencies
+
+## [0.3.5] - 2026-05-30
 
 Pearl now supports image uploads, tool calls, and includes OCR binaries for Windows users, enabling uploading scanned documents! Other various improvements are also included.
 

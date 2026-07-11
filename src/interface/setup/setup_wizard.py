@@ -9,7 +9,7 @@ from src.connections.ollama import ollama_installation
 from src.connections.docker import docker_installation
 from src.connections.kokoro import install_kokoro
 
-def create_wizard(globals):
+def create_wizard(globs):
     """Opens the wizard window."""
     # Create Wizard Window
     wizard = QWizard()
@@ -71,7 +71,7 @@ def create_wizard(globals):
 
     ollama_install = QPushButton()
     ollama_install.setText("Interactive Install")
-    ollama_install.clicked.connect(lambda: ollama_installation(globals))
+    ollama_install.clicked.connect(lambda: ollama_installation(globs))
     ollama_buttons_layout.addWidget(ollama_install)
     ollama_install.setFixedWidth(150)
 
@@ -119,10 +119,10 @@ def create_wizard(globals):
     # Install/Download Buttons
     docker_buttons_layout = QHBoxLayout()
 
-    if globals.os_name.startswith("Linux"):
+    if globs.os_name.startswith("Linux"):
         docker_install = QPushButton()
         docker_install.setText("Interactive Install")
-        docker_install.clicked.connect(lambda: docker_installation(globals))
+        docker_install.clicked.connect(lambda: docker_installation(globs))
         docker_buttons_layout.addWidget(docker_install)
         docker_install.setFixedWidth(150)
 
@@ -153,10 +153,10 @@ def create_wizard(globals):
     # Install/Download Buttons
     kokoro_buttons_layout = QHBoxLayout()
 
-    if globals.os_name.startswith("Linux"):
+    if globs.os_name.startswith("Linux"):
         kokoro_install = QPushButton()
         kokoro_install.setText("Interactive Install")
-        kokoro_install.clicked.connect(lambda: install_kokoro(globals))
+        kokoro_install.clicked.connect(lambda: install_kokoro(globs))
         kokoro_buttons_layout.addWidget(kokoro_install)
         kokoro_install.setFixedWidth(150)
 

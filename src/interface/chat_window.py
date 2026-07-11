@@ -6,19 +6,19 @@ from PIL import Image
 from CTkToolTip import CTkToolTip
 from src.managers.chat_manager import send_message
 from src.managers.attachments import attach_file
-from src.utils.load_settings import load_data_path
+from src.utils.load import load_data_path
 import src.utils.fonts as fonts
 import logging
 import time
 from src.interface.components.widgets import ButtonWidgets
 
 
-def create_chat_tab(globals, chat_tab):
+def create_chat_tab(globs, chat_tab):
     """
     Creates the chat frame for talking with the LLM.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     chat_tab: The main frame of the chat window
     """
 
@@ -30,33 +30,33 @@ def create_chat_tab(globals, chat_tab):
 
     current_label = [None]
 
-    globals.chat_frame = ctk.CTkScrollableFrame(chat_tab)
-    globals.chat_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    globs.chat_frame = ctk.CTkScrollableFrame(chat_tab)
+    globs.chat_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Entry Box
     entry_frame = ctk.CTkFrame(chat_tab, fg_color="transparent")
     entry_frame.pack(fill="both", padx=10, pady=5)
 
-    globals.input_box = ctk.CTkTextbox(entry_frame,
+    globs.input_box = ctk.CTkTextbox(entry_frame,
                               font=fonts.body_font,
                               wrap="word",
                               state="normal",
                               corner_radius=16,
                               height=100)
-    globals.input_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
-    globals.input_box.focus_set()
+    globs.input_box.pack(side="left", padx=5, pady=5, fill="x", expand=True)
+    globs.input_box.focus_set()
 
     # Send Button
-    globals.send_button = ctk.CTkButton(entry_frame,
-                                image=globals.send_icon,
+    globs.send_button = ctk.CTkButton(entry_frame,
+                                image=globs.send_icon,
                                 text=None,
                                 state="normal",
                                 height=50,
                                 width=40,
                                 corner_radius=20,
-                                command=lambda: send_message(globals, ui_elements))
-    globals.send_button.pack(side="top", padx=5, pady=5)
-    CTkToolTip(globals.send_button,
+                                command=lambda: send_message(globs, ui_elements))
+    globs.send_button.pack(side="top", padx=5, pady=5)
+    CTkToolTip(globs.send_button,
                message="Send",
                delay=1.0,
                follow=True,
@@ -65,16 +65,16 @@ def create_chat_tab(globals, chat_tab):
 
     # File Button
     file_button = ctk.CTkButton(entry_frame,
-                                image=globals.attach_icon,
+                                image=globs.attach_icon,
                                 text=None,
                                 state="normal",
                                 height=50,
                                 width=40,
                                 corner_radius=20,
-                                command=lambda: attach_file(globals))
-    globals.file_button = file_button
-    globals.file_button.pack(side="bottom", padx=5, pady=5)
-    globals.attach_tip = CTkToolTip(file_button,
+                                command=lambda: attach_file(globs))
+    globs.file_button = file_button
+    globs.file_button.pack(side="bottom", padx=5, pady=5)
+    globs.attach_tip = CTkToolTip(file_button,
                             message="Attach",
                             delay=1.0,
                             follow=True,
@@ -82,27 +82,27 @@ def create_chat_tab(globals, chat_tab):
                             pady=5)
 
     # Chat Functions
-    def add_bubble(globals, role="user", text="", model=None, prompt=None, tokens=0):
+    def add_bubble(globs, role="user", text="", model=None, prompt=None, tokens=0):
         """Appends messages to the chat box."""
         try:
-            bubble_frame = ctk.CTkFrame(globals.chat_frame, corner_radius=6)
+            bubble_frame = ctk.CTkFrame(globs.chat_frame, corner_radius=6)
 
             # Configure and pack chat bubble frame
             if role == "user":
                 bubble_frame.configure(
-                    fg_color=globals.theme_dict["CTk"]["fg_color"],
-                    bg_color=globals.theme_dict["CTk"]["fg_color"],
-                    border_color=globals.theme_dict["CTk"]["fg_color"],
+                    fg_color=globs.theme_dict["CTk"]["fg_color"],
+                    bg_color=globs.theme_dict["CTk"]["fg_color"],
+                    border_color=globs.theme_dict["CTk"]["fg_color"],
                     corner_radius=6)
             else:
                 bubble_frame.configure(
-                    fg_color=globals.theme_dict["CTk"]["fg_color"],
-                    bg_color=globals.theme_dict["CTk"]["fg_color"],
-                    border_color=globals.theme_dict["CTk"]["fg_color"],
+                    fg_color=globs.theme_dict["CTk"]["fg_color"],
+                    bg_color=globs.theme_dict["CTk"]["fg_color"],
+                    border_color=globs.theme_dict["CTk"]["fg_color"],
                     corner_radius=6)
 
                 # Create and pack assistant name only for assistant messages
-                name_label = ctk.CTkLabel(globals.chat_frame,
+                name_label = ctk.CTkLabel(globs.chat_frame,
                                         text="Pearl",
                                         font=fonts.heading_font)
                 name_label.pack(side="top",
@@ -130,19 +130,19 @@ def create_chat_tab(globals, chat_tab):
 
         # Pack widgets underneath messages
         widgets_row = ButtonWidgets(parent=bubble_frame,
-                                    globals=globals,
+                                    globs=globs,
                                     label=label,
                                     copy_callback=copy_bubble_text,
                                     model=model,
-                                    attachment=globals.file_attachment,
-                                    prompt=globals.active_prompt,
+                                    attachment=globs.file_attachment,
+                                    prompt=globs.active_prompt,
                                     tokens=tokens,
                                     role=role,
                                     text=text,
-                                    message_index=len(globals.conversation_history))
+                                    message_index=len(globs.conversation_history))
         widgets_row.pack(fill="x")
         widgets_row.hide_buttons()
-        globals.widget_rows.append(widgets_row)
+        globs.widget_rows.append(widgets_row)
 
         # Widget events
         def on_enter(event):
@@ -166,14 +166,14 @@ def create_chat_tab(globals, chat_tab):
         label.bind("<Leave>", on_leave)
         bubble_frame.bind("<Leave>", on_leave)
         entry_frame.bind("<Enter>", on_leave)
-        globals.chat_frame.bind("<Leave>", on_leave)
+        globs.chat_frame.bind("<Leave>", on_leave)
 
         # Shows menu on right click
         label.bind("<Button-3>", on_right_click)
 
-        globals.chat_frame._parent_canvas.after(
+        globs.chat_frame._parent_canvas.after(
             100,
-            lambda: globals.chat_frame._parent_canvas.yview_moveto(1.0))
+            lambda: globs.chat_frame._parent_canvas.yview_moveto(1.0))
 
         return label
 
@@ -189,34 +189,34 @@ def create_chat_tab(globals, chat_tab):
     def upon_enter():
         """Triggers send message and prevents additional
         lines in the entry box upon pressing enter."""
-        if globals.still_streaming:
+        if globs.still_streaming:
             logging.debug(f"Enter button pressed.")
-            if globals.input_box.get("1.0", "end").strip():
-                if time.time() - globals.last_message_time >= 2:
-                    globals.cancel_event.set() if globals.cancel_event else None
-                send_message(globals, ui_elements)
+            if globs.input_box.get("1.0", "end").strip():
+                if time.time() - globs.last_message_time >= 2:
+                    globs.cancel_event.set() if globs.cancel_event else None
+                send_message(globs, ui_elements)
             else:
                 return "break"
         else:
             logging.debug(f"Enter button pressed.")
-            send_message(globals, ui_elements)
+            send_message(globs, ui_elements)
         return "break"
 
     def upon_shift_enter():
         """Ensures Shift+Enter creates a new line
         in the entry box and nothing more."""
-        globals.input_box.insert(tk.INSERT, "\n")
+        globs.input_box.insert(tk.INSERT, "\n")
         return "break"
 
-    globals.input_box.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
-    globals.input_box.bind("<Shift-Return>", lambda e: upon_shift_enter())
+    globs.input_box.bind("<Return>", lambda e: upon_enter() if not e.state & 1 else "break")
+    globs.input_box.bind("<Shift-Return>", lambda e: upon_shift_enter())
 
     def hide_all_buttons():
         """Hide all widget buttons."""
-        for row in globals.widget_rows:
+        for row in globs.widget_rows:
             row.hide_buttons()
 
     ui_elements = {
         "add_bubble": lambda *args, **kwargs: add_bubble(*args, **kwargs)}
 
-    globals.ui_elements = ui_elements
+    globs.ui_elements = ui_elements

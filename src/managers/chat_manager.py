@@ -17,16 +17,16 @@ from PySide6.QtCore import Qt, QTimer
 
 
 # Chat Functions
-def send_message(globals, ui_elements):
+def send_message(globs, ui_elements):
     """Sends queries to the LLM."""
 
     # Returns if user send a message within the past 2 seconds
     now = time.time()
-    if now - globals.last_message_time <= 2:
+    if now - globs.last_message_time <= 2:
         logging.warning(f"Sending messages too fast - must wait 2 seconds.")
         return
     else:
-        globals.last_message_time = now
+        globs.last_message_time = now
 
 
     # Returns if thread count exceeds 6
@@ -34,152 +34,153 @@ def send_message(globals, ui_elements):
     logging.info(f"Total Active Threads: {active_threads}")
     if active_threads > 6:
         logging.warning(f"Active threads: {active_threads} - sending messages too fast")
-        show_toast(globals, message=f"Active threads: {active_threads} - Sending messages too fast!", _type="error")
+        show_toast(globs, message=f"Active threads: {active_threads} - Sending messages too fast!", _type="error")
         return
 
     # Stops any currently playing audio
     try:
         sd.stop()
-        if globals.os_name.startswith("Windows"):
+        if globs.os_name.startswith("Windows"):
             sd.wait()
-        with globals.speaking_lock:
-            globals.is_speaking = False
+        with globs.speaking_lock:
+            globs.is_speaking = False
     except Exception as e:
         logging.error(f"Could not stop TTS due to: {e}")
 
     # Cancels output if stop button is pressed
-    if globals.cancel_event:
-        globals.cancel_event.set()
-        globals.still_streaming = False
+    if globs.cancel_event:
+        globs.cancel_event.set()
+        globs.still_streaming = False
 
     # Prevents sending a message if LLM is currently streaming
-    if globals.still_streaming:
+    if globs.still_streaming:
         return
 
     # Sets flag to indicate the LLM is now streaming
-    globals.still_streaming = True
+    globs.still_streaming = True
 
     # Create threading event for cancellation
-    globals.cancel_event = threading.Event()
+    globs.cancel_event = threading.Event()
 
     # Create queue
     q = queue.Queue()
     
     # Set active model
-    model = globals.active_model
+    model = globs.active_model
 
     # Strip whitespace from entry box contents
-    if globals.qt_mode:
-        clean_text = globals.input_box.toPlainText().strip()
+    if not globs.legacy_mode:
+        clean_text = globs.input_box.toPlainText().strip()
     else:
-        clean_text = globals.input_box.get("1.0", "end").strip()
+        clean_text = globs.input_box.get("1.0", "end").strip()
 
     # Append file attachment contents to user text if applicable
-    if not clean_text and globals.file_attachment:
-        user_text = f"Describe to the following: {globals.file_attachment}"
-    elif clean_text and globals.file_attachment:
-        user_text = clean_text + f" Refer to the following: {globals.file_attachment}"
-    elif clean_text and not globals.file_attachment:
+    if not clean_text and globs.file_attachment:
+        user_text = f"Describe to the following: {globs.file_attachment}"
+    elif clean_text and globs.file_attachment:
+        user_text = clean_text + f" Refer to the following: {globs.file_attachment}"
+    elif clean_text and not globs.file_attachment:
         user_text = clean_text
     else:
         return
 
     # Set to defaults for new conversations
-    if globals.is_new_conversation:
-        start_new_conversation(globals)
-        globals.context_warning = True
+    if globs.is_new_conversation:
+        start_new_conversation(globs)
+        globs.context_warning = True
 
     # Inspect for context if enabled
-    if globals.enable_context:
+    if globs.enable_context:
         threading.Thread(target=detect_context,
-                         args=(globals, user_text),
+                         args=(globs, user_text),
                          daemon=True,
                          name="Context Thread").start()
 
     # Add bubble
-    ui_elements["add_bubble"](globals, role="user", text=clean_text)
+    ui_elements["add_bubble"](globs, role="user", text=clean_text)
 
     # Delete entry box contents
-    if globals.qt_mode:
-        globals.input_box.clear()
+    if not globs.legacy_mode:
+        globs.input_box.clear()
     else:
-        globals.input_box.delete("1.0", "end")
+        globs.input_box.delete("1.0", "end")
 
     # Reset file attachment to None
-    globals.file_attachment = None
+    globs.file_attachment = None
 
     # Tack on user text and attachment (if applicable) to conversation history
-    if not globals.image_attachment:
-        messages = globals.conversation_history + [{"role": "user",
+    if not globs.image_attachment:
+        messages = globs.conversation_history + [{"role": "user",
                                                     "content": user_text}]
     else:
-        messages = globals.conversation_history + [{"role": "user",
+        messages = globs.conversation_history + [{"role": "user",
                                                     "content": user_text,
-                                                    "images": [globals.image_attachment]}]
+                                                    "images": [globs.image_attachment]}]
     
     # Query Ollama in a thread
     threading.Thread(target=chat_stream,
-                     args=(globals,
+                     args=(globs,
                            model,
                            messages,
                            q,
-                           globals.cancel_event),
+                           globs.cancel_event),
                            daemon=True,
                            name="Chat Stream").start()
 
-    current_model = globals.active_model
-    globals.assistant_label = ui_elements["add_bubble"](globals, role="assistant", text="", model=current_model)
+    current_model = globs.active_model
+    globs.assistant_label = ui_elements["add_bubble"](globs, role="assistant", text="", model=current_model)
 
     # Reset assistant message
-    globals.assistant_message = ""
+    globs.assistant_message = ""
 
     # Append message to conversation history
-    add_message(globals, "user", clean_text)
+    add_message(globs, "user", clean_text)
 
     # Sets message start time
-    globals.message_start_time = datetime.now().isoformat()
+    globs.message_start_time = datetime.now().isoformat()
 
     # Re-enables file attachment button
-    if globals.qt_mode:
+    if not globs.legacy_mode:
         pass
     else:
-        globals.file_button.configure(state="normal")
-        globals.attach_tip.configure(message="Attach")
-    globals.file_attachment = None
-    globals.attachment_path = None
+        globs.file_button.configure(state="normal")
+        globs.attach_tip.configure(message="Attach")
+    globs.file_attachment = None
+    globs.attachment_path = None
 
     # Toggle button to stop mode
-    if globals.qt_mode:
-        pass
-    else:
-        globals.send_button.configure(
+    if globs.legacy_mode:
+        globs.send_button.configure(
             text=None,
-            image=globals.stop_icon,
-            command=lambda: globals.cancel_event.set()
-            if globals.cancel_event else None)
+            image=globs.stop_icon,
+            command=lambda: globs.cancel_event.set()
+            if globs.cancel_event else None)
+    else:
+        globs.send_button.setText("■")
+        globs.send_button.setVisible(True)
     tokens = 0
 
     def pull_response(user_text):
         """Pulls the response from Ollama via the thread-safe queue"""
         nonlocal tokens
-        local_id = globals.current_response_id
+        local_id = globs.current_response_id
         try:
             while True:
                 item = q.get_nowait()
                 tokens += 1
                 if item is None:
-                    if globals.current_response_id != local_id:
+                    if globs.current_response_id != local_id:
                         logging.debug(f"Discarding stale response (ID {local_id})")
-                        globals.still_streaming = False
+                        globs.still_streaming = False
                         return
                     
                     # Scrub markdown elements from response (for TTS)
                     if isinstance(item, str):
-                        for component in globals.markdown_components:
-                            globals.assistant_message.replace(component, "")
+                        for component in globs.markdown_components:
+                            globs.assistant_message.replace(component, "")
 
                     # Health Check
-                    if globals.os_name.startswith("Linux"):
+                    if globs.os_name.startswith("Linux"):
                         temp = cpu_temp_info()['cpu_temp_c']
                         if temp >= 100:
                             logging.critical(f"CRITICAL WARNING: CPU TEMP: {temp}C")
@@ -189,48 +190,50 @@ def send_message(globals, ui_elements):
                             logging.debug(f"CPU Temp: {temp}C")
 
                     # TTS
-                    play_tts(globals, text=globals.assistant_message)
+                    play_tts(globs, text=globs.assistant_message)
 
                     # Add message to conversation history
-                    add_message(globals,
+                    add_message(globs,
                                 "assistant",
-                                globals.assistant_message,
-                                model=globals.active_model,
+                                globs.assistant_message,
+                                model=globs.active_model,
                                 tokens=tokens)
                     
                     # So the stats widget gets token count
-                    if globals.widget_rows:
-                        last_widget = globals.widget_rows[-1]
+                    if globs.widget_rows:
+                        last_widget = globs.widget_rows[-1]
                         if last_widget.role == "assistant":
                             last_widget.tokens = tokens
                             last_widget._update_stats()
 
                     # Only save to file if save_chats is on
-                    if globals.save_chats:
+                    if globs.save_chats:
                         threading.Thread(target=save_conversation,
-                                         args=(globals, user_text),
+                                         args=(globs, user_text),
                                          daemon=True,
                                          name="Save Chats Thread").start()
                     else:
-                        globals.is_new_conversation = False
+                        globs.is_new_conversation = False
 
                     # Debug print full conversation history
-                    # logging.debug(f"\nFull conversation history:\n{globals.conversation_history}\n")
+                    # logging.debug(f"\nFull conversation history:\n{globs.conversation_history}\n")
 
-                    globals.still_streaming = False
-                    if globals.qt_mode:
-                        pass
-                    else:
-                        globals.send_button.configure(
+                    globs.still_streaming = False
+                    if globs.legacy_mode:
+                        globs.send_button.configure(
                             text=None,
-                            image=globals.send_icon,
-                            command=lambda: send_message(globals, ui_elements))
+                            image=globs.send_icon,
+                            command=lambda: send_message(globs, ui_elements))
+                    else:
+                        globs.send_button.setText("➤")
+                        if not globs.input_box.toPlainText().strip():
+                            globs.send_button.setVisible(False)
                     return
 
-                if globals.current_response_id == local_id:
+                if globs.current_response_id == local_id:
                     # Scrub markdown while text is streaming
                     if isinstance(item, str):
-                        globals.assistant_message += item.replace(
+                        globs.assistant_message += item.replace(
                             "***", "").replace(
                                 "___", "").replace(
                                     "**", "").replace(
@@ -241,25 +244,25 @@ def send_message(globals, ui_elements):
                                                         "#####", "").replace(
                                                             "####", "").replace(
                                                                 "###", "")
-                    if globals.assistant_label:
-                        if globals.qt_mode:
-                            globals.assistant_label.setText(
-                                globals.assistant_message)
+                    if globs.assistant_label:
+                        if not globs.legacy_mode:
+                            globs.assistant_label.setText(
+                                globs.assistant_message)
                         else:
-                            globals.assistant_label.configure(
-                                text=globals.assistant_message)
-                            globals.chat_frame._parent_canvas.yview_moveto(1.0)
+                            globs.assistant_label.configure(
+                                text=globs.assistant_message)
+                            globs.chat_frame._parent_canvas.yview_moveto(1.0)
 
         except queue.Empty:
             pass
 
-        if globals.current_response_id != local_id:
-            globals.still_streaming = False
+        if globs.current_response_id != local_id:
+            globs.still_streaming = False
             return
 
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             QTimer.singleShot(20, lambda: pull_response(user_text))
         else:
-            globals.root.after(20, lambda: pull_response(user_text))
+            globs.root.after(20, lambda: pull_response(user_text))
 
     pull_response(user_text)

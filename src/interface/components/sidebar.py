@@ -5,7 +5,7 @@ import os
 from src.managers.chat_history import (load_conversations,
                                    load_specific_conversation,
                                    start_new_conversation)
-from src.utils.load_settings import load_data_path
+from src.utils.load import load_data_path
 from src.utils.refresher import refresh_gui
 import sounddevice as sd
 from CTkToolTip import CTkToolTip
@@ -13,12 +13,12 @@ from datetime import datetime, timedelta
 import src.utils.fonts as fonts
 
 
-def create_sidebar(globals):
+def create_sidebar(globs):
     """
     Creates the sidebar that slides in from the left.
 
     Parameters:
-        globals: Global variables
+        globs: Global variables
 
     Returns:
         sidebar: The sidebar frame and its child widgets
@@ -28,20 +28,20 @@ def create_sidebar(globals):
     animation_delay = 10
 
     # Create the sidebar frame
-    globals.sidebar = ctk.CTkFrame(globals.root, width=sidebar_width, corner_radius=0)
-    globals.sidebar.configure(fg_color=globals.theme_dict["CTk"]["fg_color"])
+    globs.sidebar = ctk.CTkFrame(globs.root, width=sidebar_width, corner_radius=0)
+    globs.sidebar.configure(fg_color=globs.theme_dict["CTk"]["fg_color"])
 
     # Initially place off-screen
-    globals.sidebar.place(x=-sidebar_width, y=0, relheight=1)
+    globs.sidebar.place(x=-sidebar_width, y=0, relheight=1)
 
-    buttons_frame = ctk.CTkFrame(globals.sidebar, width=sidebar_width, corner_radius=0)
+    buttons_frame = ctk.CTkFrame(globs.sidebar, width=sidebar_width, corner_radius=0)
     buttons_frame.pack(fill="x")
-    buttons_frame.configure(fg_color=globals.theme_dict["CTk"]["fg_color"])
+    buttons_frame.configure(fg_color=globs.theme_dict["CTk"]["fg_color"])
 
     # Add the hamburger button back so the sidebar can be closed
     sidebar_hamburger = ctk.CTkButton(
         buttons_frame,
-        image=globals.hamburger_icon,
+        image=globs.hamburger_icon,
         text=None,
         width=45,
         height=45,
@@ -57,7 +57,7 @@ def create_sidebar(globals):
     # New Chat Button
     sidebar_new_chat = ctk.CTkButton(
         buttons_frame,
-        image=globals.new_chat_icon,
+        image=globs.new_chat_icon,
         text=None,
         width=45,
         height=45,
@@ -72,16 +72,16 @@ def create_sidebar(globals):
 
     # Chat History
     title_label = ctk.CTkLabel(
-        globals.sidebar,
+        globs.sidebar,
         text="Chat History",
         font=ctk.CTkFont(size=18, weight="bold"))
     title_label.pack(pady=5, padx=10)
 
     # Scrollable Frame for Chat History items
-    history_frame = ctk.CTkScrollableFrame(globals.sidebar)
+    history_frame = ctk.CTkScrollableFrame(globs.sidebar)
     history_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-    def populate_history(globals):
+    def populate_history(globs):
         """Clears and populates the history frame with chat entries."""
 
         # Calculate the number of conversations
@@ -94,14 +94,14 @@ def create_sidebar(globals):
                 new_chat_count += 1
 
         # Only rebuild sidebar GUI if chat count changed
-        if not globals.chat_count:
+        if not globs.chat_count:
             logging.debug(f"Building sidebar...")
-            globals.chat_count = new_chat_count
-        elif new_chat_count == globals.chat_count:
+            globs.chat_count = new_chat_count
+        elif new_chat_count == globs.chat_count:
             logging.debug(f"Chat count hasn't changed. Skipping sidebar rebuild...")
             return
         else:
-            globals.chat_count = new_chat_count
+            globs.chat_count = new_chat_count
             logging.debug(f"Building sidebar...")
         
         # Destroy old widgets first
@@ -112,7 +112,7 @@ def create_sidebar(globals):
             
 
         # Load conversations and return early with label if empty
-        conversations = load_conversations(globals)
+        conversations = load_conversations(globs)
         if not conversations:
             no_chats_label = ctk.CTkLabel(history_frame, text="No chats yet!")
             no_chats_label.pack(pady=20, padx=5)
@@ -205,99 +205,99 @@ def create_sidebar(globals):
         """Resets to a new conversation and clears the chat frame."""
         # Stop currently playing audio, refresh GUI, set flags
         sd.stop()
-        refresh_gui(globals)
-        start_new_conversation(globals)
+        refresh_gui(globs)
+        start_new_conversation(globs)
 
         # Clear the current chat bubbles
-        for widget in globals.chat_frame.winfo_children():
+        for widget in globs.chat_frame.winfo_children():
             widget.destroy()
-        globals.chat_frame._parent_canvas.yview_moveto(0.0)
-        globals.root.update_idletasks()
+        globs.chat_frame._parent_canvas.yview_moveto(0.0)
+        globs.root.update_idletasks()
 
         # Map chat page
-        app_pages = [globals.setup_page, globals.settings_page, globals.changelog]
+        app_pages = [globs.setup_page, globs.settings_page, globs.changelog]
         for page in app_pages:
             if page:
                 page.pack_forget()
-        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
+        globs.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
         toggle_sidebar()
         logging.info(f"Started new chat from sidebar button.")
 
     def slide_in():
         """Slides the sidebar in after clicking the hamburger button."""
-        current_x = globals.sidebar.winfo_x()
+        current_x = globs.sidebar.winfo_x()
         new_x = min(0, current_x + animation_step)
-        globals.sidebar.place_configure(x=new_x)
+        globs.sidebar.place_configure(x=new_x)
         if new_x < 0:
-            globals.sidebar.after(animation_delay, slide_in)
+            globs.sidebar.after(animation_delay, slide_in)
         else:
-            globals.sidebar_open = True
-            globals.sidebar.after(animation_delay, populate_history(globals))
+            globs.sidebar_open = True
+            globs.sidebar.after(animation_delay, populate_history(globs))
 
     def slide_out():
         """Slide the sidebar back out when done."""
-        current_x = globals.sidebar.winfo_x()
+        current_x = globs.sidebar.winfo_x()
         new_x = max(-sidebar_width, current_x - animation_step)
-        globals.sidebar.place_configure(x=new_x)
+        globs.sidebar.place_configure(x=new_x)
         if new_x > -sidebar_width:
-            globals.sidebar.after(animation_delay, slide_out)
+            globs.sidebar.after(animation_delay, slide_out)
         else:
-            globals.sidebar_open = False
+            globs.sidebar_open = False
 
     def toggle_sidebar():
         """Calls the sidebar to be slid in or out."""
         logging.debug(f"Sidebar toggle called.")
-        globals.sidebar.tkraise()
-        logging.debug(f"Current sidebar x position: {globals.sidebar.winfo_x()}")
+        globs.sidebar.tkraise()
+        logging.debug(f"Current sidebar x position: {globs.sidebar.winfo_x()}")
 
         # Health check
-        refresh_gui(globals)
+        refresh_gui(globs)
 
-        if globals.sidebar_open:
+        if globs.sidebar_open:
             logging.debug(f"Closing sidebar.")
             slide_out()
         else:
             logging.debug(f"Opening sidebar.")
-            globals.sidebar.place(x=-sidebar_width)
+            globs.sidebar.place(x=-sidebar_width)
             slide_in()
 
     def load_and_display_chat(conv_id):
         """Loads the chat and rebuilds the main chat window."""
         sd.stop()
-        load_specific_conversation(globals, conv_id)
+        load_specific_conversation(globs, conv_id)
 
-        app_pages = [globals.setup_page, globals.settings_page, globals.changelog]
+        app_pages = [globs.setup_page, globs.settings_page, globs.changelog]
         for page in app_pages:
             if page:
                 page.pack_forget()
-        globals.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
+        globs.chat_page.pack(fill="both", expand=True, padx=10, pady=0)
 
         # Clear current chat bubbles
-        for widget in globals.chat_frame.winfo_children():
+        for widget in globs.chat_frame.winfo_children():
             widget.destroy()
 
         # Add new bubbles from loaded chat
-        for msg in globals.chat_history:
+        for msg in globs.chat_history:
             role = msg["role"]
             content = msg["content"]
             model = msg.get("model")
             prompt = msg.get("prompt")
             tokens = msg.get("tokens")
-            globals.ui_elements["add_bubble"](globals, role=role, text=content, model=model, prompt=prompt, tokens=tokens)
+            globs.ui_elements["add_bubble"](globs, role=role, text=content, model=model, prompt=prompt, tokens=tokens)
 
-        globals.chat_frame._parent_canvas.yview_moveto(1.0)
-        globals.root.update_idletasks()
+        globs.chat_frame._parent_canvas.yview_moveto(1.0)
+        globs.root.update_idletasks()
 
         # Close sidebar after selection
         toggle_sidebar()
         logging.info(f"Displaying conversation: {conv_id}")
 
     # Override the hamburger button command in top_bar
-    if hasattr(globals, 'hamburger'):
-        globals.hamburger.configure(command=toggle_sidebar)
+    if hasattr(globs, 'hamburger'):
+        globs.hamburger.configure(command=toggle_sidebar)
     else:
-        logging.error(f"No globals.hamburger found.")
+        logging.error(f"No globs.hamburger found.")
 
-    populate_history(globals)
+    populate_history(globs)
 
-    return globals.sidebar
+    return globs.sidebar

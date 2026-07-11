@@ -22,5 +22,7 @@
     "ollama_context_path": "http://localhost:11434/",
     "ollama_title_path": "http://localhost:11434/",
     "enable_context": true,
-    "generate_titles": true
+    "generate_titles": true,
+    "dynamic_window_size": true,
+    "legacy_mode": true
 }

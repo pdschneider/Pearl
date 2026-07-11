@@ -1,6 +1,8 @@
 # version.py
-__version__ = "0.3.5"
+__version__ = "0.4.0-beta"
 
 __author__ = "Phillip Schneider"
 __title__ = "Pearl"
+__lower_title__ = __title__.lower()
+__binary_name__ = "pearl-gui"
 __description__ = "Personal Everything Assistant Running Locally"

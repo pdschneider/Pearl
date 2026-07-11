@@ -11,12 +11,12 @@ from src.utils.refresher import refresh_gui
 from src.interface.setup.setup_wizard import create_wizard
 
 
-def create_about_tab(globals, about_frame):
+def create_about_tab(globs, about_frame):
     """
     Creates the about tab and initializes widgets.
 
             Parameters:
-                    globals: Global variables
+                    globs: Global variables
                     about_frame: The main frame of the about tab
     """
 
@@ -71,7 +71,7 @@ Have fun!
 """).pack(padx=5, pady=5)
 
     ctk.CTkLabel(about_frame,
-                 text=f"Current Version: {globals.current_version}",
+                 text=f"Current Version: {globs.current_version}",
                  anchor="center").pack(fill="x", pady=20, padx=10)
 
     buttons_frame = ctk.CTkFrame(about_frame, fg_color="transparent")
@@ -79,22 +79,22 @@ Have fun!
 
     ctk.CTkButton(buttons_frame,
                   text="View Setup Page",
-                  command=lambda: bring_back_setup(globals)).grid(
+                  command=lambda: bring_back_setup(globs)).grid(
                       row=0, column=0, padx=5)
     
     ctk.CTkButton(buttons_frame,
                   text="Open Wizard",
-                  command=lambda: create_wizard(globals)).grid(
+                  command=lambda: create_wizard(globs)).grid(
                       row=0, column=1, padx=5)
 
     ctk.CTkButton(buttons_frame,
                   text="View Changelog",
-                  command=lambda: show_changelog(globals)).grid(
+                  command=lambda: show_changelog(globs)).grid(
                       row=0, column=2, padx=5)
 
     ctk.CTkButton(buttons_frame,
                   text="Report a Bug",
-                  command=lambda: report_bug(globals)).grid(
+                  command=lambda: report_bug(globs)).grid(
                       row=0, column=3, padx=5)
 
     github_button = ctk.CTkButton(buttons_frame,
@@ -110,25 +110,25 @@ Have fun!
                padx=10,
                pady=5)
 
-    def bring_back_setup(globals):
+    def bring_back_setup(globs):
         """Reinitiates the setup window."""
-        refresh_gui(globals)
-        globals.app_title.configure(text="Welcome to Pearl!")
-        globals.settings_page.pack_forget()
-        globals.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
+        refresh_gui(globs)
+        globs.app_title.configure(text="Welcome to Pearl!")
+        globs.settings_page.pack_forget()
+        globs.setup_page.pack(fill="both", expand=True, padx=10, pady=0)
 
-    def show_changelog(globals):
+    def show_changelog(globs):
         """Brings up the changelog window."""
-        refresh_gui(globals)
-        globals.app_title.configure(text="Changelog")
-        globals.settings_page.pack_forget()
-        globals.chat_page.pack_forget()
-        globals.changelog.pack(fill="both", expand=True, padx=10, pady=0)
+        refresh_gui(globs)
+        globs.app_title.configure(text="Changelog")
+        globs.settings_page.pack_forget()
+        globs.chat_page.pack_forget()
+        globs.changelog.pack(fill="both", expand=True, padx=10, pady=0)
 
-    def report_bug(globals):
+    def report_bug(globs):
         """Opens the default mail application to report a bug."""
 
-        if globals.qt_mode:
+        if not globs.legacy_mode:
             # Display a messagebox first
             reply = QMessageBox.question(
                 None,
@@ -145,13 +145,13 @@ Have fun!
                 body = f"Thank you very much for making a report! " \
                 f"Let me know what problem occurred, the behavior your expected, " \
                 f"and feel free to also include any logs or screenshots that may help! " \
-                f" | Pearl Version: {globals.current_version} | OS: {globals.os_name}"
+                f" | Pearl Version: {globs.current_version} | OS: {globs.os_name}"
                 encoded_body = urllib.parse.quote(body)
                 mailto = f"mailto:{to}?subject={subject}&body={encoded_body}"
                 webbrowser.open(mailto)
         else:
             reply = messagebox.askyesno(
-                parent=globals.root,
+                parent=globs.root,
                 title="Report Bug?",
                 message=f"Open the default email application to report a bug?")
             
@@ -162,7 +162,7 @@ Have fun!
                 body = f"Thank you very much for making a report! " \
                 f"Let me know what problem occurred, the behavior your expected, " \
                 f"and feel free to also include any logs or screenshots that may help! " \
-                f" | Pearl Version: {globals.current_version} | OS: {globals.os_name}"
+                f" | Pearl Version: {globs.current_version} | OS: {globs.os_name}"
                 encoded_body = urllib.parse.quote(body)
                 mailto = f"mailto:{to}?subject={subject}&body={encoded_body}"
                 webbrowser.open(mailto)

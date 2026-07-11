@@ -5,6 +5,8 @@ import shutil
 import json
 import platform
 import sys
+from version import __lower_title__
+
 
 def load_data_path(direct=None, filename=None, default=False):
     """
@@ -104,23 +106,24 @@ def load_data_path(direct=None, filename=None, default=False):
         bundled_dir = os.path.normpath(os.path.join(bundle_root, "defaults"))
 
         # Persistent directory for user data
+        app_name = __lower_title__
         if direct == "config":
             if platform.system() == "Windows":
-                persistent_dir = os.path.normpath(os.path.join(os.getenv("APPDATA"), "Pearl"))
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("APPDATA"), app_name))
             else:
-                persistent_dir = os.path.normpath(os.path.expanduser("~/.config/Pearl"))
+                persistent_dir = os.path.normpath(os.path.expanduser(f"~/.config/{app_name}"))
         elif direct == "local":
             if platform.system() == "Windows":
-                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), "Pearl"))
+                persistent_dir = os.path.normpath(os.path.join(os.getenv("LOCALAPPDATA"), app_name))
             else:
-                persistent_dir = os.path.normpath(os.path.expanduser("~/.local/share/Pearl"))
+                persistent_dir = os.path.normpath(os.path.expanduser(f"~/.local/share/{app_name}"))
             default_files = []
         else:  # cache or main
             if platform.system() == "Windows":
                 persistent_dir = os.path.normpath(
-                    os.path.join(os.getenv("LOCALAPPDATA"), "Pearl", "Cache"))
+                    os.path.join(os.getenv("LOCALAPPDATA"), app_name, "Cache"))
             else:
-                persistent_dir = os.path.normpath(os.path.expanduser("~/.cache/Pearl"))
+                persistent_dir = os.path.normpath(os.path.expanduser(f"~/.cache/{app_name}"))
             default_files = []
 
         data_dir = persistent_dir

@@ -6,14 +6,14 @@ from CTkToolTip import CTkToolTip
 import src.utils.fonts as fonts
 import sounddevice as sd
 import logging
-from src.utils.load_settings import load_data_path
+from src.utils.load import load_data_path
 from src.managers.sound_manager import kokoro_speak, default_speak
 
 
 class ButtonWidgets(ctk.CTkFrame):
     """A riny reusable row for buttons underneath message bubbles."""
     def __init__(self,
-                 globals,
+                 globs,
                  parent,
                  label,
                  copy_callback,
@@ -26,8 +26,8 @@ class ButtonWidgets(ctk.CTkFrame):
                  message_index=None):
         super().__init__(parent,
                          fg_color=None,
-                         bg_color=globals.theme_dict["CTkScrollableFrame"]["fg_color"],
-                         border_color=globals.theme_dict["CTkScrollableFrame"]["fg_color"],
+                         bg_color=globs.theme_dict["CTkScrollableFrame"]["fg_color"],
+                         border_color=globs.theme_dict["CTkScrollableFrame"]["fg_color"],
                          border_width=0,
                          corner_radius=0,
                          height=32,
@@ -41,7 +41,7 @@ class ButtonWidgets(ctk.CTkFrame):
         self.attachment = attachment or None
         self.prompt = prompt or "Unknown"
         self.tokens = tokens or 0
-        self.globals = globals
+        self.globs = globs
         self.role = role or None
         self.text = text or ""
         self.message_index = message_index or 0
@@ -176,17 +176,17 @@ class ButtonWidgets(ctk.CTkFrame):
 
     def _stop_sound(self):
         """Stops sound if playing."""
-        logging.debug(f"Stop sound button clicked. Is speaking? {self.globals.is_speaking}")
+        logging.debug(f"Stop sound button clicked. Is speaking? {self.globs.is_speaking}")
         try:
             sd.stop()
-            with self.globals.speaking_lock:
-                self.globals.is_speaking = False
+            with self.globs.speaking_lock:
+                self.globs.is_speaking = False
             logging.debug(f"Sound stopped from stop button widget.")
             if False:
-                if self.globals.kokoro_active and self.globals.tts_enabled == True and self.globals.tts_source == "Kokoro":
-                    kokoro_speak(self.globals)
-                elif self.globals.tts_enabled == True and self.globals.tts_source == "Default":
-                    default_speak(self.globals, text=self.text)
+                if self.globs.kokoro_active and self.globs.tts_enabled == True and self.globs.tts_source == "Kokoro":
+                    kokoro_speak(self.globs)
+                elif self.globs.tts_enabled == True and self.globs.tts_source == "Default":
+                    default_speak(self.globs, text=self.text)
 
         except Exception as e:
             logging.error(f"Could not play or stop TTS due to: {e}")

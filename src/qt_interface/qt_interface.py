@@ -1,52 +1,328 @@
 # src/qt_interface/qt_interface.py
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QWidget
-from PySide6.QtGui import QAction
-from PySide6.QtCore import Qt
+import os
+import logging
+import subprocess
+import webbrowser
+import urllib
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QMessageBox
+from PySide6.QtCore import Qt, QEvent, QTimer
+from PySide6.QtGui import QCursor
+from src.qt_interface.qt_components.qt_title_bar import TitleBar
 from src.qt_interface.qt_components.qt_top_bar import create_top_bar
+from src.qt_interface.qt_components.qt_sidebar import create_sidebar, toggle_sidebar
 from src.qt_interface.qt_chat_page import create_chat_page
-from src.qt_interface.qt_components.qt_sidebar import create_sidebar
 from src.qt_interface.qt_settings.qt_settings import create_settings_panel
+from src.utils.load import load_data_path
+from src.interface.setup.setup_wizard import create_wizard
+from src.qt_interface.qt_components.qt_changelog import create_changelog_panel, toggle_changelog_panel
+from src.qt_interface.qt_components.qt_about import create_about_panel, toggle_about_panel
 
 
-def create_interface(globals):
-    """Creates the main interface in PySide."""
-    # Set up main window attributes
-    globals.window.setWindowTitle("Pearl")
-    if globals.saved_width and globals.saved_height and globals.saved_x and globals.saved_y:
-        w = globals.saved_width
-        h = globals.saved_height
-        x = globals.saved_x
-        y = globals.saved_y
-        globals.window.setGeometry(x, y, w, h)
+def create_qt_interface(globs):
+    """Creates the main PySide6 interface with borderless window."""
+
+    # SETUP WINDOW
+    globs.window.setWindowTitle("Pearl")
+    if globs.saved_width and globs.saved_height and globs.saved_x and globs.saved_y:
+        globs.window.setGeometry(
+            globs.saved_x, globs.saved_y,
+            globs.saved_width, globs.saved_height)
     else:
-        globals.window.resize(900, 850)
+        globs.window.resize(900, 850)
 
-    # Central Widget
+    # MAKE IT BORDERLESS
+    globs.window.setWindowFlags(Qt.FramelessWindowHint)
+
+    # CENTRAL WIDGET & LAYOUT
     central_widget = QWidget()
-    globals.window.setCentralWidget(central_widget)
-
-    # Configure layout
+    globs.window.setCentralWidget(central_widget)
     main_layout = QVBoxLayout(central_widget)
-    main_layout.setContentsMargins(5, 5, 5, 5)
-    main_layout.setSpacing(5)
-    globals.window.setLayout(main_layout)
+    main_layout.setContentsMargins(0, 0, 0, 0)
+    main_layout.setSpacing(0)
 
-    # Create top navigation bar
-    top_bar = create_top_bar(globals)
+    # Title Bar
+    title_bar = TitleBar(globs.window)
+    main_layout.addWidget(title_bar)
+    globs.title_bar = title_bar
+
+    # Menus
+    file_menu = title_bar.menu_bar.addMenu("File")
+    data_menu = title_bar.menu_bar.addMenu("Data")
+    help_menu = title_bar.menu_bar.addMenu("Help")
+
+    # Populate File Menu
+    open_logs_action = file_menu.addAction("Open Logs")
+    open_config_action = file_menu.addAction("Open Config")
+    open_chats_action = file_menu.addAction("Open Chats")
+
+    # Attach Actions to File Menu Buttons
+    open_logs_action.triggered.connect(lambda: open_logs(globs))
+    open_config_action.triggered.connect(lambda: open_config(globs))
+    open_chats_action.triggered.connect(lambda: open_chats(globs))
+
+    # Populate Data Menu
+    data_menu.addAction("Export / Import Chats (coming soon...)")
+    data_menu.addAction("Export / Import Settings (coming soon...)")
+
+    # Populate Help Menu
+    view_changelog_action = help_menu.addAction("View Changelog")
+    open_wizard_action = help_menu.addAction("Open Wizard")
+    view_github_action = help_menu.addAction("View Github")
+    report_bug_action = help_menu.addAction("Report a Bug")
+    view_about_action = help_menu.addAction("About")
+
+    # Attach Functions to Help Buttons
+    view_changelog_action.triggered.connect(lambda: toggle_changelog_panel(globs))
+    open_wizard_action.triggered.connect(lambda: create_wizard(globs))
+    view_github_action.triggered.connect(lambda: webbrowser.open(
+        url=f"https://github.com/pdschneider/{globs.title}"))
+    report_bug_action.triggered.connect(lambda: report_bug(globs))
+    view_about_action.triggered.connect(lambda: toggle_about_panel(globs))
+
+    # TOP BAR
+    top_bar = create_top_bar(globs)
     main_layout.addWidget(top_bar)
+    globs.top_bar = top_bar
 
-    # Create animated sidebar
-    sidebar = create_sidebar(globals)
+    # CHAT PAGE
+    chat_page = create_chat_page(globs)
+    main_layout.addWidget(chat_page)
+    globs.chat_page = chat_page
+
+    # SETTINGS PANEL
+    create_settings_panel(globs)
+
+    # Changelog Panel
+    create_changelog_panel(globs)
+
+    # About Panel
+    create_about_panel(globs)
+
+    # SIDEBAR
+    sidebar = create_sidebar(globs)
     sidebar.setParent(central_widget)
     sidebar.raise_()
-    sidebar.setGeometry(-250, 0, 250, central_widget.height())
+    globs.sidebar = sidebar
 
-    # Add the chat page
-    chat_page = create_chat_page(globals)
-    main_layout.addWidget(chat_page)
+    # Dim Overlay for Panels
+    dim_overlay = QWidget(central_widget)
+    dim_overlay.setParent(central_widget)
+    dim_overlay.setAttribute(Qt.WA_StyledBackground, True)
+    dim_overlay.setStyleSheet("background-color: rgba(0, 0, 0, 120);")
+    dim_overlay.hide()
 
-    # Create the settings panel
-    create_settings_panel(globals)
+    def close_all_panels(event=None):
+        """Closes all panels and the overlay when overlay is clicked."""
+        for attr in ['settings_panel', 'changelog_panel', 'about_panel']:
+            if hasattr(globs, attr):
+                panel = getattr(globs, attr)
+                if panel and panel.isVisible():
+                    panel.hide()
+        # Close sidebar if open
+        if hasattr(globs, 'sidebar_is_open') and globs.sidebar_is_open:
+            toggle_sidebar(globs, globs.sidebar)
+        globs.dim_overlay.hide()
 
-    # Show window
-    globals.window.show()
+    dim_overlay.mousePressEvent = close_all_panels
+    globs.dim_overlay = dim_overlay
+
+    # RESIZE LOGIC
+    RESIZE_MARGIN = 10
+    globs.resize_state = {
+        "active": False,
+        "edge": None,
+        "last_pos": None,
+        "start_geom": None
+    }
+
+    def get_resize_edge_from_global(window, global_pos):
+        geom = window.frameGeometry()
+        x, y = global_pos.x(), global_pos.y()
+
+        left = x <= geom.left() + RESIZE_MARGIN
+        right = x >= geom.right() - RESIZE_MARGIN
+        top = y <= geom.top() + RESIZE_MARGIN
+        bottom = y >= geom.bottom() - RESIZE_MARGIN
+
+        if top and left: return "TL"
+        if top and right: return "TR"
+        if bottom and left: return "BL"
+        if bottom and right: return "BR"
+        if left: return "L"
+        if right: return "R"
+        if top: return "T"
+        if bottom: return "B"
+        return None
+
+    def get_cursor_shape(edge):
+        shapes = {
+            "L": Qt.SizeHorCursor, "R": Qt.SizeHorCursor,
+            "T": Qt.SizeVerCursor, "B": Qt.SizeVerCursor,
+            "TL": Qt.SizeFDiagCursor, "BR": Qt.SizeFDiagCursor,
+            "TR": Qt.SizeBDiagCursor, "BL": Qt.SizeBDiagCursor,
+            None: Qt.ArrowCursor
+        }
+        return shapes.get(edge, Qt.ArrowCursor)
+
+    def handle_window_mouse_event(obj, event):
+        if event.type() == QEvent.MouseMove:
+            global_pos = event.globalPosition().toPoint()
+
+            if globs.resize_state["active"]:
+                if globs.resize_state["last_pos"]:
+                    delta = global_pos - globs.resize_state["last_pos"]
+                    geom = globs.resize_state["start_geom"]
+                    edge = globs.resize_state["edge"]
+
+                    if edge in ["L", "TL", "BL"]:
+                        new_left = geom.left() + delta.x()
+                        if new_left < geom.right() - 200: geom.setLeft(new_left)
+                    if edge in ["R", "TR", "BR"]:
+                        new_right = geom.right() + delta.x()
+                        if new_right > geom.left() + 200: geom.setRight(new_right)
+                    if edge in ["T", "TL", "TR"]:
+                        new_top = geom.top() + delta.y()
+                        if new_top < geom.bottom() - 150: geom.setTop(new_top)
+                    if edge in ["B", "BL", "BR"]:
+                        new_bottom = geom.bottom() + delta.y()
+                        if new_bottom > geom.top() + 150: geom.setBottom(new_bottom)
+
+                    globs.window.setGeometry(geom)
+
+                globs.resize_state["last_pos"] = global_pos
+                return True
+
+            else:
+                edge = get_resize_edge_from_global(globs.window, global_pos)
+                target_shape = get_cursor_shape(edge)
+                current_shape = globs.window.cursor().shape()
+                if current_shape != target_shape:
+                    globs.window.setCursor(target_shape)
+                return False
+
+        elif event.type() == QEvent.MouseButtonPress:
+            if event.button() == Qt.LeftButton:
+                global_pos = event.globalPosition().toPoint()
+                edge = get_resize_edge_from_global(globs.window, global_pos)
+
+                if edge:
+                    globs.resize_state["active"] = True
+                    globs.resize_state["edge"] = edge
+                    globs.resize_state["last_pos"] = global_pos
+                    globs.resize_state["start_geom"] = globs.window.frameGeometry()
+                    return True
+
+        elif event.type() == QEvent.MouseButtonRelease:
+            if event.button() == Qt.LeftButton:
+                if globs.resize_state["active"]:
+                    globs.resize_state["active"] = False
+                    globs.resize_state["edge"] = None
+                    globs.resize_state["last_pos"] = None
+                    globs.resize_state["start_geom"] = None
+                    globs.window.setCursor(Qt.ArrowCursor)
+                    return True
+
+        return False
+
+    globs.window.setMouseTracking(True)
+
+    original_event = globs.window.event
+    def custom_event(event):
+        if handle_window_mouse_event(globs.window, event):
+            return True
+        return original_event(event)
+
+    globs.window.event = custom_event
+
+    # Enable dynamic overlay/panel resize on window resize
+    def update_overlay_geometry():
+        """Updates overlay (settings + changelog + about) when resizing the window."""
+        if hasattr(globs, 'dim_overlay'):
+            globs.dim_overlay.resize(globs.window.width(), globs.window.height() - 35)
+            globs.dim_overlay.move(0, 35)
+
+        for panel_attr in ['settings_panel', 'changelog_panel', 'about_panel']:
+            panel = getattr(globs, panel_attr, None)
+            if panel and panel.isVisible():
+                if panel_attr == 'settings_panel':
+                    panel_w = max(650, int(globs.window.width() * 0.85))
+                    panel_h = max(550, int(globs.window.height() * 0.85))
+                    panel.resize(panel_w, panel_h)
+                else:
+                    # Fixed size for changelog/about
+                    pass
+
+                # Re-center
+                parent_w = globs.window.width()
+                parent_h = globs.window.height()
+                panel_w = panel.width()
+                panel_h = panel.height()
+                x = (parent_w - panel_w) // 2
+                y = max(45, (parent_h - panel_h) // 2)
+                panel.move(x, y)
+
+    original_resize = globs.window.resizeEvent
+    def custom_resize(event):
+        original_resize(event)
+        QTimer.singleShot(0, update_overlay_geometry)
+
+    globs.window.resizeEvent = custom_resize
+
+    # SHOW
+    globs.window.setMinimumSize(750, 650)
+    globs.window.show()
+
+    def open_logs(globs):
+        """Opens the logs folder."""
+        if globs.os_name.startswith("Windows"):
+            logging.debug(f"Opening logs folder on Windows...")
+            os.startfile(load_data_path("cache", "logs"))
+        else:
+            logging.debug(f"Opening logs folder on Linux...")
+            subprocess.run(
+                ['xdg-open', load_data_path("cache", "logs")], check=True)
+
+    def open_config(globs):
+        """Opens the settings folder."""
+        if globs.os_name.startswith("Windows"):
+            logging.debug(f"Opening settings folder on Windows...")
+            os.startfile(load_data_path("config"))
+        else:
+            logging.debug(f"Opening settings folder on Linux...")
+            subprocess.run(
+                ['xdg-open', load_data_path("config")], check=True)
+
+    def open_chats(globs):
+        """Opens the chats folder."""
+        if globs.os_name.startswith("Windows"):
+            logging.debug(f"Opening settings folder on Windows...")
+            os.startfile(load_data_path("config"))
+        else:
+            logging.debug(f"Opening settings folder on Linux...")
+            subprocess.run(
+                ['xdg-open', load_data_path("local", "chats")], check=True)
+
+
+    def report_bug(globs):
+        """Opens the default mail application to report a bug."""
+
+        # Display a messagebox first
+        reply = QMessageBox.question(
+            None,
+            "Report Bug?",
+            f"Would you like to open your default email application for a bug report?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        
+        # Opens up the default email application
+        if reply == QMessageBox.StandardButton.Yes:
+            logging.debug(f"Bug Report button clicked.")
+            to = "bugs@phillipplays.com"
+            subject = "Bug Report for Pearl"
+            body = f"Thank you very much for making a report! " \
+            f"Let me know what problem occurred, the behavior your expected, " \
+            f"and feel free to also include any logs or screenshots that may help! " \
+            f" | Pearl Version: {globs.current_version} | OS: {globs.os_name}"
+            encoded_body = urllib.parse.quote(body)
+            mailto = f"mailto:{to}?subject={subject}&body={encoded_body}"
+            webbrowser.open(mailto)

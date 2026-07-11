@@ -1,59 +1,173 @@
 # src/qt_interface/qt_settings/qt_settings.py
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTabWidget
+from PySide6.QtCore import Qt
+from src.qt_interface.qt_settings.qt_general import create_general_settings_tab
+from src.qt_interface.qt_settings.qt_system import create_system_settings_tab
+from src.qt_interface.qt_settings.qt_appearance import create_appearance_settings_tab
+from src.qt_interface.qt_settings.qt_behavior import create_behavior_settings_tab
+from src.qt_interface.qt_settings.qt_audio import create_audio_settings_tab
+from src.qt_interface.qt_settings.qt_personalization import create_personalization_settings_tab
+from src.qt_interface.qt_settings.qt_tools import create_tools_settings_tab
+from src.utils.qt_save import save_qt_settings
+import logging
 
-def create_settings_panel(globals):
-    """Creates the settings panel that overlays the main content."""
+def create_settings_panel(globs):
+    """Creates the settings overlay panel with tabs."""
 
-    # Main settings container
-    settings_panel = QWidget(globals.window)
-    settings_panel.setFixedSize(600, 500)  # Start with a reasonable size
+    # Main container
+    settings_panel = QWidget(globs.window)
+    settings_panel.setMinimumSize(650, 550)
     settings_panel.setStyleSheet("""
         background-color: rgb(43, 43, 43);
         border-radius: 10px;
     """)
-
-    # Hide it initially
     settings_panel.hide()
 
-    # Layout for the panel
     layout = QVBoxLayout(settings_panel)
     layout.setContentsMargins(20, 20, 20, 20)
     layout.setSpacing(15)
 
-    # Title
+    # === HEADER ===
+    header_layout = QVBoxLayout()
     title = QLabel("Settings")
-    title.setStyleSheet("font-size: 20px; font-weight: bold;")
-    layout.addWidget(title)
+    title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
+    header_layout.addWidget(title)
+    layout.addLayout(header_layout)
 
-    # Placeholder content
-    placeholder = QLabel("Settings content will go here...")
-    layout.addWidget(placeholder)
+    # === TABS ===
+    tabs = QTabWidget()
+    tabs.setStyleSheet("""
+        QTabWidget::pane {
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #2b2b2b;
+        }
+        QTabBar::tab {
+            background-color: #333;
+            color: #aaa;
+            padding: 10px 20px;
+            margin-right: 2px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        QTabBar::tab:selected {
+            background-color: #2b2b2b;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+    """)
 
-    # Close button
-    close_btn = QPushButton("Close")
-    close_btn.clicked.connect(lambda: toggle_settings_panel(globals))
+    # General tab
+    general_tab = create_general_settings_tab(globs)
+    tabs.addTab(general_tab, "General")
+
+    # Appearance tab
+    appearance_tab = create_appearance_settings_tab(globs)
+    tabs.addTab(appearance_tab, "Appearance")
+
+    # Behavior tab
+    behavior_tab = create_behavior_settings_tab(globs)
+    tabs.addTab(behavior_tab, "Behavior")
+
+    # Personalization tab
+    personalization_tab = create_personalization_settings_tab(globs)
+    tabs.addTab(personalization_tab, "Personalization")
+
+    # Tools tab
+    tools_tab = create_tools_settings_tab(globs)
+    tabs.addTab(tools_tab, "Tools")
+
+    # Audio tab
+    audio_tab = create_audio_settings_tab(globs)
+    tabs.addTab(audio_tab, "Audio")
+
+    # System tab
+    system_tab = create_system_settings_tab(globs)
+    tabs.addTab(system_tab, "System")
+
+    layout.addWidget(tabs)
+
+    # === CLOSE BUTTON ===
+    close_btn = QPushButton("Save")
+    close_btn.setStyleSheet("""
+        QPushButton {
+            background-color: #3a3a3a;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #4a4a4a;
+        }
+    """)
+    close_btn.setCursor(Qt.PointingHandCursor)
+
+    def on_close_click():
+        """Save settings before closing the panel."""
+        save_qt_settings(globs)  # Save first
+        toggle_settings_panel(globs)  # Then close
+        
+        # Re-establish proper z-order: sidebar > dim_overlay > main content
+        if hasattr(globs, 'sidebar') and hasattr(globs, 'dim_overlay'):
+            globs.dim_overlay.raise_()
+            globs.sidebar.raise_()  # Sidebar must be ABOVE dim overlay
+        
+        if hasattr(globs, 'dim_overlay'):
+            globs.dim_overlay.show()
+
+    close_btn.clicked.connect(on_close_click)
     layout.addWidget(close_btn)
 
-    # Store reference
-    globals.settings_panel = settings_panel
+    # Store references
+    globs.settings_panel = settings_panel
+    globs.settings_tabs = tabs
 
     return settings_panel
 
-def toggle_settings_panel(globals):
-    """Shows or hides the settings panel."""
+def toggle_settings_panel(globs):
+    """Shows or hides the settings panel with dim overlay."""
     
-    if globals.settings_panel.isVisible():
-        globals.settings_panel.hide()
+    if not hasattr(globs, 'settings_panel'):
+        logging.error("Settings panel not created yet.")
+        return
+    
+    panel = globs.settings_panel
+    
+    if panel.isVisible():
+        # Closing settings
+        panel.hide()
     else:
-        # Calculate center position
-        parent_w = globals.window.width()
-        parent_h = globals.window.height()
-        panel_w = globals.settings_panel.width()
-        panel_h = globals.settings_panel.height()
+        # Opening settings
         
-        x = (parent_w - panel_w) // 2
-        y = (parent_h - panel_h) // 2
+        # Close any other active panels first
+        for attr in ['changelog_panel', 'about_panel', 'sidebar']:
+            if attr == 'sidebar':
+                if hasattr(globs, 'sidebar_is_open') and globs.sidebar_is_open:
+                    # Don't close sidebar - just leave it open
+                    pass
+            else:
+                p = getattr(globs, attr, None)
+                if p and p.isVisible():
+                    p.hide()
         
-        # Move and show
-        globals.settings_panel.move(x, y)
-        globals.settings_panel.show()
+        # Ensure overlay shows
+        if hasattr(globs, 'dim_overlay'):
+            globs.dim_overlay.resize(globs.window.width(), globs.window.height() - 35)
+            globs.dim_overlay.move(0, 35)
+            globs.dim_overlay.show()
+            globs.dim_overlay.raise_()
+        
+        # Resize and center settings panel
+        panel_w = max(650, int(globs.window.width() * 0.85))
+        panel_h = max(550, int(globs.window.height() * 0.85))
+        panel.resize(panel_w, panel_h)
+        
+        x = (globs.window.width() - panel_w) // 2
+        y = max(45, (globs.window.height() - panel_h) // 2)
+        panel.move(x, y)
+        
+        panel.raise_()
+        panel.show()
+    
+    logging.debug(f"Settings panel visibility: {panel.isVisible()}")

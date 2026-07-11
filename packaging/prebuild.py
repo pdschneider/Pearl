@@ -1,6 +1,6 @@
 # packaging/version_gen.py
 # Auto-generates version.txt from version.py for PyInstaller Windows builds
-# Also updates Inno Script
+# Also updates Inno Script and Debian files
 
 import re
 import sys
@@ -15,7 +15,7 @@ from version import __version__, __author__, __title__, __description__
 
 # Parse version string into tuple (major, minor, patch, build)
 try:
-    clean_version = __version__.replace('-beta', '').replace('-rc', '')
+    clean_version = __version__.replace('-beta', '').replace('-rc', '').replace('-alpha', '')
     major, minor, patch = map(int, clean_version.split('.'))
     build = 0
 except Exception:
@@ -44,12 +44,12 @@ VSVersionInfo(
           StringStruct('CompanyName', '{__author__}'),
           StringStruct('FileDescription', '{__description__}'),
           StringStruct('FileVersion', '{__version__}'),
-          StringStruct('InternalName', 'Pearl'),
+          StringStruct('InternalName', '{__title__}'),
           StringStruct('LegalCopyright', 'Copyright © 2026 {__author__}. Apache 2.0.'),
-          StringStruct('OriginalFilename', 'Pearl.exe'),
+          StringStruct('OriginalFilename', '{__title__}.exe'),
           StringStruct('ProductName', '{__title__}'),
           StringStruct('ProductVersion', '{__version__}'),
-          StringStruct('Comments', 'Personal Everything Assistant Running Locally'),
+          StringStruct('Comments', '{__description__}'),
         ])
       ]),
     VarFileInfo([VarStruct('Translation', [0x409, 1200])])
@@ -101,7 +101,7 @@ if control_file_path.exists():
 
     # Replace the Version line specifically
     # This regex matches "Version: " followed by anything until the end of the line
-    deb_version = __version__.replace('-beta', '~beta').replace('-rc', '~rc')
+    deb_version = __version__.replace('-beta', '~beta').replace('-rc', '~rc').replace('-alpha', '~alpha')
 
     control_content = re.sub(
         r'^Version: .*$',
@@ -125,3 +125,87 @@ with open(version_txt_path, 'w', encoding='utf-8') as f:
 
 print(f"✅ version.txt successfully generated with version {__version__}")
 print(f"   Location: {version_txt_path}")
+
+def sync_spec_files(project_root):
+    """Read requirements.txt and inject hidden imports + PySide6 hooks into spec files."""
+
+    req_path = project_root / 'packaging' / 'requirements.txt'
+    if not req_path.exists():
+        print("⚠️  requirements.txt not found")
+        return
+
+    req_text = req_path.read_text(encoding='utf-8').lower()
+
+    # Extract package names without version specifiers
+    req_packages = set()
+    for line in req_text.splitlines():
+        line = line.strip()
+        if line and not line.startswith('#'):
+            pkg_name = re.split(r'[=<>!~]', line)[0]
+            req_packages.add(pkg_name)
+
+    # Maps requirements.txt package name to hidden import names
+    HIDDEN_IMPORT_MAP = {
+        'packaging': ['packaging'],
+        'pillow': ['PIL._tkinter_finder', 'PIL'],
+        'customtkinter': ['tkinter', '_tkinter'],
+        'pygame': ['pygame'],
+        'requests': ['requests'],
+        'pdfplumber': ['pdfplumber'],
+        'pytesseract': ['pytesseract'],
+        'openpyxl': ['openpyxl'],
+        'watchdog': ['watchdog'],
+        'msoffcrypto-tool': ['msoffcrypto'],
+        'pdf2image': ['pdf2image'],
+    }
+
+    # Build the list of hidden imports based on what's installed
+    imports_to_add = []
+    for req_pkg, hidden_imports in HIDDEN_IMPORT_MAP.items():
+        if req_pkg in req_packages:
+            imports_to_add.extend(hidden_imports)
+
+    # Handle PySide6 hooks separately
+    has_pyside = 'pyside6' in req_packages
+    if has_pyside:
+        imports_to_add.extend(['PySide6', 'shiboken6'])
+
+    pyside_hooks = (
+        "from PyInstaller.utils.hooks import collect_all\n"
+        "ret_pyside = collect_all('PySide6')\n"
+        "ret_shiboken = collect_all('shiboken6')"
+    ) if has_pyside else ""
+
+    # Find all spec files in packaging/
+    spec_files = list((project_root / 'packaging').glob('*.spec'))
+
+    for spec_path in spec_files:
+        content = spec_path.read_text(encoding='utf-8')
+
+        # Replace everything between the PYSIDE HOOKS markers
+        content = re.sub(
+            r'# --- SPAWN PYSIDE HOOKS START ---\n.*?# --- SPAWN PYSIDE HOOKS END ---',
+            f'# --- SPAWN PYSIDE HOOKS START ---\n{pyside_hooks}\n# --- SPAWN PYSIDE HOOKS END ---',
+            content,
+            flags=re.DOTALL
+        )
+
+        # Replace everything between the IMPORTS markers
+        if imports_to_add:
+            imports_str = '\n'.join(
+                f"        '{imp}'," for imp in sorted(set(imports_to_add))
+            )
+        else:
+            imports_str = ""
+
+        content = re.sub(
+            r'# --- SPAWN IMPORTS START ---\n.*?# --- SPAWN IMPORTS END ---',
+            f'# --- SPAWN IMPORTS START ---\n{imports_str}\n        # --- SPAWN IMPORTS END ---',
+            content,
+            flags=re.DOTALL
+        )
+
+        spec_path.write_text(content, encoding='utf-8')
+        print(f"✅ Synced {spec_path.name} ({len(imports_to_add)} hidden imports)")
+
+sync_spec_files(project_root)

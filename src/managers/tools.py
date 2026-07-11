@@ -2,6 +2,7 @@
 import secrets
 import string
 
+
 def generate_password(length=16):
     """This function generates a unique password using secrets."""
     possible_characters = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
