@@ -517,14 +517,16 @@ def startup(globs):
         
         # Check if .deb
         elif (script_path_2.startswith("/usr/bin/pearl-gui") or
-            script_path_2.startswith("/usr/local/bin/pearl-gui")):
+            script_path_2.startswith("/usr/local/bin/pearl-gui")
+            ) or (script_path.startswith("/usr/bin/pearl-gui") or
+                    script_path.startswith("/usr/local/bin/pearl-gui")):
             globs.app_type = "Deb"
             globs.app_path = script_path
             logging.debug(f"Path to executable (.deb/system): {os.path.realpath(sys.executable)} | Path to script: {script_path_2}")
             logging.debug(f"App Type: {globs.app_type}")
 
         # Check if running as an .exe
-        elif platform.platform().startswith("Windows") and ('onefile' in sys.executable.lower() or '_MEIPASS' in sys.executable):
+        elif platform.platform().startswith("Windows") and (getattr(sys, 'frozen', False) or '__compiled__' in dir(sys.modules.get('__main__', {})) or 'onefile' in sys.executable.lower() or '_MEIPASS' in sys.executable):
             globs.app_type = "Exe"
             globs.app_path = script_path
             logging.debug(f"Path to executable (frozen / Inno Setup): {sys.executable} | Path to Script: {script_path}")

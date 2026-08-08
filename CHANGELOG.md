@@ -2,7 +2,7 @@
 
 All notable changes to **Pearl** will be located in this file.
 
-## [0.4.0-beta] - 2026-08-06
+## [0.4.0] - 2026-08-07
 
 This update allows users to choose between legacy mode and the new Qt-based GUI framework! It also bumps the minor version due to a combination of the new UI, image upload support, and tool call support from the last release!
 
@@ -15,12 +15,14 @@ This update allows users to choose between legacy mode and the new Qt-based GUI 
 - Settings now use lowercase folder names
 - Upgraded from Python 3.12.3 to Python 3.13.15 on Linux
 - Various Qt-GUI UI improvements
-- Temp files now cache, speeding up re-launches on Linux
+- Temp files now cache on Linux, speeding up re-launches
 - Windows users upgrading from previous versions no longer have to go through as many pages of the installation wizard each upgrade
+- Window resize logic and cursor detection is now handled much better
+- Updated Tesseract to v5.5.3
 - Updated dependencies
 
 ### Fixed
-- App type is now correctly discovered
+- App type is now correctly discovered, fixing restart and update issues
 - Changed internal 'globals' to 'globs' to fix namespace issues
 - Fixed AppImage crash issue due to improper binary name
 - During Windows installs, application now closes whether or not it responds to graceful shutdown commands - correcting a rare error during the installation process
