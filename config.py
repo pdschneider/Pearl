@@ -96,7 +96,7 @@ class Globs:
         self.file_button = None
 
         # UI variables
-        self.root = ctk.CTk()
+        self.root = ctk.CTk(className="pearl-gui")
         self.app_title = "Pearl at your service!"
         self.startup_root = None
         self.ui_elements = None
@@ -255,6 +255,7 @@ class Globs:
         self.title_gen_model = settings.get("title_gen_model", "llama3.2:3b")
         self.dynamic_window_size = settings.get("dynamic_window_size", True)
         self.legacy_mode = settings.get("legacy_mode", True)
+        self.previous_version = settings.get("previous_version", "0.1.0")
 
 
 def apply_theme(name: str) -> None:

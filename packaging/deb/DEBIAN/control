@@ -1,5 +1,5 @@
 Package: pearl-gui
-Version: 0.4.0
+Version: 0.4.1~beta
 Architecture: amd64
 Depends: libxcb-cursor0
 Maintainer: Phillip Schneider <bugs@phillipplays.com>

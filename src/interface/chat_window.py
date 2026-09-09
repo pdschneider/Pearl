@@ -1,12 +1,9 @@
-# Interface/chat_window.py
+# src/interface/chat_window.py
 import tkinter as tk
 import customtkinter as ctk
-from customtkinter import CTkImage
-from PIL import Image
 from CTkToolTip import CTkToolTip
 from src.managers.chat_manager import send_message
 from src.managers.attachments import attach_file
-from src.utils.load import load_data_path
 import src.utils.fonts as fonts
 import logging
 import time

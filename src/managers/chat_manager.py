@@ -1,4 +1,4 @@
-# Managers/chat_manager.py
+# src/managers/chat_manager.py
 import threading
 import queue
 import logging
@@ -13,7 +13,7 @@ from src.utils.context import detect_context
 from src.utils.toast import show_toast
 from src.utils.hardware import cpu_temp_info
 from datetime import datetime
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QTimer
 
 
 # Chat Functions

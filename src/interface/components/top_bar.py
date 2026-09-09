@@ -67,7 +67,7 @@ def create_top_bar(globs):
         if not globs.legacy_mode:
             # Display a messagebox first
             reply = QMessageBox.question(
-                None,
+                globs.window,
                 "Report Bug?",
                 f"Would you like to open your default email application for a bug report?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,

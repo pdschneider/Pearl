@@ -24,5 +24,6 @@
     "enable_context": true,
     "generate_titles": true,
     "dynamic_window_size": true,
-    "legacy_mode": true
+    "legacy_mode": true,
+    "previous_version": "0.1.0"
 }

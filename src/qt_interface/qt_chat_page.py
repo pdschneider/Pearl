@@ -3,15 +3,40 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QTextEdit, QPushButton, QLabel,
     QScrollArea, QFrame, QSizePolicy,
-    QApplication)
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QCursor, QFont, QFontMetrics
-import logging
+    QApplication, QTextBrowser)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QTextOption
 from src.managers.chat_manager import send_message
-import src.utils.fonts as fonts
+from src.qt_interface.qt_styling import dark
+import math
 
 
-def create_chat_page(globals):
+class AutoHeightBrowser(QTextBrowser):
+    """QTextBrowser that auto-resizes height to fit content."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setOpenExternalLinks(True)
+        self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
+        self.document().setDocumentMargin(0)
+        self.textChanged.connect(self._update_height)
+
+    def _update_height(self):
+        doc = self.document()
+        max_width = 600
+        doc.setTextWidth(max_width)
+        natural_width = math.ceil(doc.idealWidth()) + 2
+        target_width = min(natural_width, max_width)
+        doc.setTextWidth(target_width)
+        height = int(doc.size().height())
+        self.setFixedWidth(target_width)
+        self.setFixedHeight(height + 2)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_height()
+
+
+def create_chat_page(globs):
     """Creates the main chat page with chat area + input at the bottom."""
     
     # Main container for the chat page
@@ -37,11 +62,12 @@ def create_chat_page(globals):
     main_layout.addWidget(scroll_area, stretch=1)
 
     # === INPUT AREA ===
-    input_widget = create_input_area(globals)
+    input_widget = create_input_area(globs)
     main_layout.addWidget(input_widget)
 
-    # Store references on globals so we can access them later from other functions
-    globals.chat_area_layout = chat_layout
+    # Store references on globs so we can access them later from other functions
+    globs.chat_area_layout = chat_layout
+    globs.chat_content = chat_content
 
     return chat_page
 
@@ -137,37 +163,13 @@ def create_input_area(globs):
     globs.input_box.setMinimumHeight(50)
     globs.input_box.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
     globs.input_box.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    globs.input_box.setStyleSheet(
-        """
-        QTextEdit {
-            background-color: transparent;
-            border: none;
-            color: white;
-            padding: 6px;
-        }
-        QTextEdit:focus {
-            outline: none;
-        }
-        """
-    )
+    globs.input_box.setStyleSheet(dark.input_box)
     top_layout.addWidget(globs.input_box, stretch=1)
 
     # Send button
     globs.send_button = QPushButton("➤")
     globs.send_button.setFixedSize(32, 32)
-    globs.send_button.setStyleSheet(
-        """
-        QPushButton {
-            background-color: #4a4a4a;
-            border: none;
-            border-radius: 16px;
-            color: white;
-        }
-        QPushButton:hover {
-            background-color: #5a5a5a;
-        }
-        """
-    )
+    globs.send_button.setStyleSheet(dark.send_button)
     globs.send_button.clicked.connect(lambda: handle_send_click(globs))
 
     # Hide/show button based on input content
@@ -179,7 +181,7 @@ def create_input_area(globs):
 
     container_layout.addWidget(top_row)
 
-    # Bottom row: Toolbar (blended-in, invisible for now)
+    # Bottom row: Toolbar
     toolbar_row = QWidget()
     toolbar_row.setFixedHeight(28)  # Small toolbar height
     toolbar_layout = QHBoxLayout(toolbar_row)
@@ -202,33 +204,36 @@ def create_input_area(globs):
     return input_widget
 
 
-def add_bubble(globals, role, text, model=None):
+def add_bubble(globs, role, text, model=None):
     """Creates a message bubble in the chat area."""
     # Create a frame for the bubble
     bubble_frame = QFrame()
+    bubble_frame.setStyleSheet("background-color: #3a3a3a; border-radius: 8px;")
     
     # Layout for the bubble
     bubble_layout = QVBoxLayout(bubble_frame)
-    bubble_layout.setContentsMargins(5, 5, 5, 5)
+    bubble_layout.setContentsMargins(10, 10, 10, 10)
     
     # Create the message label
-    message_label = QLabel(text)
-    message_label.setWordWrap(True)
-    message_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+    message_label = AutoHeightBrowser()
+    message_label.setPlainText(text)
     message_label.setFont(QFont("Ubuntu", 14))
+    message_label.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    message_label.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    message_label.setReadOnly(True)
     
     # Style based on role
     if role == "user":
-        message_label.setAlignment(Qt.AlignRight)
-    else:
         message_label.setAlignment(Qt.AlignLeft)
     
     bubble_layout.addWidget(message_label)
+    bubble_frame.adjustSize()
     
     # Add to chat layout
-    globals.chat_area_layout.insertWidget(
-        globals.chat_area_layout.count() - 1,  # Insert before the stretch
-        bubble_frame)
+    globs.chat_area_layout.insertWidget(
+        globs.chat_area_layout.count() - 1,
+        bubble_frame,
+        alignment=Qt.AlignRight if role == "user" else Qt.AlignLeft)
     
     return message_label
 

@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QPushButton, QScrollArea)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor
+from src.qt_interface.qt_styling import dark
 import webbrowser
 
 
@@ -19,7 +20,7 @@ def create_about_panel(globs):
     layout.setContentsMargins(20, 20, 20, 20)
     layout.setSpacing(15)
 
-    # === HEADER ===
+    # Header
     header_layout = QHBoxLayout()
     title = QLabel("About")
     title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
@@ -34,14 +35,10 @@ def create_about_panel(globs):
     header_layout.addWidget(close_header_btn)
     layout.addLayout(header_layout)
 
-    # === SCROLLABLE CONTENT ===
+    # Scroll Area
     scroll_area = QScrollArea()
     scroll_area.setWidgetResizable(True)
-    scroll_area.setStyleSheet("""
-        QScrollArea { border: none; background-color: transparent; }
-        QScrollBar:vertical { background-color: #333; width: 8px; border-radius: 4px; }
-        QScrollBar::handle:vertical { background-color: #4a4a4a; min-height: 50px; border-radius: 4px; }
-    """)
+    scroll_area.setStyleSheet(dark.scroll_area)
 
     content_widget = QWidget()
     content_layout = QVBoxLayout(content_widget)
@@ -100,12 +97,9 @@ Have fun!
     scroll_area.setWidget(content_widget)
     layout.addWidget(scroll_area, stretch=1)
 
-    # === CLOSE BUTTON ===
+    # Close Button
     close_btn = QPushButton("Close")
-    close_btn.setStyleSheet("""
-        QPushButton { background-color: #3a3a3a; color: white; padding: 10px; border-radius: 4px; font-weight: bold; }
-        QPushButton:hover { background-color: #4a4a4a; }
-    """)
+    close_btn.setStyleSheet(dark.close_button)
     close_btn.setCursor(QCursor(Qt.PointingHandCursor))
     close_btn.clicked.connect(lambda: toggle_about_panel(globs))
     layout.addWidget(close_btn)

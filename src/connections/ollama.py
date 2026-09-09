@@ -92,7 +92,7 @@ def pull_model(globs):
         if not globs.legacy_mode:
             logging.warning(f"Ollama must be installed before downloading a model.")
             download = QMessageBox.question(
-                None,
+                globs.window,
                 f"Ollama Not Installed",
                 f"Ollama does not appear to be installed. Would you like to install Ollama and the default model (ministral-3)?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -122,7 +122,7 @@ def pull_model(globs):
         logging.warning(f"Ollama must be installed before downloading a model.")
         if not globs.legacy_mode:
             download = QMessageBox.question(
-                None,
+                globs.window,
                 f"Model Not Installed",
                 f"The selected model is not installed. Would you like to install the default model (ministral-3)?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -215,11 +215,11 @@ def pull_model(globs):
             logging.warning(f"Only Windows and Linux are supported for model downloads.")
             if not globs.legacy_mode:
                 QMessageBox.warning(
-                        None,
-                        "OS Not Supported",
-                        f"Only Windows and Linux are supported for in-app model downloads. Install models on Ollama.com instead.",
-                        QMessageBox.StandardButton.Ok,
-                        QMessageBox.StandardButton.Ok)
+                    globs.window,
+                    "OS Not Supported",
+                    f"Only Windows and Linux are supported for in-app model downloads. Install models on Ollama.com instead.",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
             else:
                 messagebox.showwarning(
                     parent=globs.root,
@@ -233,11 +233,11 @@ def ollama_installation(globs):
     if test:
         logging.warning(f"Ollama is already active and running. No need to install.")
         QMessageBox.warning(
-                    None,
-                    "Ollama Already Installed",
-                    f"Ollama is already active and running. No need to install!",
-                    QMessageBox.StandardButton.Ok,
-                    QMessageBox.StandardButton.Ok)
+            globs.window,
+            "Ollama Already Installed",
+            f"Ollama is already active and running. No need to install!",
+            QMessageBox.StandardButton.Ok,
+            QMessageBox.StandardButton.Ok)
         return
 
     # Check disk space to ensure at least 10GB
@@ -301,11 +301,11 @@ def ollama_installation(globs):
         logging.warning(f"Only Windows and Linux are supported for interactive install.")
         if not globs.legacy_mode:
             QMessageBox.warning(
-                        None,
-                        "OS Not Supported",
-                        f"Only Windows and Linux are supported for interactive install. Use the web installer instead.",
-                        QMessageBox.StandardButton.Ok,
-                        QMessageBox.StandardButton.Ok)
+                globs.window,
+                "OS Not Supported",
+                f"Only Windows and Linux are supported for interactive install. Use the web installer instead.",
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.Ok)
         else:
             messagebox.showwarning(
                 parent=globs.root,
@@ -533,22 +533,24 @@ def chat_stream(globs, model, messages, out_q, cancel_event):
         globs.thinking = False
 
     # Define available tools
-    globs.available_tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "generate_password",
-            "description": "Generates a random secure password.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "length": {"type": "integer", "description": "Length of the password in characters."}
-                },
-                "required": []
+    globs.available_tools = []
+    if "pearl" in globs.active_model.lower() or "ministral" in globs.active_model.lower():
+        globs.available_tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "generate_password",
+                "description": "Generates a random secure password.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "length": {"type": "integer", "description": "Length of the password in characters."}
+                    },
+                    "required": []
+                }
             }
         }
-    }
-    ]
+        ]
 
     # Generate payload
     url = f"{globs.ollama_chat_path}api/chat"
@@ -976,7 +978,7 @@ def ram_check(globs, model):
         # Display a messagebox letting the user know they need more RAM
         if not globs.legacy_mode:
             QMessageBox.warning(
-                None,
+                globs.window,
                 "Not Enough RAM",
                 f"Not enough RAM for this model - free up space to load.",
                 QMessageBox.StandardButton.Ok,

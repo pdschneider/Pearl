@@ -86,11 +86,10 @@ def docker_installation(globs):
         logging.warning(f"Docker is already active and running. No need to install.")
         if not globs.legacy_mode:
             QMessageBox.warning(
-                        None,
-                        "Docker Already Installed",
-                        f"Docker is already active and running. No need to install!",
-                        QMessageBox.StandardButton.Ok,
-                        QMessageBox.StandardButton.Ok)
+                globs.window,
+                "Docker Already Installed",
+                f"Docker is already active and running. No need to install!",
+                QMessageBox.StandardButton.Ok)
             return
         else:
             messagebox.showwarning(
@@ -148,11 +147,11 @@ def docker_installation(globs):
             logging.warning(f"Only Linux and Windows are supported for Docker interactive install.")
             if not globs.legacy_mode:
                 QMessageBox.warning(
-                            None,
-                            "OS Not Supported",
-                            f"Only Linux and Windows are supported for interactive install of Docker. Use the web installer instead.",
-                            QMessageBox.StandardButton.Ok,
-                            QMessageBox.StandardButton.Ok)
+                    globs.window,
+                    "OS Not Supported",
+                    f"Only Linux and Windows are supported for interactive install of Docker. Use the web installer instead.",
+                    QMessageBox.StandardButton.Ok,
+                    QMessageBox.StandardButton.Ok)
             else:
                 messagebox.showwarning(
                     parent=globs.root,

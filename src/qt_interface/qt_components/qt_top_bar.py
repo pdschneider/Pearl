@@ -1,7 +1,6 @@
 # src/qt_interface/qt_components/qt_top_bar.py
-from PySide6.QtWidgets import (QHBoxLayout, QLabel,
-                               QPushButton, QWidget,
-                               QMessageBox)
+from PySide6.QtWidgets import (QHBoxLayout,
+                               QPushButton, QWidget)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor
 import logging

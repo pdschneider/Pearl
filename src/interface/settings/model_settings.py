@@ -42,7 +42,7 @@ def create_models_tab(globs, models_frame):
                     f"Cannot load models with less than 1GB of available RAM.")
                 # Display a messagebox letting the user know they need more RAM
                 QMessageBox.warning(
-                    None,
+                    globs.window,
                     "Not Enough RAM",
                     f"You must have at least 1GB of available RAM to load models.",
                     QMessageBox.StandardButton.Ok,
@@ -77,7 +77,7 @@ def create_models_tab(globs, models_frame):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 QMessageBox.warning(
-                    None,
+                    globs.window,
                     "Not Enough RAM",
                     f"You must have more than 1GB of available RAM to load models.",
                     QMessageBox.StandardButton.Ok,
@@ -118,7 +118,7 @@ def create_models_tab(globs, models_frame):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 QMessageBox.warning(
-                    None,
+                    globs.window,
                     "Not Enough RAM",
                     f"You must have more than 1GB of available RAM to load models.",
                     QMessageBox.StandardButton.Ok,
@@ -159,7 +159,7 @@ def create_models_tab(globs, models_frame):
                 logging.warning(
                     f"Cannot load models with less than 1GB of available RAM.")
                 QMessageBox.warning(
-                    None,
+                    globs.window,
                     "Not Enough RAM",
                     f"You must have more than 1GB of available RAM to load models.",
                     QMessageBox.StandardButton.Ok,

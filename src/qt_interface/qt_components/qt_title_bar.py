@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (QWidget, QHBoxLayout,
                                QMenu, QStyle)
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QAction
+from src.qt_interface.qt_styling import dark
 
 
 class TitleBar(QWidget):
@@ -29,37 +30,7 @@ class TitleBar(QWidget):
         # --- LEFT: Menu Bar ---
         self.menu_bar = QMenuBar(self)
         self.menu_bar.setNativeMenuBar(False) # Force custom menu bar on macOS too
-        self.menu_bar.setStyleSheet("""
-            QMenuBar {
-                background-color: transparent;
-                border: none;
-                color: #e0e0e0;
-                font-size: 13px;
-            }
-            QMenuBar::item {
-                padding: 6px 12px;
-                border-radius: 4px;
-                color: #cccccc;
-            }
-            QMenuBar::item:selected {
-                background-color: #333333;
-                color: #ffffff;
-            }
-            QMenu {
-                background-color: #252525;
-                border: 1px solid #333333;
-                color: #e0e0e0;
-                padding: 5px;
-            }
-            QMenu::item {
-                padding: 8px 20px;
-                border-radius: 4px;
-            }
-            QMenu::item:selected {
-                background-color: #2ecc71;
-                color: #ffffff;
-            }
-        """)
+        self.menu_bar.setStyleSheet(dark.menu_bar)
         layout.addWidget(self.menu_bar)
 
         layout.addStretch()
@@ -99,22 +70,7 @@ class TitleBar(QWidget):
     def contextMenuEvent(self, event):
         """Show context menu on right-click."""
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: #2d2d2d;
-                color: white;
-                border: 1px solid #444;
-                padding: 4px;
-            }
-            QMenu::item {
-                padding: 6px 30px 6px 8px;
-                min-width: 120px;
-                margin-left: 4px;
-            }
-            QMenu::item:selected {
-                background-color: #444;
-            }
-        """)
+        menu.setStyleSheet(dark.menu)
         
         style = self.style()
         

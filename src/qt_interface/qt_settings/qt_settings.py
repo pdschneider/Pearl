@@ -8,6 +8,7 @@ from src.qt_interface.qt_settings.qt_behavior import create_behavior_settings_ta
 from src.qt_interface.qt_settings.qt_audio import create_audio_settings_tab
 from src.qt_interface.qt_settings.qt_personalization import create_personalization_settings_tab
 from src.qt_interface.qt_settings.qt_tools import create_tools_settings_tab
+from src.qt_interface.qt_styling import dark
 from src.utils.qt_save import save_qt_settings
 import logging
 
@@ -27,35 +28,16 @@ def create_settings_panel(globs):
     layout.setContentsMargins(20, 20, 20, 20)
     layout.setSpacing(15)
 
-    # === HEADER ===
+    # Header
     header_layout = QVBoxLayout()
     title = QLabel("Settings")
     title.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
     header_layout.addWidget(title)
     layout.addLayout(header_layout)
 
-    # === TABS ===
+    # Tabs
     tabs = QTabWidget()
-    tabs.setStyleSheet("""
-        QTabWidget::pane {
-            border: 1px solid #444;
-            border-radius: 5px;
-            background-color: #2b2b2b;
-        }
-        QTabBar::tab {
-            background-color: #333;
-            color: #aaa;
-            padding: 10px 20px;
-            margin-right: 2px;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-        }
-        QTabBar::tab:selected {
-            background-color: #2b2b2b;
-            color: #2ecc71;
-            font-weight: bold;
-        }
-    """)
+    tabs.setStyleSheet(dark.tabs)
 
     # General tab
     general_tab = create_general_settings_tab(globs)
@@ -87,20 +69,9 @@ def create_settings_panel(globs):
 
     layout.addWidget(tabs)
 
-    # === CLOSE BUTTON ===
+    # Close Button
     close_btn = QPushButton("Save")
-    close_btn.setStyleSheet("""
-        QPushButton {
-            background-color: #3a3a3a;
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        QPushButton:hover {
-            background-color: #4a4a4a;
-        }
-    """)
+    close_btn.setStyleSheet(dark.close_button)
     close_btn.setCursor(Qt.PointingHandCursor)
 
     def on_close_click():
@@ -124,6 +95,7 @@ def create_settings_panel(globs):
     globs.settings_tabs = tabs
 
     return settings_panel
+
 
 def toggle_settings_panel(globs):
     """Shows or hides the settings panel with dim overlay."""

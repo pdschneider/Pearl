@@ -31,6 +31,7 @@ def save_qt_settings(globs):
     current_settings["dynamic_window_size"] = new_window_size
     current_settings["legacy_mode"] = new_legacy_mode
     current_settings["logging_level"] = new_logging_level
+    current_settings["previous_version"] = globs.current_version
 
     # Save to JSON file
     try:

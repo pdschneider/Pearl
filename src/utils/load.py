@@ -74,6 +74,7 @@ def load_data_path(direct=None, filename=None, default=False):
                      "assets/tag.png",
                      "assets/add-1.png",
                      "assets/add-2.png",
+                     "assets/window-size.png",
                      "themes/cosmic_sky.json",
                      "themes/pastel_green.json",
                      "themes/blazing_red.json",

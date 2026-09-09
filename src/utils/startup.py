@@ -188,6 +188,11 @@ def startup(globs):
                 changed = True
                 logging.info(
                     f"Added missing or nonconforming 'legacy_mode' key to settings.json")
+            if ("previous_version" not in data) or not isinstance(data["previous_version"], str):
+                data["previous_version"] = "0.1.0"
+                changed = True
+                logging.info(
+                    f"Added missing or nonconforming 'previous_version' key to settings.json")
 
             # Write to file
             if changed:
@@ -514,12 +519,14 @@ def startup(globs):
             globs.app_path = os.environ['APPIMAGE']
             logging.debug(f"Path to executable (AppImage): {globs.app_path}")
             logging.debug(f"App Type: {globs.app_type}")
-        
+
         # Check if .deb
         elif (script_path_2.startswith("/usr/bin/pearl-gui") or
-            script_path_2.startswith("/usr/local/bin/pearl-gui")
+            script_path_2.startswith("/usr/local/bin/pearl-gui") or
+            script_path_2.startswith("/usr/lib/pearl-gui")
             ) or (script_path.startswith("/usr/bin/pearl-gui") or
-                    script_path.startswith("/usr/local/bin/pearl-gui")):
+                    script_path.startswith("/usr/local/bin/pearl-gui") or
+                    script_path.startswith("/usr/lib/pearl-gui")):
             globs.app_type = "Deb"
             globs.app_path = script_path
             logging.debug(f"Path to executable (.deb/system): {os.path.realpath(sys.executable)} | Path to script: {script_path_2}")

@@ -3,7 +3,7 @@
 ; Non-commercial use only
 
 #define MyAppName "Pearl"
-#define MyAppVersion "0.4.0"
+#define MyAppVersion "0.4.1-beta"
 #define MyAppPublisher "Phillip Schneider"
 #define MyAppURL "https://github.com/pdschneider/Pearl"
 #define MyAppExeName "Pearl.exe"
@@ -40,7 +40,7 @@ ArchitecturesAllowed=x64compatible
 ; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
-LicenseFile=..\LICENSE.txt
+LicenseFile=..\docs\LICENSE.txt
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
@@ -57,7 +57,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\main.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -84,7 +84,7 @@ begin
   if PreviousInstallationExists() then
   begin
     case PageID of
-      wpWelcome, wpLicense, wpReady:
+      wpWelcome, wpLicense, wpReady, wpSelectTasks:
         Result := True;
     end;
   end;

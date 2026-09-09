@@ -89,11 +89,11 @@ def install_kokoro(globs):
         logging.warning(f"Kokoro is already up and running - no need to install!")
         if not globs.legacy_mode:
             QMessageBox.warning(
-                        None,
-                        "Kokoro Already Installed",
-                        f"Kokoro is already active and running. No need to install!",
-                        QMessageBox.StandardButton.Ok,
-                        QMessageBox.StandardButton.Ok)
+                globs.window,
+                "Kokoro Already Installed",
+                f"Kokoro is already active and running. No need to install!",
+                QMessageBox.StandardButton.Ok,
+                QMessageBox.StandardButton.Ok)
             return
         else:
             messagebox.showwarning(

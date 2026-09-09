@@ -34,3 +34,6 @@ linux.ps1
 .Diricon
 notes/
 bin/
+
+# Miscellaneous
+nuitka-crash-report.xml

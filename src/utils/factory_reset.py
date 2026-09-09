@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QMessageBox
 from src.utils.load import load_data_path
 
 
-def factory_reset_config(globals, error=None):
+def factory_reset_config(globs, error=None):
     """Deletes the entire configuration folder for Pearl."""
     # Create a messagebox
     msg = QMessageBox()
@@ -43,7 +43,7 @@ If this issue persists, send a report to bugs@phillipplays.com.""")
 def total_factory_reset(globs):
     """Completely wipes all Pearl-related data."""
     answer = QMessageBox.question(
-        None,
+        globs.window,
         "Reset Pearl?",
 """Danger - This will reset all of your settings, chats, and logs.
 
@@ -60,7 +60,7 @@ Do you wish to completely wipe all Pearl-related data?""",
 
             # Show success box
             QMessageBox.information(
-                None,
+                globs.window,
                 "Reset Successful!",
                 "Successfully deleted all Pearl-related data!",
                 QMessageBox.StandardButton.Ok,
@@ -70,7 +70,7 @@ Do you wish to completely wipe all Pearl-related data?""",
         except Exception as e:
             logging.error(f"Unable to perform reset due to: {e}")
             QMessageBox.warning(
-                None,
+                globs.window,
                 "Reset Failed",
                 f"Unable to perform reset due to: {e}",
                 QMessageBox.StandardButton.Ok,

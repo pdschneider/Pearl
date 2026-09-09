@@ -266,7 +266,7 @@ def create_general_settings_tab(globs, general_frame):
         logging.debug(f"Attempting to delete chats...")
         if not globs.legacy_mode:
             reply = QMessageBox.question(
-                None,
+                globs.window,
                 "Delete Chats",
                 f"Are you sure you would like to delete all conversations?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -390,7 +390,7 @@ def create_general_settings_tab(globs, general_frame):
         if prompt_restart:
             if not globs.legacy_mode:
                 reply = QMessageBox.question(
-                    None,
+                    globs.window,
                     "Restart Pearl?",
                     f"Would you like to restart Pearl to apply all changes?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,

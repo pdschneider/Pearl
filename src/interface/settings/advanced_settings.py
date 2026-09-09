@@ -246,7 +246,7 @@ def create_advanced_tab(globs, advanced_frame):
         if prompt_restart:
             if not globs.legacy_mode:
                 reply = QMessageBox.question(
-                    None,
+                    globs.window,
                     "Restart Pearl?",
                     f"Would you like to restart Pearl to apply all changes?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,

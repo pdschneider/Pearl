@@ -2,6 +2,39 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.4.1-beta] - 2026-09-09
+
+This update brings chat bubbles to the new interface as well as various other improvements and fixes. Additionally, the Windows version is built *much* better and should be notably faster with roughly half the file size!
+
+### 🌟 Added
+- Chats in the new GUI now feature chat bubbles like in the old GUI
+- Windows version is now finally built with Nuitka in standalone mode, greatly increasing speed and reducing file size
+
+### ⚙️ Changed
+- Dialog boxes now display directly over app rather than in the center of the screen
+- Updating Pearl on Windows no longer prompts to create a desktop icon
+- Now built in standalone mode on Linux, improving launch time
+- Only pearl or ministral models now support tool calls to prevent overuse clogging and slowing down chats
+- App now tracks which version was previously ran
+- Updated app type detection logic
+- Shortened title bar menu options for simplicity
+- Upgraded to Python 3.13.15 on Windows
+- Moved all styling to central styling script
+- Updated dependencies
+
+### 🛠️ Fixed
+- Customtkinter version now treated as independent app for .deb builds
+- Fixed broken .deb scripts, fixing launcher issues
+- Fixed password generator bug preventing number strings to be used as integers
+- Added missing .png for the legacy GUI
+
+### 📚 Documentation
+- Moved LICENSE.txt to /docs
+- Entire docs folder now bundled with each release
+
+### 🔒 Security
+- Removed unused nltk dependency with a high level security vulnerability
+
 ## [0.4.0] - 2026-08-07
 
 This update allows users to choose between legacy mode and the new Qt-based GUI framework! It also bumps the minor version due to a combination of the new UI, image upload support, and tool call support from the last release!
@@ -17,7 +50,7 @@ This update allows users to choose between legacy mode and the new Qt-based GUI 
 - Various Qt-GUI UI improvements
 - Temp files now cache on Linux, speeding up re-launches
 - Windows users upgrading from previous versions no longer have to go through as many pages of the installation wizard each upgrade
-- Window resize logic and cursor detection is now handled much better
+- Window resize logic and cursor detection are now handled much better
 - Updated Tesseract to v5.5.3
 - Updated dependencies
 
@@ -25,7 +58,7 @@ This update allows users to choose between legacy mode and the new Qt-based GUI 
 - App type is now correctly discovered, fixing restart and update issues
 - Changed internal 'globals' to 'globs' to fix namespace issues
 - Fixed AppImage crash issue due to improper binary name
-- During Windows installs, application now closes whether or not it responds to graceful shutdown commands - correcting a rare error during the installation process
+- During Windows installs, the application now closes whether or not it responds to graceful shutdown commands - correcting a rare error during the installation process
 - Fixed extremely slow startup on conditions where Kokoro is installed but not set up properly
 
 ### Security

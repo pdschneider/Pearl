@@ -4,10 +4,10 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout,
                                QLabel, QScrollArea)
 from PySide6.QtCore import (Qt, QPropertyAnimation,
                             QEasingCurve, QRect, QTimer)
-from PySide6.QtGui import QColor
 from src.managers.chat_history import load_conversations, load_specific_conversation
 from src.managers.chat_history import start_new_conversation
 from src.qt_interface.qt_settings.qt_settings import toggle_settings_panel
+from src.qt_interface.qt_styling import dark
 import logging
 import sounddevice as sd
 
@@ -79,23 +79,11 @@ def create_sidebar(globs):
     globs.scroll_area = scroll_area
     globs._sidebar_scroll_content = scroll_content
 
-    # === SETTINGS BUTTON (at the bottom) ===
+    # Settings Button
     settings_btn = QPushButton("⚙  Settings")
     settings_btn.setFixedSize(100, 40)
     settings_btn.setCursor(Qt.PointingHandCursor)
-    settings_btn.setStyleSheet(
-        """
-        QPushButton {
-            background-color: #3a3a3a;
-            border: none;
-            border-radius: 8px;
-            color: white;
-        }
-        QPushButton:hover {
-            background-color: #454545;
-        }
-        """
-    )
+    settings_btn.setStyleSheet(dark.settings_button)
     settings_btn.clicked.connect(lambda: toggle_settings_panel(globs))
     layout.addWidget(settings_btn)
 

@@ -172,9 +172,9 @@ def create_qt_interface(globs):
     help_menu = title_bar.menu_bar.addMenu("Help")
 
     # Populate File Menu
-    open_logs_action = file_menu.addAction("Open Logs")
-    open_config_action = file_menu.addAction("Open Config")
-    open_chats_action = file_menu.addAction("Open Chats")
+    open_logs_action = file_menu.addAction("Logs")
+    open_config_action = file_menu.addAction("Config")
+    open_chats_action = file_menu.addAction("Chats")
 
     # Attach Actions to File Menu Buttons
     open_logs_action.triggered.connect(lambda: open_logs(globs))
@@ -186,10 +186,10 @@ def create_qt_interface(globs):
     data_menu.addAction("Export / Import Settings (coming soon...)")
 
     # Populate Help Menu
-    view_changelog_action = help_menu.addAction("View Changelog")
-    open_wizard_action = help_menu.addAction("Open Wizard")
-    view_github_action = help_menu.addAction("View on Github")
-    view_codeberg_action = help_menu.addAction("View on Codeberg")
+    view_changelog_action = help_menu.addAction("Changelog")
+    open_wizard_action = help_menu.addAction("Wizard")
+    view_github_action = help_menu.addAction("Github")
+    view_codeberg_action = help_menu.addAction("Codeberg")
     report_bug_action = help_menu.addAction("Report a Bug")
     view_about_action = help_menu.addAction("About")
 
@@ -371,7 +371,7 @@ def create_qt_interface(globs):
 
         # Display a messagebox first
         reply = QMessageBox.question(
-            None,
+            globs.window,
             "Report Bug?",
             f"Would you like to open your default email application for a bug report?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
