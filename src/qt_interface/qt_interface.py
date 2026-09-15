@@ -15,6 +15,8 @@ from src.utils.load import load_data_path
 from src.interface.setup.setup_wizard import create_wizard
 from src.qt_interface.qt_components.qt_changelog import create_changelog_panel, toggle_changelog_panel
 from src.qt_interface.qt_components.qt_about import create_about_panel, toggle_about_panel
+from src.qt_interface.qt_components.qt_bug_report import create_report_panel, toggle_report_panel
+from src.utils.icons import load_qt_icons
 
 
 class WindowResizeEventFilter(QObject):
@@ -142,7 +144,7 @@ class WindowResizeEventFilter(QObject):
 def create_qt_interface(globs):
     """Creates the main PySide6 interface with borderless window."""
 
-    # SETUP WINDOW
+    # Set up Window
     globs.window.setWindowTitle("Pearl")
     if globs.saved_width and globs.saved_height and globs.saved_x and globs.saved_y:
         globs.window.setGeometry(
@@ -151,15 +153,18 @@ def create_qt_interface(globs):
     else:
         globs.window.resize(900, 850)
 
-    # MAKE IT BORDERLESS
+    # Bordless Window
     globs.window.setWindowFlags(Qt.FramelessWindowHint)
 
-    # CENTRAL WIDGET & LAYOUT
+    # Central Widget & Layout
     central_widget = QWidget()
     globs.window.setCentralWidget(central_widget)
     main_layout = QVBoxLayout(central_widget)
     main_layout.setContentsMargins(0, 0, 0, 0)
     main_layout.setSpacing(0)
+
+    # Load Icons
+    load_qt_icons(globs)
 
     # Title Bar
     title_bar = TitleBar(globs.window)
@@ -188,19 +193,13 @@ def create_qt_interface(globs):
     # Populate Help Menu
     view_changelog_action = help_menu.addAction("Changelog")
     open_wizard_action = help_menu.addAction("Wizard")
-    view_github_action = help_menu.addAction("Github")
-    view_codeberg_action = help_menu.addAction("Codeberg")
-    report_bug_action = help_menu.addAction("Report a Bug")
+    report_bug_action = help_menu.addAction("Bug Report")
     view_about_action = help_menu.addAction("About")
 
     # Attach Functions to Help Buttons
     view_changelog_action.triggered.connect(lambda: toggle_changelog_panel(globs))
     open_wizard_action.triggered.connect(lambda: create_wizard(globs))
-    view_github_action.triggered.connect(lambda: webbrowser.open(
-        url=f"https://github.com/pdschneider/{globs.title}"))
-    view_codeberg_action.triggered.connect(lambda: webbrowser.open(
-            url="https://codeberg.org/pdschneider/InvoiceBuddy"))
-    report_bug_action.triggered.connect(lambda: report_bug(globs))
+    report_bug_action.triggered.connect(lambda: toggle_report_panel(globs))
     view_about_action.triggered.connect(lambda: toggle_about_panel(globs))
 
     # TOP BAR
@@ -222,7 +221,10 @@ def create_qt_interface(globs):
     # About Panel
     create_about_panel(globs)
 
-    # SIDEBAR
+    # Report Panel
+    create_report_panel(globs)
+
+    # Sidebar
     sidebar = create_sidebar(globs)
     sidebar.setParent(central_widget)
     sidebar.raise_()
@@ -237,7 +239,7 @@ def create_qt_interface(globs):
 
     def close_all_panels(event=None):
         """Closes all panels and the overlay when overlay is clicked."""
-        for attr in ['settings_panel', 'changelog_panel', 'about_panel']:
+        for attr in ['settings_panel', 'changelog_panel', 'about_panel', 'report_panel']:
             if hasattr(globs, attr):
                 panel = getattr(globs, attr)
                 if panel and panel.isVisible():
@@ -250,43 +252,13 @@ def create_qt_interface(globs):
     dim_overlay.mousePressEvent = close_all_panels
     globs.dim_overlay = dim_overlay
 
-    # RESIZE LOGIC
-    RESIZE_MARGIN = 10
+    # Resize Logic
     globs.resize_state = {
         "active": False,
         "edge": None,
         "last_pos": None,
         "start_geom": None
     }
-
-    def get_resize_edge_from_global(window, global_pos):
-        geom = window.frameGeometry()
-        x, y = global_pos.x(), global_pos.y()
-
-        left = x <= geom.left() + RESIZE_MARGIN
-        right = x >= geom.right() - RESIZE_MARGIN
-        top = y <= geom.top() + RESIZE_MARGIN
-        bottom = y >= geom.bottom() - RESIZE_MARGIN
-
-        if top and left: return "TL"
-        if top and right: return "TR"
-        if bottom and left: return "BL"
-        if bottom and right: return "BR"
-        if left: return "L"
-        if right: return "R"
-        if top: return "T"
-        if bottom: return "B"
-        return None
-
-    def get_cursor_shape(edge):
-        shapes = {
-            "L": Qt.SizeHorCursor, "R": Qt.SizeHorCursor,
-            "T": Qt.SizeVerCursor, "B": Qt.SizeVerCursor,
-            "TL": Qt.SizeFDiagCursor, "BR": Qt.SizeFDiagCursor,
-            "TR": Qt.SizeBDiagCursor, "BL": Qt.SizeBDiagCursor,
-            None: Qt.ArrowCursor
-        }
-        return shapes.get(edge, Qt.ArrowCursor)
 
     globs.window.setMouseTracking(True)
     for child in globs.window.findChildren(QWidget):
@@ -304,7 +276,7 @@ def create_qt_interface(globs):
             globs.dim_overlay.resize(globs.window.width(), globs.window.height() - 35)
             globs.dim_overlay.move(0, 35)
 
-        for panel_attr in ['settings_panel', 'changelog_panel', 'about_panel']:
+        for panel_attr in ['settings_panel', 'changelog_panel', 'about_panel', 'report_panel']:
             panel = getattr(globs, panel_attr, None)
             if panel and panel.isVisible():
                 if panel_attr == 'settings_panel':
@@ -364,28 +336,3 @@ def create_qt_interface(globs):
             logging.debug(f"Opening settings folder on Linux...")
             subprocess.run(
                 ['xdg-open', load_data_path("local", "chats")], check=True)
-
-
-    def report_bug(globs):
-        """Opens the default mail application to report a bug."""
-
-        # Display a messagebox first
-        reply = QMessageBox.question(
-            globs.window,
-            "Report Bug?",
-            f"Would you like to open your default email application for a bug report?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes)
-        
-        # Opens up the default email application
-        if reply == QMessageBox.StandardButton.Yes:
-            logging.debug(f"Bug Report button clicked.")
-            to = "bugs@phillipplays.com"
-            subject = "Bug Report for Pearl"
-            body = f"Thank you very much for making a report! " \
-            f"Let me know what problem occurred, the behavior your expected, " \
-            f"and feel free to also include any logs or screenshots that may help! " \
-            f" | Pearl Version: {globs.current_version} | OS: {globs.os_name}"
-            encoded_body = urllib.parse.quote(body)
-            mailto = f"mailto:{to}?subject={subject}&body={encoded_body}"
-            webbrowser.open(mailto)

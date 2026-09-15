@@ -64,6 +64,7 @@ class Globs:
         self.changelog_panel = None
         self.settings_panel = None
         self.about_panel = None
+        self.report_panel = None
         self.logging_level_box = None
         self.chat_content = None
 
@@ -147,6 +148,9 @@ class Globs:
         self.title_icon = None
         self.windows_icon = None
         self.note_icon = None
+        self.github_icon = None
+        self.github_light_icon = None
+        self.codeberg_icon = None
 
         # Pages
         self.main_frame = None

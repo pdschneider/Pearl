@@ -84,7 +84,7 @@ def toggle_changelog_panel(globs):
             globs.dim_overlay.hide()
     else:
         # Close any active panels first
-        for attr in ['settings_panel', 'about_panel']:
+        for attr in ['settings_panel', 'about_panel', 'report_panel', 'changelog_panel']:
             if hasattr(globs, attr):
                 p = getattr(globs, attr)
                 if p and p.isVisible():

@@ -1,13 +1,15 @@
 # src/qt_interface/qt_components/qt_about.py
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QScrollArea)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QCursor
 from src.qt_interface.qt_styling import dark
 import webbrowser
 
 
 def create_about_panel(globs):
+    """Creates the about overlay panel."""
+
     about_panel = QWidget(globs.window)
     about_panel.setFixedSize(450, 550)
     about_panel.setStyleSheet("""
@@ -88,6 +90,7 @@ Have fun!
     desc_label.setWordWrap(True)
     content_layout.addWidget(desc_label)
 
+    # Version
     version_label = QLabel(f"Current Version: {globs.current_version}")
     version_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2ecc71; padding-top: 10px;")
     version_label.setAlignment(Qt.AlignCenter)
@@ -96,6 +99,31 @@ Have fun!
     content_layout.addStretch()
     scroll_area.setWidget(content_widget)
     layout.addWidget(scroll_area, stretch=1)
+
+    # Socials Layout
+    socials_layout = QHBoxLayout()
+
+    # GitHub
+    github_btn = QPushButton()
+    github_btn.setIcon(globs.github_icon)
+    github_btn.setIconSize(QSize(40,40))
+    github_btn.setStyleSheet(dark.social_button)
+    github_btn.setToolTip("View Source Code on GitHub")
+    github_btn.clicked.connect(lambda: webbrowser.open(
+        url="https://github.com/pdschneider/Pearl"))
+    socials_layout.addWidget(github_btn)
+
+    # Codeberg
+    codeberg_btn = QPushButton()
+    codeberg_btn.setIcon(globs.codeberg_icon)
+    codeberg_btn.setIconSize(QSize(40,40))
+    codeberg_btn.setStyleSheet(dark.social_button)
+    codeberg_btn.setToolTip("View Source Code on Codeberg")
+    codeberg_btn.clicked.connect(lambda: webbrowser.open(
+            url="https://codeberg.org/pdschneider/Pearl"))
+    socials_layout.addWidget(codeberg_btn)
+
+    layout.addLayout(socials_layout)
 
     # Close Button
     close_btn = QPushButton("Close")
@@ -114,7 +142,7 @@ def toggle_about_panel(globs):
         if hasattr(globs, 'dim_overlay'):
             globs.dim_overlay.hide()
     else:
-        for attr in ['settings_panel', 'changelog_panel']:
+        for attr in ['settings_panel', 'changelog_panel', 'about_panel', 'report_panel']:
             if hasattr(globs, attr):
                 p = getattr(globs, attr)
                 if p and p.isVisible():

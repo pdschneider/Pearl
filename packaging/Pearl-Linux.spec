@@ -13,8 +13,7 @@ a = Analysis(
     datas=[
         ('../defaults', 'defaults'),
         ('../docs', 'docs'),
-        ('../CHANGELOG.md', '.'),
-        ('../README.md', '.'),
+        ('../CHANGELOG.md', '.')
     ],
     hiddenimports=[
         # --- SPAWN IMPORTS START ---

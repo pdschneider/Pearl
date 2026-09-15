@@ -1,20 +1,50 @@
----
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
+name: "✨ Feature Request"
+description: "Suggest a new feature or improvement."
+labels: ["Type/Enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > If your issue was closed but not fully resolved, please **reopen** it or **create a new issue**.
 
----
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "A clear description of the feature you'd like."
+      placeholder: |
+        e.g. I'd like to be able to speak to Pearl using a microphone.
+    validations:
+      required: true
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Motivation"
+      description: "Why is this feature needed? What problem does it solve?"
+    validations:
+      required: false
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: "Proposed Solution"
+      description: "How do you think this should work?"
+    validations:
+      required: false
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "Any alternative solutions or features you've considered."
+    validations:
+      required: false
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+  - type: textarea
+    id: additional
+    attributes:
+      label: "Additional Context"
+      description: "Any other relevant information"
+    validations:
+      required: false

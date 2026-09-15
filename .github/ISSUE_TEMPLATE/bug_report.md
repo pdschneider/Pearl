@@ -1,38 +1,66 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+name: "🐛 Bug Report"
+description: "Report a bug."
+labels: ["Type/Bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > If your issue was closed but not fully resolved, please **reopen** it or **create a new issue**.
 
----
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "A clear text description of the bug."
+      placeholder: |
+        e.g. When I chat with Pearl, sometimes I get an error.
+    validations:
+      required: true
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Step-by-step instructions to reproduce the issue."
+      placeholder: |
+        1. Go to '...'
+        2. Enter '...'
+        3. Cick on '...'
+        4. See error
+    validations:
+      required: true
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Behavior"
+      description: "What you expected to happen."
+    validations:
+      required: true
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+  - type: textarea
+    id: actual
+    attributes:
+      label: "Actual Behavior"
+      description: "What actually happened."
+    validations:
+      required: true
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "App Version, OS, etc."
+      placeholder: |
+        - Version: [e.g. v0.4.0]
+        - OS: [e.g. Linux Mint 22 // Windows 11]
+    validations:
+      required: false
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
-
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
-
-**Additional context**
-Add any other context about the problem here.
+  - type: textarea
+    id: additional
+    attributes:
+      label: "Additional Context"
+      description: "Any other relevant information. Error messages, log output, screenshots, etc."
+    validations:
+      required: false

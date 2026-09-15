@@ -113,7 +113,7 @@ def toggle_settings_panel(globs):
         # Opening settings
         
         # Close any other active panels first
-        for attr in ['changelog_panel', 'about_panel', 'sidebar']:
+        for attr in ['changelog_panel', 'about_panel', 'sidebar', 'report_panel']:
             if attr == 'sidebar':
                 if hasattr(globs, 'sidebar_is_open') and globs.sidebar_is_open:
                     # Don't close sidebar - just leave it open

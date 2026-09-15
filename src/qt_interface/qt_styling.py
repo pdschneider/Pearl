@@ -110,5 +110,27 @@ dark = SimpleNamespace(
         QPushButton:hover {
             background-color: #5a5a5a;
         }
-    """
+    """,
+    social_button = """
+        QPushButton {
+            background-color: transparent;
+            border: none;
+            padding: 8px 12px;
+            font-size: 22px;
+            color: #e0e0e0;
+        }
+
+        QPushButton:hover {
+            background-color: #3a3a3d;
+            border-radius: 6px;
+        }
+
+        QPushButton:pressed {
+            background-color: #2a2a2d;
+            border-radius: 6px;
+        }
+        QToolTip {
+            background-color: #2b2b2b; color: white; border: 1px solid #555;
+        }
+    """,
 )

@@ -2,9 +2,9 @@
 
 All notable changes to **Pearl** will be located in this file.
 
-## [0.4.1-beta] - 2026-09-09
+## [0.4.1] - 2026-09-15
 
-This update brings chat bubbles to the new interface as well as various other improvements and fixes. Additionally, the Windows version is built *much* better and should be notably faster with roughly half the file size!
+I've been hard at work improving Pearl! This update brings chat bubbles to the new interface as well as various other improvements and fixes. Additionally, the Windows version is built *much* better and should be notably faster with roughly half the file size!
 
 ### 🌟 Added
 - Chats in the new GUI now feature chat bubbles like in the old GUI
@@ -20,6 +20,8 @@ This update brings chat bubbles to the new interface as well as various other im
 - Shortened title bar menu options for simplicity
 - Upgraded to Python 3.13.15 on Windows
 - Moved all styling to central styling script
+- Consolidated source code links into about panel
+- Added custom panel for bug reports
 - Updated dependencies
 
 ### 🛠️ Fixed
@@ -27,13 +29,22 @@ This update brings chat bubbles to the new interface as well as various other im
 - Fixed broken .deb scripts, fixing launcher issues
 - Fixed password generator bug preventing number strings to be used as integers
 - Added missing .png for the legacy GUI
+- xml files now correctly point to the new license / screenshot locations
 
 ### 📚 Documentation
 - Moved LICENSE.txt to /docs
+- Readme moved to docs folder
 - Entire docs folder now bundled with each release
+- Updated architecture.md
+- Updated build.md
+- Added CONTRIBUTING.md
+- Added SECURITY.md
+- Updated bug report and feature request templates
+- Added dependencies.md
+- Added all dependencies licenses to /docs/licenses/
 
 ### 🔒 Security
-- Removed unused nltk dependency with a high level security vulnerability
+- Removed unused nltk dependency with several high level security vulnerabilities
 
 ## [0.4.0] - 2026-08-07
 

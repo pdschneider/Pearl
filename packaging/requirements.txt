@@ -34,14 +34,14 @@ PySide6_Essentials==6.11.2
 pytesseract==0.3.13
 python-docx==1.2.0
 pyttsx3==2.99
-regex==2026.9.3
+regex==2026.9.10
 requests==2.34.2
 rs_bpe==0.1.0
 setuptools==84.0.0
 shiboken6==6.11.2
 sounddevice==0.5.6
 soundfile==0.14.0
-tqdm==4.70.0
+tqdm==4.70.1
 typing_extensions==4.16.0
 urllib3==2.7.0
 zstandard==0.25.0

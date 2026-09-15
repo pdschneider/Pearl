@@ -5,13 +5,13 @@ This document provides a high-level overview of Pearl's codebase and design deci
 
 ## Overview
 
-Pearl is a fully local, privacy-focused AI chat desktop application built with Python. It features a graphical user interface using **Custom Tkinter** with certain elements built with **PySide6**, integrates with local LLMs via Ollama, supports multiple text-to-speech engines, and file uploads.
+Pearl is a fully local, privacy-focused AI chat application built with Python. It features a graphical user interface using **Customtkinter** but is currently being rebuilt in **PySide6**, integrates with local LLMs via Ollama API calls, supports multiple text-to-speech engines, and file uploads.
 
 The application is designed to be:
-- **Fully offline-first** — no user data leaves the local machine by default after setup
+- **Fully offline-first** — No user data leaves the local machine by default after setup
 - **Cross-platform** — Windows and Linux (with Android support considered for the future)
-- **Easy to build and distribute** — using Nuitka (Linux) and PyInstaller + Inno Setup (Windows)
-- **Modular** — to allow future extensibility (new models, TTS backends, prompt styles, etc.)
+- **Easy to build and distribute** — Using Nuitka (Linux) and Inno Setup (Windows)
+- **Modular tool use** — to allow future extensibility to integrate with other self-hosted services and perform on-device functions
 
 ## Core Components
 
@@ -19,17 +19,16 @@ The application is designed to be:
 - Main window and primary interface
 - Chat view, sidebar (chat history), input area
 - Settings page with multiple sub-pages, plus onboarding page
-- Message boxes and file selection boxes built with PySide6
+- Message boxes and file selection boxes
 
 ### 2. Backend / Core Logic
 - Chat management and conversation history
-- Prompt switching and context handling
+- Prompt injection and context handling
 - File attachment logic
 - Setup scripts for onboarding (installs for Ollama, Docker + Kokoro)
 
 ### 3. AI Integration
-- Ollama client wrapper + kokoro TTS wrapper
-- Model discovery, download, and metadata handling
+- Ollama API wrapper + kokoro TTS API wrapper
 - Response streaming and processing
 
 ### 4. TTS (Text-to-Speech)
@@ -45,24 +44,47 @@ The application is designed to be:
 
 ```Bash
 Pearl/
-├── pearl.py                  # Main entry point - launches the GUI
+├── main.py                   # Main entry point — launches the GUI
 ├── config.py                 # Configuration and settings handling
-├── version.py                # Version information
-├── defaults/                 # Default prompts, assets, icons, and configuration files
-├── src/                      # Primary source code
-│   ├── interface/            # All GUI-related code
-│   │   ├── components/       # Reusable  UI components
-│   │   ├── settings/         # Settings pages
+├── version.py                # Version, author, and title metadata
+├── defaults/                 # Default prompts, themes, assets, and configuration files
+│   ├── assets/               # App icons and UI images
+│   ├── themes/               # JSON theme files
+│   ├── context.json          # Conversation context configuration
+│   ├── prompts.json          # Custom prompt templates
+│   ├── settings.json         # Default app settings
+│   ├── docker_install.ps1    # Docker setup script (Windows)
+│   ├── docker_ubuntu.sh      # Docker setup script (Linux)
+│   ├── ollama_install.sh     # Ollama setup script
+│   ├── kokoro_install.ps1    # Kokoro TTS setup script (Windows)
+│   └── docker_debian.sh      # Docker setup script (Debian)
+├── src/
+│   ├── interface/            # Legacy Tkinter GUI (if legacy mode enabled)
+│   │   ├── components/       # Reusable Tkinter UI components
+│   │   ├── settings/         # Tkinter settings pages
 │   │   └── setup/            # Initial setup wizard and onboarding screen
-│   ├── connections           # Integration with network-related code (ollama, kokoro, github, docker)
+│   ├── qt_interface/         # Modern PySide6 GUI (default)
+│   │   ├── qt_components/    # Reusable PySide6 UI components
+│   │   └── qt_settings/      # PySide6 settings pages
+│   ├── connections/          # External API connections (Ollama, Kokoro, GitHub, Docker)
 │   ├── managers/             # Core logic managers
-│   └── utils/                # Utility functions, helpers, and shared tools
-├── data/                     # Development mode data storage
-├── packaging/                # Build configurations, spec files, AppImage resources, Inno Setup scripts
-├── docs/                     # Documentation files (ARCHITECTURE.md, USAGE.md, etc.)
-├── CHANGELOG.md
-├── LICENSE.txt
-└── README.md
+│   │   ├── attachments.py    # File attachment handling
+│   │   ├── chat_history.py   # Chat history persistence
+│   │   ├── chat_manager.py   # Chat session management
+│   │   ├── model_manager.py  # Local model loading and switching
+│   │   ├── sound_manager.py  # TTS (text-to-speech) handling
+│   │   └── tools.py          # Chatbot tools and plugins
+│   └── utils/                # Utility functions and helpers
+├── tests/                    # Test scripts
+├── packaging/                # Build configs, spec files, AppImage, DEB, and Inno Setup
+│   ├── deb/                  # Debian package structure
+│   ├── Pearl.AppDir/         # AppImage directory structure
+│   ├── InnoSetup.iss         # Windows installer script
+│   ├── requirements.txt      # Python dependencies (generated by pip freeze)
+│   ├── prebuild.py           # Pre-build version bumping script
+│   └── *.spec                # PyInstaller spec files
+├── docs/                     # Documentation
+└── CHANGELOG.md
 ```
 
 ## Key Design Decisions
@@ -70,8 +92,8 @@ Pearl/
 - **Separation of Concerns**: GUI code is kept separate from core logic where possible.
 - **Privacy First**: All processing happens locally. No telemetry or cloud services are used by default.
 - **Modularity**: TTS, LLM backend, and storage are designed to support multiple implementations.
-- **Why PySide6**: Chosen for better styling, performance, and modern Qt features compared to the current Custom Tkinter implementation.
-- **Build Strategy**: One-file executables for easy distribution while maintaining reasonable binary size.
+- **Why PySide6**: Chosen for better styling, performance, and modern Qt features compared to the old Customtkinter implementation.
+- **Build Strategy**: Executables for easy distribution while maintaining reasonable binary size.
 
 ## Data Flow (Simplified)
 
@@ -79,7 +101,7 @@ Pearl/
 2. Prompt builder combines message + conversation history + file contents + prompt
 3. Request sent to Ollama backend
 4. Response is processed, displayed, and optionally spoken via TTS
-5. Conversation is saved to local storage (optional)
+5. Conversation is optionally saved to local storage
 
 ## Extensibility Points
 
@@ -88,43 +110,12 @@ Pearl/
 - Creating additional prompt templates or "roles"
 - Remembering elements of past chats
 - Supporting new file types for attachments
+- Integrating with other self-hosted services
 
 ## Future Considerations
 
 - Improved testing
 - Performance optimizations for large context windows
-
----
-
-## Folder Structure (deb - inside packaging/)
-
-``` bash
-deb/
-├── DEBIAN
-├── etc
-│   └── pearl
-└── usr
-    ├── bin
-    ├── lib
-    │   └── pearl
-    └── share
-        ├── applications
-        ├── doc
-        │   └── pearl
-        ├── icons
-        │   └── hicolor
-        │       ├── 128x128
-        │       │   └── apps
-        │       ├── 256x256
-        │       │   └── apps
-        │       └── scalable
-        ├── pearl
-        ├── man
-        │   └── man1
-        ├── metainfo
-        └── pixmaps
-
-```
 
 ---
 
@@ -143,5 +134,4 @@ deb/
 ---
 
 **Maintained by**: Phillip Schneider
-
-If you notice outdated information, please open a GitHub issue.
+*Up to date as of v0.4.1*
