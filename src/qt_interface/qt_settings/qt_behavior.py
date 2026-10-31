@@ -1,4 +1,7 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QCheckBox
+    )
 from PySide6.QtCore import Qt
 
 
@@ -19,5 +22,19 @@ def create_behavior_settings_tab(globs):
     title = QLabel("Behavior")
     title.setStyleSheet("font-size: 18px; font-weight: bold; color: white; margin-bottom: 10px;")
     layout.addWidget(title)
+
+    # Generate Chat Titles
+    chat_titles_layout = QHBoxLayout()
+    chat_titles_label = QLabel()
+    chat_titles_label.setText("Generate Chat Titles")
+    chat_titles_label.setStyleSheet("QLabel { color: white; font-size: 14px; }")
+    chat_titles_layout.addWidget(chat_titles_label)
+
+    globs.generate_titles_checkbox = QCheckBox()
+    globs.generate_titles_checkbox.setChecked(globs.generate_titles)
+    chat_titles_layout.addWidget(globs.generate_titles_checkbox)
+
+    chat_titles_layout.addStretch()
+    layout.addLayout(chat_titles_layout)
 
     return tab_widget

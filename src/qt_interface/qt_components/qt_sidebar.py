@@ -5,8 +5,9 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout,
 from PySide6.QtCore import (Qt, QPropertyAnimation,
                             QEasingCurve, QRect, QTimer)
 from src.managers.chat_history import load_conversations, load_specific_conversation
-from src.managers.chat_history import start_new_conversation
 from src.qt_interface.qt_settings.qt_settings import toggle_settings_panel
+from src.managers.chat_history import start_new_conversation
+from src.qt_interface.qt_chat_page import refresh_chat_page
 from src.qt_interface.qt_styling import dark
 import logging
 import sounddevice as sd
@@ -45,7 +46,9 @@ def create_sidebar(globs):
     new_chat_btn = QPushButton("✎  New Chat")
     new_chat_btn.setFixedSize(100, 40)
     new_chat_btn.setCursor(Qt.PointingHandCursor)
-    new_chat_btn.clicked.connect(lambda: start_new_chat(globs))
+    new_chat_btn.clicked.connect(lambda: start_new_conversation(globs))
+    new_chat_btn.clicked.connect(lambda: refresh_chat_page(globs))
+    new_chat_btn.clicked.connect(lambda: toggle_sidebar(globs, sidebar))
     buttons_layout.addWidget(new_chat_btn)
     buttons_layout.addStretch()
 
@@ -135,6 +138,7 @@ def toggle_sidebar(globs, sidebar):
         globs.dim_overlay.move(0, TITLE_BAR_HEIGHT)
         globs.dim_overlay.show()
         sidebar.raise_()
+        populate_sidebar_history(globs)
     else:
         logging.debug(f"Closing sidebar... raising sidebar, will hide overlay AFTER animation")
         sidebar.raise_()
@@ -239,7 +243,7 @@ def populate_sidebar_history(globs):
             if len(title) > 30:
                 title = f"{title[:25]}..."
 
-            conv_id = convo["metadata"]["conversation_id"]
+            conv_id = convo["metadata"].get("conversation_id", "")
 
             # Entry frame
             entry = QWidget()
@@ -267,8 +271,7 @@ def populate_sidebar_history(globs):
             def on_click(event, cid=conv_id):
                 load_specific_conversation(globs, cid)
                 # Reload chat bubbles (need to import or reference)
-                if hasattr(globs, 'refresh_chat_page'):
-                    globs.refresh_chat_page()
+                refresh_chat_page(globs)
                 # Close sidebar
                 if globs.sidebar_is_open:
                     toggle_sidebar(globs, globs.sidebar)
@@ -278,15 +281,8 @@ def populate_sidebar_history(globs):
 
             scroll_content.layout().addWidget(entry)
 
+    # Push all content to the top; absorb leftover space below
+    scroll_content.layout().addStretch(1)
+
     # Scroll to top
     globs.scroll_area.verticalScrollBar().setValue(0)
-
-
-def start_new_chat(globs):
-    """Resets to a new conversation and clears the chat page."""
-
-    # Stop sound
-    sd.stop()
-
-    # Start new conversation
-    start_new_conversation(globs)

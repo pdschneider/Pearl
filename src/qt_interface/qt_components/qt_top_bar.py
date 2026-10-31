@@ -6,8 +6,8 @@ from PySide6.QtGui import QCursor
 import logging
 import sounddevice as sd
 from src.qt_interface.qt_components.qt_sidebar import toggle_sidebar
-from src.qt_interface.qt_settings.qt_settings import toggle_settings_panel
 from src.managers.chat_history import start_new_conversation
+from src.qt_interface.qt_chat_page import refresh_chat_page
 
 
 def create_top_bar(globs):
@@ -30,19 +30,11 @@ def create_top_bar(globs):
     new_chat_button = QPushButton("✎  New Chat")
     new_chat_button.setFixedSize(100, 40)
     new_chat_button.setCursor(QCursor(Qt.PointingHandCursor))
-    new_chat_button.clicked.connect(lambda: start_new_chat(globs))
+    new_chat_button.clicked.connect(lambda: start_new_conversation(globs))
+    new_chat_button.clicked.connect(lambda: refresh_chat_page(globs))
     top_bar_layout.addWidget(new_chat_button)
 
     # Stretch Top Bar
     top_bar_layout.addStretch()
-
-    def start_new_chat(globs):
-        """Resets to a new conversation and clears the chat page."""
-
-        # Stop sound
-        sd.stop()
-
-        # Start new conversation
-        start_new_conversation(globs)
 
     return top_bar_widget

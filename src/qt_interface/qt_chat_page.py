@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QTextOption
 from src.managers.chat_manager import send_message
 from src.qt_interface.qt_styling import dark
+from src.managers.attachments import attach_file
 import math
 
 
@@ -187,7 +188,30 @@ def create_input_area(globs):
     toolbar_layout = QHBoxLayout(toolbar_row)
     toolbar_layout.setContentsMargins(8, 0, 8, 0)
     toolbar_layout.setSpacing(6)
-    toolbar_layout.addStretch()  # Future buttons pinned left
+
+    # Attachment button (pinned bottom-left)
+    globs.attach_button = QPushButton("+")
+    globs.attach_button.setFixedSize(22, 22)
+    globs.attach_button.setStyleSheet(dark.attach_button)
+    globs.attach_button.clicked.connect(lambda: attach_file(globs))
+    toolbar_layout.addWidget(globs.attach_button)
+
+    toolbar_layout.addStretch()  # Separates two sides of the toolbar
+
+    # TTS Toggle
+    globs.tts_button = QPushButton("\U0001F50A" if globs.tts_enabled else "\U0001F507")
+    globs.tts_button.setFixedSize(22, 22)
+    globs.tts_button.setCheckable(True)
+    globs.tts_button.setChecked(globs.tts_enabled)
+    globs.tts_button.setStyleSheet(dark.tts_button)
+    globs.tts_button.setToolTip("Text-to-Speech")
+    globs.tts_button.clicked.connect(lambda: toggle_tts(globs))
+    toolbar_layout.addWidget(globs.tts_button)
+
+    def toggle_tts(globs):
+        on = globs.tts_button.isChecked()
+        globs.tts_enabled = on
+        globs.tts_button.setText("\U0001F50A" if on else "\U0001F507")
 
     # Same background as container so it blends perfectly
     toolbar_row.setStyleSheet(
@@ -216,7 +240,7 @@ def add_bubble(globs, role, text, model=None):
     
     # Create the message label
     message_label = AutoHeightBrowser()
-    message_label.setPlainText(text)
+    message_label.setMarkdown(text)
     message_label.setFont(QFont("Ubuntu", 14))
     message_label.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
     message_label.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -236,6 +260,25 @@ def add_bubble(globs, role, text, model=None):
         alignment=Qt.AlignRight if role == "user" else Qt.AlignLeft)
     
     return message_label
+
+
+def clear_chat_area(globs):
+    """Removes all message bubbles from the chat layout."""
+    layout = globs.chat_area_layout
+    while layout.count() > 1:  # keep the trailing stretch
+        item = layout.takeAt(0)
+        if item.widget():
+            item.widget().deleteLater()
+
+
+def refresh_chat_page(globs):
+    """Rebuilds chat bubbles from the loaded conversation history."""
+    clear_chat_area(globs)
+    for message in globs.conversation_history:
+        role = message.get("role")
+        content = message.get("content", "")
+        if role in ("user", "assistant") and content:
+            add_bubble(globs, role=role, text=content)
 
 
 def copy_to_clipboard(text):

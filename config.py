@@ -67,6 +67,10 @@ class Globs:
         self.report_panel = None
         self.logging_level_box = None
         self.chat_content = None
+        self.sidebar_is_open = None
+        self.generate_titles_checkbox = None
+        self.attach_button = None
+        self.tts_button = None
 
         # Thread Locks
         self.speaking_lock = threading.Lock()

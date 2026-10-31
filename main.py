@@ -5,8 +5,13 @@ from src.utils.dependencies import check_dependencies
 check_dependencies()
 from config import globs
 from src.utils.startup import startup
-from src.interface.interface import create_interface
-from src.qt_interface.qt_interface import create_qt_interface
+
+# Load only the correct GUI
+if globs.legacy_mode:
+    from src.interface.interface import create_interface
+else:
+    from src.qt_interface.qt_interface import create_qt_interface
+
 from src.utils.startup import startup
 from src.utils.save_settings import save_all_settings
 from src.utils.factory_reset import factory_reset_config

@@ -86,7 +86,7 @@ def attach_file(globs):
 
     # Open dialog box for filepath
     file, filter = QFileDialog.getOpenFileName(
-        None,
+        globs.window,
         "Attach File",
         "",
         "All Files (*.*)",
@@ -209,8 +209,9 @@ def attach_file(globs):
     
     # Set global variable and  disable button
     globs.file_attachment = attachment
-    globs.file_button.configure(state="disabled")
-    globs.attach_tip.configure(message="File Already Attached")
+    if globs.legacy_mode:
+        globs.file_button.configure(state="disabled")
+        globs.attach_tip.configure(message="File Already Attached")
 
 
 def parse_pdf(globs, file):
@@ -238,6 +239,7 @@ def parse_pdf(globs, file):
     except Exception as e:
         logging.error(f"Error reading with pdfplumber: {e}\nAttempting fallback OCR...")
         return ""
+
 
 def extract_with_ocr(file):
     """Extract text with OCR if pdfplumber fails."""
@@ -272,6 +274,7 @@ def extract_with_ocr(file):
     except Exception as e:
         logging.error(f"OCR error on {file}: {e}")
         return ""
+
 
 def parse_docx(file):
     """Parses .docx files to plain text."""
