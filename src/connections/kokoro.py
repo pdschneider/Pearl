@@ -41,7 +41,9 @@ def fetch_tts_models(globs):
             logging.debug(f"Attempting to load Kokoro voice list...")
             voices = requests.get("http://localhost:8880/v1/audio/voices", timeout=5)
             if voices.status_code == 200:
-                return voices.json()["voices"]
+                # Newer Kokoro returns dicts with id/name; older returned plain strings
+                return [v["id"] if isinstance(v, dict) else v
+                        for v in voices.json()["voices"]]
             else:
                 logging.error(
                     f"Kokoro voices fetch failed. Status code: {voices.status_code}. Returning empty dictionary.")

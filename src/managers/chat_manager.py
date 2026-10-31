@@ -12,6 +12,7 @@ from src.managers.chat_history import (save_conversation,
 from src.utils.context import detect_context
 from src.utils.toast import show_toast
 from src.utils.hardware import cpu_temp_info
+from src.utils.tts_scrub import scrub_for_tts
 from datetime import datetime
 from PySide6.QtCore import QTimer
 
@@ -173,11 +174,6 @@ def send_message(globs, ui_elements):
                         logging.debug(f"Discarding stale response (ID {local_id})")
                         globs.still_streaming = False
                         return
-                    
-                    # Scrub markdown elements from response (for TTS)
-                    if isinstance(item, str):
-                        for component in globs.markdown_components:
-                            globs.assistant_message.replace(component, "")
 
                     # Health Check
                     if globs.os_name.startswith("Linux"):
@@ -189,8 +185,12 @@ def send_message(globs, ui_elements):
                         else:
                             logging.debug(f"CPU Temp: {temp}C")
 
+                    # Final clean markdown render
+                    if globs.assistant_label and not globs.legacy_mode:
+                        globs.assistant_label.setMarkdown(globs.assistant_message)
+
                     # TTS
-                    play_tts(globs, text=globs.assistant_message)
+                    play_tts(globs, text=scrub_for_tts(globs.assistant_message))
 
                     # Add message to conversation history
                     add_message(globs,
@@ -231,22 +231,12 @@ def send_message(globs, ui_elements):
                     return
 
                 if globs.current_response_id == local_id:
-                    # Scrub markdown while text is streaming
+                    # Accumulate raw response (markdown intact)
                     if isinstance(item, str):
-                        globs.assistant_message += item.replace(
-                            "***", "").replace(
-                                "___", "").replace(
-                                    "**", "").replace(
-                                        "__", "").replace(
-                                            "*", "").replace(
-                                                "_", "").replace(
-                                                    "~~", "").replace(
-                                                        "#####", "").replace(
-                                                            "####", "").replace(
-                                                                "###", "")
+                        globs.assistant_message += item
                     if globs.assistant_label:
                         if not globs.legacy_mode:
-                            globs.assistant_label.setText(
+                            globs.assistant_label.setMarkdown(
                                 globs.assistant_message)
                         else:
                             globs.assistant_label.configure(

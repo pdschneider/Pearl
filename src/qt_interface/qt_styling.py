@@ -99,6 +99,29 @@ dark = SimpleNamespace(
         QTextEdit:focus {
             outline: none;
         }
+        QTextEdit QScrollBar:vertical {
+            background: transparent;
+            width: 8px;
+            margin: 0;
+        }
+        QTextEdit QScrollBar::handle:vertical {
+            background: rgba(255, 255, 255, 60);
+            border-radius: 4px;
+            min-height: 30px;
+            margin: 2px;
+        }
+        QTextEdit QScrollBar::handle:vertical:hover {
+            background: rgba(255, 255, 255, 100);
+        }
+        QTextEdit QScrollBar::add-line:vertical,
+        QTextEdit QScrollBar::sub-line:vertical {
+            height: 0;
+            width: 0;
+        }
+        QTextEdit QScrollBar::add-page:vertical,
+        QTextEdit QScrollBar::sub-page:vertical {
+            background: transparent;
+        }
     """,
     send_button = """
         QPushButton {
@@ -109,6 +132,39 @@ dark = SimpleNamespace(
         }
         QPushButton:hover {
             background-color: #5a5a5a;
+        }
+    """,
+    attach_button = """
+        QPushButton {
+            background-color: transparent;
+            border: none;
+            color: #aaaaaa;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 11px;
+        }
+        QPushButton:hover {
+            background-color: rgba(255, 255, 255, 30);
+        }
+        QPushButton:pressed {
+            background-color: rgba(255, 255, 255, 60);
+        }
+    """,
+    tts_button = """
+        QPushButton {
+            background-color: transparent;
+            border: none;
+            border-radius: 11px;
+            font-size: 14px;
+        }
+        QPushButton:hover {
+            background-color: rgba(255, 255, 255, 30);
+        }
+        QPushButton:pressed {
+            background-color: rgba(255, 255, 255, 60);
+        }
+        QPushButton:checked {
+            background-color: rgba(46, 204, 113, 40);
         }
     """,
     social_button = """
@@ -133,4 +189,46 @@ dark = SimpleNamespace(
             background-color: #2b2b2b; color: white; border: 1px solid #555;
         }
     """,
+    combobox = """
+        QComboBox {
+            color: white;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 5px;
+            font-size: 14px;
+        }
+        QComboBox::drop-down {
+            border: none;
+        }
+        QComboBox::down-arrow {
+            image: none;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid transparent;
+            margin-right: 10px;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #333;
+            color: white;
+            selection-background-color: #2ecc71;
+            border: none;
+        }
+    """,
+    danger_button = """
+        QPushButton {
+            color: white;
+            background-color: #c0392b;
+            border: 1px solid #e74c3c;
+            border-radius: 4px;
+            padding: 5px 15px;
+            font-size: 14px;
+        }
+        QPushButton:hover {
+            background-color: #e74c3c;
+        }
+        QPushButton:pressed {
+            background-color: #a93226;
+        }
+    """
 )

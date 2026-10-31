@@ -1,5 +1,8 @@
 # src/qt_interface/qt_settings/qt_settings.py
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTabWidget
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QPushButton, QTabWidget
+)
 from PySide6.QtCore import Qt
 from src.qt_interface.qt_settings.qt_general import create_general_settings_tab
 from src.qt_interface.qt_settings.qt_system import create_system_settings_tab
@@ -11,6 +14,14 @@ from src.qt_interface.qt_settings.qt_tools import create_tools_settings_tab
 from src.qt_interface.qt_styling import dark
 from src.utils.qt_save import save_qt_settings
 import logging
+
+
+# TODO:
+"""
+> Endpoints (Networking Stuff)
+> Install/Uninstall Dependencies
+"""
+
 
 def create_settings_panel(globs):
     """Creates the settings overlay panel with tabs."""

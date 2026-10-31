@@ -2,6 +2,45 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.4.2] - 2026-10-31
+
+This update also adds core functionality to the new GUI and corrects various bugs. Pearl even has markdown text back, a feature not seen since one of the first releases!
+
+### 🌟 New
+- Pearl now supports Markdown text
+- New Chat button is now fully functional in the new GUI
+- Choosing previous chats from the sidebar now loads the chats in the new GUI
+- File attachments now work in the new GUI
+- Added Exit button to file menu in title bar
+- Reintroduced delete all chats button to the new GUI
+- Added chat title generation toggle to the new GUI
+- Added TTS toggle to the new GUI
+- Added Default/Kokoro TTS selection in Audio settings of the new GUI
+- Added Kokoro voice model selection to the new GUI
+- Added audio playback device selection to the new GUI
+
+### ⚙️ Changed
+- Improved TTS scrubbing of markdown and unicode characters for more natural speech
+- App saves on exit in new GUI
+- Updated dependencies
+
+### 🛠️ Fixed
+- Kokoro voice selection now works with both newer and older versions of Kokoro
+- Fixed broken image path in ReadMe
+- Better alerts when errors occur
+- Chat history now has correct spacing
+- Window placement now correctly saves in new GUI
+- Sidebar now re-populates when a new chat is added or removed
+- Fixed major crash preventing Pearl from being opened on Windows
+- Window resize event no longer triggers when opening other windows from the title bar
+- Various other bug fixes
+
+### 📚 Documentation
+- Moved LICENSE.txt back to root for github compatibility
+
+### 🔒 Security
+- Patched multiple vulnerabilities by updating the urllib3 library & more
+
 ## [0.4.1] - 2026-09-15
 
 I've been hard at work improving Pearl! This update brings chat bubbles to the new interface as well as various other improvements and fixes. Additionally, the Windows version is built *much* better and should be notably faster with roughly half the file size!

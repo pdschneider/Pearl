@@ -2,9 +2,7 @@
 import os
 import logging
 import subprocess
-import webbrowser
-import urllib
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QMessageBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
 from PySide6.QtCore import Qt, QEvent, QTimer, QObject
 from src.qt_interface.qt_components.qt_title_bar import TitleBar
 from src.qt_interface.qt_components.qt_top_bar import create_top_bar
@@ -17,6 +15,7 @@ from src.qt_interface.qt_components.qt_changelog import create_changelog_panel, 
 from src.qt_interface.qt_components.qt_about import create_about_panel, toggle_about_panel
 from src.qt_interface.qt_components.qt_bug_report import create_report_panel, toggle_report_panel
 from src.utils.icons import load_qt_icons
+from src.utils.qt_save import save_qt_settings
 
 
 class WindowResizeEventFilter(QObject):
@@ -67,6 +66,13 @@ class WindowResizeEventFilter(QObject):
         return shapes.get(edge, Qt.ArrowCursor)
     
     def eventFilter(self, obj, event):
+        # Only act on events for our own main window
+        if not isinstance(obj, QWidget) or obj.window() is not self.window:
+            return False
+        # Skip resize logic if a popup/menu is open
+        if QApplication.activePopupWidget():
+            return False
+
         if event.type() == QEvent.MouseMove:
             global_pos = event.globalPosition().toPoint()
             
@@ -146,12 +152,16 @@ def create_qt_interface(globs):
 
     # Set up Window
     globs.window.setWindowTitle("Pearl")
-    if globs.saved_width and globs.saved_height and globs.saved_x and globs.saved_y:
-        globs.window.setGeometry(
-            globs.saved_x, globs.saved_y,
-            globs.saved_width, globs.saved_height)
+
+    # Restore saved geometry (only if dynamic window size is enabled)
+    if globs.saved_width and globs.saved_height and globs.saved_x and globs.saved_y and globs.dynamic_window_size:
+        globs.window.setGeometry(globs.saved_x, globs.saved_y, globs.saved_width, globs.saved_height)
     else:
-        globs.window.resize(900, 850)
+        # Center default-sized window on the primary screen
+        screen_geo = globs.window.screen().availableGeometry()
+        x = (screen_geo.width() - 900) // 2
+        y = (screen_geo.height() - 850) // 2
+        globs.window.setGeometry(x, y, 900, 850)
 
     # Bordless Window
     globs.window.setWindowFlags(Qt.FramelessWindowHint)
@@ -180,11 +190,13 @@ def create_qt_interface(globs):
     open_logs_action = file_menu.addAction("Logs")
     open_config_action = file_menu.addAction("Config")
     open_chats_action = file_menu.addAction("Chats")
+    exit_app_action = file_menu.addAction("Exit")
 
     # Attach Actions to File Menu Buttons
     open_logs_action.triggered.connect(lambda: open_logs(globs))
     open_config_action.triggered.connect(lambda: open_config(globs))
     open_chats_action.triggered.connect(lambda: open_chats(globs))
+    exit_app_action.triggered.connect(lambda: globs.window.close())
 
     # Populate Data Menu
     data_menu.addAction("Export / Import Chats (coming soon...)")
@@ -336,3 +348,15 @@ def create_qt_interface(globs):
             logging.debug(f"Opening settings folder on Linux...")
             subprocess.run(
                 ['xdg-open', load_data_path("local", "chats")], check=True)
+
+    # Handle window close: stop observers and save settings
+    original_close = globs.window.closeEvent
+
+    def custom_close(event):
+        try:
+            save_qt_settings(globs)
+        except Exception as e:
+            logging.error(f"Error occurred when saving settings: {e}")
+        original_close(event)
+
+    globs.window.closeEvent = custom_close

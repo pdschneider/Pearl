@@ -6,7 +6,7 @@
 
 Pearl is a friendly, fully local private AI chat assistant. No cloud, tracking, or data sent over the web happens by default after initial setup. She chats with you privately, switches context intelligently, and supports file uploads.
 
-<img src="defaults/assets/Pearl.png" align="right" width="30%" />
+<img src="../defaults/assets/Pearl.png" align="right" width="30%" />
 
 ### ✨ Features
 

@@ -4,6 +4,7 @@ import uuid
 import logging
 import os
 from datetime import datetime
+import sounddevice as sd
 from config import load_data_path
 from src.utils.hardware import get_disk_space
 from src.utils.toast import show_toast
@@ -20,6 +21,10 @@ except Exception as e:
 
 def start_new_conversation(globs):
     """Reverts variables for a new conversation."""
+    if not globs.legacy_mode:
+        # Stop sound
+        sd.stop()
+
     globs.conversation_history = []
     globs.chat_history = globs.conversation_history
     globs.conversation_id = str(uuid.uuid4())
@@ -181,11 +186,13 @@ def load_specific_conversation(globs, conversation_id):
     try:
         with open(filename, 'r') as f:
             data = json.load(f)
-            globs.conversation_id = data["metadata"]["conversation_id"]
-            globs.created_at = data["metadata"]["created_at"]
-            globs.conversation_history = data["history"]
-            globs.chat_history = data["history"]
+            globs.conversation_id = data.get("metadata", {}).get("conversation_id", "")
+            globs.created_at = data.get("metadata", {}).get("created_at", "")
+            globs.conversation_history = data.get("history", [])
+            globs.chat_history = data.get("history", [])
             globs.is_new_conversation = False
             logging.info(f"Loaded conversation {conversation_id}")
+
     except Exception as e:
         logging.error(f"Failed to load conversation {conversation_id}: {e}")
+        show_toast(globs, message=f"Error loading conversation", _type="error")
