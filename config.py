@@ -19,7 +19,8 @@ from src.utils.load import (load_prompts,
                                  load_docker_debian,
                                  load_docker_ubuntu,
                                  load_docker_windows,
-                                 load_kokoro_windows)
+                                 load_kokoro_windows,
+                                 load_tools)
 
 
 class Globs:
@@ -71,6 +72,7 @@ class Globs:
         self.generate_titles_checkbox = None
         self.attach_button = None
         self.tts_button = None
+        self.password_generator_checkbox = None
 
         # Thread Locks
         self.speaking_lock = threading.Lock()
@@ -233,6 +235,8 @@ class Globs:
     def refresh_globs(self):
         """Reloads all settings from disk and updates the class."""
         settings = load_settings()
+        tools = load_tools()
+
         self.all_prompts = load_prompts()
         self.all_context = load_context()
 
@@ -262,8 +266,11 @@ class Globs:
         self.generate_titles = settings.get("generate_titles", True)
         self.title_gen_model = settings.get("title_gen_model", "llama3.2:3b")
         self.dynamic_window_size = settings.get("dynamic_window_size", True)
-        self.legacy_mode = settings.get("legacy_mode", True)
+        self.legacy_mode = settings.get("legacy_mode", False)
         self.previous_version = settings.get("previous_version", "0.1.0")
+
+        # Variables from tools
+        self.password_generator = tools.get("password_generator", False)
 
 
 def apply_theme(name: str) -> None:

@@ -1,7 +1,9 @@
 # src/qt_interface/qt_settings/qt_save.py
 import logging
+import json
+import os
 from src.utils.save_settings import save_settings
-from src.utils.load import load_settings
+from src.utils.load import load_settings, load_tools, load_data_path
 from PySide6.QtCore import Qt
 
 
@@ -19,7 +21,11 @@ def save_qt_settings(globs):
     new_logging_level = globs.logging_level_box.currentText().upper()
     new_generate_titles = globs.generate_titles_checkbox.isChecked()
     new_tts_enabled = globs.tts_button.isChecked()
-    
+    new_chat_path = globs.ollama_chat_path_box.text().strip() or "http://localhost:11434/"
+    new_title_path = globs.ollama_title_path_box.text().strip() or "http://localhost:11434/"
+
+    # Checkbox States for Tools
+    new_password_generator = globs.password_generator_checkbox.isChecked()
 
     # Update the globs object immediately
     globs.github_check = new_github_check
@@ -29,6 +35,9 @@ def save_qt_settings(globs):
     globs.logging_level = new_logging_level
     globs.generate_titles = new_generate_titles
     globs.tts_enabled = new_tts_enabled
+    globs.ollama_chat_path = new_chat_path
+    globs.ollama_title_path = new_title_path
+    globs.password_generator = new_password_generator
 
     # Load current settings to merge with new value
     current_settings = load_settings()
@@ -43,6 +52,12 @@ def save_qt_settings(globs):
     current_settings["tts_source"] = globs.tts_source
     current_settings["kokoro_active_voice"] = globs.kokoro_active_voice
     current_settings["default_sink"] = globs.default_sink
+    current_settings["ollama_chat_path"] = new_chat_path
+    current_settings["ollama_title_path"] = new_title_path
+
+    # Load current tools to merge with new value
+    current_tools = load_tools()
+    current_tools["password_generator"] = new_password_generator
 
     def save_window_placement(globs):
         if globs.window.windowState() != Qt.WindowState.WindowMaximized:
@@ -77,7 +92,20 @@ def save_qt_settings(globs):
     # Save to JSON file
     try:
         save_settings(**current_settings)
+        save_tools(**current_tools)
         logging.info(f"Setting Saved!")
-
     except Exception as e:
         logging.error(f"Failed to save settings: {e}")
+
+
+def save_tools(**kwargs):
+    """Save settings to settings.json."""
+    tools = load_tools()
+    tools.update(kwargs)
+    file_path = os.path.normpath(load_data_path("config", "tools.json"))
+    try:
+        with open(file_path, 'w') as f:
+            json.dump(tools, f, indent=4)
+        logging.debug(f"Saving tools to: {file_path}")
+    except Exception as e:
+        logging.error(f"Error saving tools to {file_path}: {e}")

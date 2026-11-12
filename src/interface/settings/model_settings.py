@@ -3,7 +3,7 @@ import logging
 import time
 import customtkinter as ctk
 from CTkToolTip import CTkToolTip
-from src.connections.ollama import get_all_models, get_loaded_models, load_model, get_model_info
+from src.connections.ollama import get_all_models, get_loaded_models, load_model
 from src.utils.hardware import get_ram_info
 from src.utils.save_settings import save_settings
 from src.utils.toast import show_toast
@@ -20,9 +20,10 @@ def create_models_tab(globs, models_frame):
                     models_frame: The main frame of the models settings tab
     """
 
-    model_selector = Treeview(globs,
-                              models_frame,
-                              all_models=lambda: get_all_models(globs, globs.ollama_chat_path))
+    model_selector = Treeview(
+        globs, models_frame,
+        all_models=lambda: get_all_models(globs, globs.ollama_chat_path)
+    )
 
     def load_selected(globs):
         """Loads selected model into memory"""

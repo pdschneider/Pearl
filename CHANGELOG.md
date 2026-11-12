@@ -2,9 +2,38 @@
 
 All notable changes to **Pearl** will be located in this file.
 
+## [0.4.3] - 2026-11-11
+
+Pearl's new GUI is now ready to ship as the default version! This update adds the core functionality of selecting models to the new GUI, as well as networking, uninstall options, and many other improvements.
+
+### 🌟 New
+- Model selection brought back to the new GUI
+- A new chat landing page is now used instead of a blank chat page by default
+- Networking capabilities are brought back in the new GUI
+- Uninstall buttons for Ollama, Kokoro, and Docker are brought back to the new GUI
+- Factory reset is back in the new GUI
+- Tool calls are now togglable in settings
+- Attached files are now removable prior to sending
+- Files can now be dragged & dropped into the input box to attach
+- Pearl now defaults to the new GUI
+
+### ⚙️ Changed
+- Improved context length detection for CPU and GPU setups
+- The Setup Wizard now displays on first app open
+- Toggling audio off now stops currently playing audio
+- Improved input box styling and behavior
+- Improved toasts UI
+- Shifted UI elements toward a purple aesthetic
+- Various other UI improvements
+- Updated dependencies
+
+### 🛠️ Fixed
+- Loading and unloading models now use the correct endpoints
+- Fixed bug where individual message bubbles had scrolling properties
+
 ## [0.4.2] - 2026-10-31
 
-This update also adds core functionality to the new GUI and corrects various bugs. Pearl even has markdown text back, a feature not seen since one of the first releases!
+This update adds core functionality to the new GUI and corrects various bugs. Pearl even has markdown text back, a feature not seen since one of the first releases!
 
 ### 🌟 New
 - Pearl now supports Markdown text

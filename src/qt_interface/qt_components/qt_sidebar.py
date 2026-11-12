@@ -1,13 +1,17 @@
 # src/qt_interface/qt_components/qt_sidebar.py
-from PySide6.QtWidgets import (QWidget, QVBoxLayout,
-                               QHBoxLayout, QPushButton,
-                               QLabel, QScrollArea)
-from PySide6.QtCore import (Qt, QPropertyAnimation,
-                            QEasingCurve, QRect, QTimer)
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QLabel, QScrollArea
+)
+from PySide6.QtCore import (
+    Qt, QPropertyAnimation, QEasingCurve, QRect, QTimer
+)
 from src.managers.chat_history import load_conversations, load_specific_conversation
 from src.qt_interface.qt_settings.qt_settings import toggle_settings_panel
 from src.managers.chat_history import start_new_conversation
-from src.qt_interface.qt_chat_page import refresh_chat_page
+from src.qt_interface.qt_chat_page import (
+    refresh_chat_page, switch_to_chat_page, switch_to_new_chat_page
+)
 from src.qt_interface.qt_styling import dark
 import logging
 import sounddevice as sd
@@ -48,6 +52,7 @@ def create_sidebar(globs):
     new_chat_btn.setCursor(Qt.PointingHandCursor)
     new_chat_btn.clicked.connect(lambda: start_new_conversation(globs))
     new_chat_btn.clicked.connect(lambda: refresh_chat_page(globs))
+    new_chat_btn.clicked.connect(lambda: switch_to_new_chat_page(globs))
     new_chat_btn.clicked.connect(lambda: toggle_sidebar(globs, sidebar))
     buttons_layout.addWidget(new_chat_btn)
     buttons_layout.addStretch()
@@ -272,6 +277,7 @@ def populate_sidebar_history(globs):
                 load_specific_conversation(globs, cid)
                 # Reload chat bubbles (need to import or reference)
                 refresh_chat_page(globs)
+                switch_to_chat_page(globs)
                 # Close sidebar
                 if globs.sidebar_is_open:
                     toggle_sidebar(globs, globs.sidebar)

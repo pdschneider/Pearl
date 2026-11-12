@@ -16,13 +16,6 @@ from src.utils.qt_save import save_qt_settings
 import logging
 
 
-# TODO:
-"""
-> Endpoints (Networking Stuff)
-> Install/Uninstall Dependencies
-"""
-
-
 def create_settings_panel(globs):
     """Creates the settings overlay panel with tabs."""
 

@@ -1,14 +1,17 @@
 # src/qt_interface/qt_chat_page.py
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, 
-    QTextEdit, QPushButton, QLabel,
-    QScrollArea, QFrame, QSizePolicy,
-    QApplication, QTextBrowser)
+    QWidget, QVBoxLayout,  QScrollArea, QFrame,
+    QApplication, QTextBrowser
+)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QTextOption
-from src.managers.chat_manager import send_message
+from src.connections.ollama import (
+    get_loaded_models, unload_model
+)
+from src.utils.save_settings import save_settings
+from src.qt_interface.qt_components.qt_input_box import create_input_area
 from src.qt_interface.qt_styling import dark
-from src.managers.attachments import attach_file
+import sounddevice as sd
 import math
 
 
@@ -20,6 +23,12 @@ class AutoHeightBrowser(QTextBrowser):
         self.setWordWrapMode(QTextOption.WrapMode.WordWrap)
         self.document().setDocumentMargin(0)
         self.textChanged.connect(self._update_height)
+
+    def wheelEvent(self, event):
+        # Bubbles are auto-sized to fit content, so they never scroll internally.
+        # Ignore wheel events so they propagate to the chat scroll area instead
+        # of being silently swallowed by the hidden internal scrollbar.
+        event.ignore()
 
     def _update_height(self):
         doc = self.document()
@@ -39,7 +48,8 @@ class AutoHeightBrowser(QTextBrowser):
 
 def create_chat_page(globs):
     """Creates the main chat page with chat area + input at the bottom."""
-    
+
+    globs.add_bubble = add_bubble
     # Main container for the chat page
     chat_page = QWidget()
     
@@ -48,10 +58,13 @@ def create_chat_page(globs):
     main_layout.setContentsMargins(10, 10, 10, 10)
     main_layout.setSpacing(10)
 
-    # === CHAT AREA ===
+    # Chat Area
     scroll_area = QScrollArea()
+    scroll_area.setObjectName("chatScrollArea")
+    scroll_area.verticalScrollBar().setObjectName("chatScrollBar")
     scroll_area.setWidgetResizable(True)
     scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    scroll_area.setStyleSheet(dark.scroll_area)
 
     # Container for messages
     chat_content = QWidget()
@@ -62,170 +75,32 @@ def create_chat_page(globs):
     scroll_area.setWidget(chat_content)
     main_layout.addWidget(scroll_area, stretch=1)
 
-    # === INPUT AREA ===
-    input_widget = create_input_area(globs)
+    # Input Area
+    globs.input_widget = create_input_area(globs)
+    input_widget = globs.input_widget
+
+    # Handle model switching from the toolbar combobox
+    def on_model_changed():
+        model = globs.model_combo.currentText()
+        if not model or model == getattr(globs, "active_model", ""):
+            return
+        globs.active_model = model
+        save_settings(active_model=model)
+        # Unload any other loaded models to free VRAM/RAM
+        for loaded in get_loaded_models(globs, globs.ollama_chat_path):
+            if loaded != model:
+                unload_model(globs, loaded)
+
+    globs.model_combo.currentIndexChanged.connect(on_model_changed)
+
     main_layout.addWidget(input_widget)
 
     # Store references on globs so we can access them later from other functions
+    globs.chat_main_layout = main_layout
     globs.chat_area_layout = chat_layout
     globs.chat_content = chat_content
 
     return chat_page
-
-
-class InputBox(QTextEdit):
-    """Custom QTextEdit that sends on Enter, newlines on Shift+Enter, with cooldown."""
-    
-    def __init__(self, globs, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.globs = globs
-        self.ui_elements = {"add_bubble": lambda *a, **kw: add_bubble(*a, **kw)}
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return and not event.modifiers() & Qt.ShiftModifier:
-            self._handle_enter()
-            return
-        
-        super().keyPressEvent(event)
-
-    def _handle_enter(self):
-        import time
-
-        text = self.toPlainText().strip()
-
-        # If streaming and no new text, ignore
-        if self.globs.still_streaming and not text:
-            return
-
-        # If streaming with new text and 2+ seconds elapsed, cancel current stream
-        if self.globs.still_streaming and text:
-            if time.time() - self.globs.last_message_time >= 2:
-                if self.globs.cancel_event:
-                    self.globs.cancel_event.set()
-            else:
-                return  # Too soon, ignore
-
-        send_message(self.globs, self.ui_elements)
-
-
-def handle_send_click(globs):
-    """Toggles between send and stop depending on streaming state."""
-    if globs.still_streaming and globs.cancel_event:
-        globs.cancel_event.set()
-        globs.send_button.setText("➤")
-    else:
-        send_message(globs, {"add_bubble": add_bubble})
-
-
-def update_send_button_visibility(globs):
-    """Shows send button when there's text or streaming, hides otherwise."""
-    if globs.still_streaming:
-        globs.send_button.setVisible(True)
-    elif globs.input_box.toPlainText().strip():
-        globs.send_button.setVisible(True)
-    else:
-        globs.send_button.setVisible(False)
-
-
-def create_input_area(globs):
-    """Creates a unified input area with text box + toolbar row inside one rounded container."""
-    input_widget = QWidget()
-    outer_layout = QVBoxLayout(input_widget)
-    outer_layout.setContentsMargins(0, 0, 0, 0)
-    outer_layout.setSpacing(0)
-
-    # Single unified rounded container
-    input_container = QFrame()
-    input_container.setStyleSheet(
-        """
-        QFrame {
-            background-color: #2b2b2b;
-            border: 1px solid #3a3a3a;
-            border-radius: 12px;
-        }
-        """
-    )
-    container_layout = QVBoxLayout(input_container)
-    container_layout.setContentsMargins(8, 8, 8, 8)
-    container_layout.setSpacing(0)
-
-    # Top row: Text input + send button (combined)
-    top_row = QWidget()
-    top_row.setFixedHeight(50)
-    top_layout = QHBoxLayout(top_row)
-    top_layout.setContentsMargins(0, 0, 0, 0)
-    top_layout.setSpacing(0)
-
-    # Text input (shorter now)
-    globs.input_box = InputBox(globs)
-    globs.input_box.setPlaceholderText("Message Pearl...")
-    globs.input_box.setFont(QFont("Ubuntu", 14))
-    globs.input_box.setMaximumHeight(50)
-    globs.input_box.setMinimumHeight(50)
-    globs.input_box.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-    globs.input_box.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    globs.input_box.setStyleSheet(dark.input_box)
-    top_layout.addWidget(globs.input_box, stretch=1)
-
-    # Send button
-    globs.send_button = QPushButton("➤")
-    globs.send_button.setFixedSize(32, 32)
-    globs.send_button.setStyleSheet(dark.send_button)
-    globs.send_button.clicked.connect(lambda: handle_send_click(globs))
-
-    # Hide/show button based on input content
-    globs.input_box.textChanged.connect(lambda: update_send_button_visibility(globs))
-    globs.send_button.setVisible(False)
-
-    top_layout.addWidget(globs.send_button)
-    top_layout.addSpacing(8)
-
-    container_layout.addWidget(top_row)
-
-    # Bottom row: Toolbar
-    toolbar_row = QWidget()
-    toolbar_row.setFixedHeight(28)  # Small toolbar height
-    toolbar_layout = QHBoxLayout(toolbar_row)
-    toolbar_layout.setContentsMargins(8, 0, 8, 0)
-    toolbar_layout.setSpacing(6)
-
-    # Attachment button (pinned bottom-left)
-    globs.attach_button = QPushButton("+")
-    globs.attach_button.setFixedSize(22, 22)
-    globs.attach_button.setStyleSheet(dark.attach_button)
-    globs.attach_button.clicked.connect(lambda: attach_file(globs))
-    toolbar_layout.addWidget(globs.attach_button)
-
-    toolbar_layout.addStretch()  # Separates two sides of the toolbar
-
-    # TTS Toggle
-    globs.tts_button = QPushButton("\U0001F50A" if globs.tts_enabled else "\U0001F507")
-    globs.tts_button.setFixedSize(22, 22)
-    globs.tts_button.setCheckable(True)
-    globs.tts_button.setChecked(globs.tts_enabled)
-    globs.tts_button.setStyleSheet(dark.tts_button)
-    globs.tts_button.setToolTip("Text-to-Speech")
-    globs.tts_button.clicked.connect(lambda: toggle_tts(globs))
-    toolbar_layout.addWidget(globs.tts_button)
-
-    def toggle_tts(globs):
-        on = globs.tts_button.isChecked()
-        globs.tts_enabled = on
-        globs.tts_button.setText("\U0001F50A" if on else "\U0001F507")
-
-    # Same background as container so it blends perfectly
-    toolbar_row.setStyleSheet(
-        """
-        QWidget {
-            background-color: transparent;
-        }
-        """
-    )
-    container_layout.addWidget(toolbar_row)
-
-    outer_layout.addWidget(input_container)
-
-    return input_widget
 
 
 def add_bubble(globs, role, text, model=None):
@@ -279,6 +154,20 @@ def refresh_chat_page(globs):
         content = message.get("content", "")
         if role in ("user", "assistant") and content:
             add_bubble(globs, role=role, text=content)
+
+
+def switch_to_chat_page(globs):
+    """Flips to the chat page, bringing the input widget back home."""
+    globs.page_stack.setCurrentIndex(1)
+    globs.chat_main_layout.addWidget(globs.input_widget)
+    globs.input_widget.setMaximumWidth(16777215)  # Qt's "no limit"
+
+
+def switch_to_new_chat_page(globs):
+    """Flips to the landing page and moves the input widget into its slot."""
+    globs.page_stack.setCurrentIndex(0)
+    globs.new_chat_input_slot.addWidget(globs.input_widget)
+    globs.input_widget.setMaximumWidth(700)
 
 
 def copy_to_clipboard(text):

@@ -2,7 +2,9 @@
 import os
 import logging
 import subprocess
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QApplication, QStackedWidget
+)
 from PySide6.QtCore import Qt, QEvent, QTimer, QObject
 from src.qt_interface.qt_components.qt_title_bar import TitleBar
 from src.qt_interface.qt_components.qt_top_bar import create_top_bar
@@ -11,9 +13,19 @@ from src.qt_interface.qt_chat_page import create_chat_page
 from src.qt_interface.qt_settings.qt_settings import create_settings_panel
 from src.utils.load import load_data_path
 from src.interface.setup.setup_wizard import create_wizard
-from src.qt_interface.qt_components.qt_changelog import create_changelog_panel, toggle_changelog_panel
-from src.qt_interface.qt_components.qt_about import create_about_panel, toggle_about_panel
-from src.qt_interface.qt_components.qt_bug_report import create_report_panel, toggle_report_panel
+from src.qt_interface.qt_components.qt_changelog import (
+    create_changelog_panel, toggle_changelog_panel
+)
+from src.qt_interface.qt_components.qt_about import (
+    create_about_panel, toggle_about_panel
+)
+from src.qt_interface.qt_components.qt_bug_report import (
+    create_report_panel, toggle_report_panel
+)
+from src.qt_interface.qt_new_chat import create_new_chat_page
+from src.qt_interface.qt_chat_page import (
+    create_chat_page, switch_to_new_chat_page, switch_to_chat_page
+)
 from src.utils.icons import load_qt_icons
 from src.utils.qt_save import save_qt_settings
 
@@ -219,10 +231,22 @@ def create_qt_interface(globs):
     main_layout.addWidget(top_bar)
     globs.top_bar = top_bar
 
-    # CHAT PAGE
+    # PAGE STACK: new-chat landing page + chat page
+    globs.page_stack = QStackedWidget()
+    new_chat_page = create_new_chat_page(globs)
+
+    globs.page_stack.addWidget(new_chat_page)   # index 0: landing
     chat_page = create_chat_page(globs)
-    main_layout.addWidget(chat_page)
+
+    globs.page_stack.addWidget(chat_page)       # index 1: chat
+    main_layout.addWidget(globs.page_stack)
+
     globs.chat_page = chat_page
+    globs.new_chat_page = new_chat_page
+
+    # Input starts on the landing page
+    switch_to_new_chat_page(globs)
+    globs.switch_to_chat_page = switch_to_chat_page
 
     # SETTINGS PANEL
     create_settings_panel(globs)
