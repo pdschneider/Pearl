@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
     QCheckBox
     )
 from PySide6.QtCore import Qt
+from src.qt_interface.qt_styling import dark
 
 
 def create_behavior_settings_tab(globs):
@@ -31,6 +32,7 @@ def create_behavior_settings_tab(globs):
     chat_titles_layout.addWidget(chat_titles_label)
 
     globs.generate_titles_checkbox = QCheckBox()
+    globs.generate_titles_checkbox.setStyleSheet(dark.settings_checkbox)
     globs.generate_titles_checkbox.setChecked(globs.generate_titles)
     chat_titles_layout.addWidget(globs.generate_titles_checkbox)
 

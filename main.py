@@ -15,10 +15,17 @@ else:
 from src.utils.startup import startup
 from src.utils.save_settings import save_all_settings
 from src.utils.factory_reset import factory_reset_config
+from src.interface.setup.setup_wizard import create_wizard
+from packaging import version
 
 
 # Tests dependencies and sets flags
 startup(globs)
+
+
+# Trigger wizard if first time using the app
+if not globs.legacy_mode and version.parse(globs.previous_version) == version.parse("0.1.0"):
+    create_wizard(globs)
 
 
 def on_closing():

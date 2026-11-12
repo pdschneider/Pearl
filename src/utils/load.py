@@ -17,6 +17,7 @@ def load_data_path(direct=None, filename=None, default=False):
     default_files = ["settings.json",
                      "context.json",
                      "prompts.json",
+                     "tools.json",
                      "ollama_install.sh",
                      "docker_debian.sh",
                      "docker_ubuntu.sh",
@@ -268,3 +269,12 @@ def load_kokoro_windows():
     except Exception as e:
         logging.warning(f"Unable to load Kokoro install path for Windows due to: {e}")
         return ""
+
+
+def load_tools():
+    try:
+        with open(load_data_path("config", 'tools.json')) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.error(f"Failed to load tools.json due to: {e}.")
+        return {}

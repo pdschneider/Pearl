@@ -79,18 +79,23 @@ accepted_filetypes = [".txt", ".csv", ".json",
                       ".jpg", ".jpeg", ".png",
                       ".gif"]
 
-def attach_file(globs):
-    """Attach a file to a message."""
+
+def attach_file(globs, dialog=True, filepath=None):
+    """Attach a file to the message. Uses the file dialog by default,
+    or a provided filepath (drag-and-drop)."""
     globs.file_attachment = None
     globs.attachment_path = None
 
     # Open dialog box for filepath
-    file, filter = QFileDialog.getOpenFileName(
-        globs.window,
-        "Attach File",
-        "",
-        "All Files (*.*)",
-        options=QFileDialog.Option.DontUseNativeDialog)
+    if dialog:
+        file, filter = QFileDialog.getOpenFileName(
+            globs.window,
+            "Attach File",
+            "",
+            "All Files (*.*)",
+            options=QFileDialog.Option.DontUseNativeDialog)
+    else:
+        file = filepath
     
     # Return if file is not selected or is a directory
     if not file or not os.path.isfile(file):
@@ -209,6 +214,7 @@ def attach_file(globs):
     
     # Set global variable and  disable button
     globs.file_attachment = attachment
+    globs.show_attachment_chip(globs, globs.attachment_path)
     if globs.legacy_mode:
         globs.file_button.configure(state="disabled")
         globs.attach_tip.configure(message="File Already Attached")

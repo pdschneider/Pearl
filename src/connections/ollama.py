@@ -7,10 +7,12 @@ import socket
 import subprocess
 import threading
 from datetime import datetime
-from src.utils.hardware import get_disk_space, get_ram_info, get_gpu_info
+from src.utils.hardware import (
+    get_disk_space, get_ram_info, get_gpu_info
+)
 from src.utils.toast import show_toast
 from src.utils.save_settings import save_settings
-from src.managers.tools import generate_password
+from src.managers.tools import generate_password, PASSWORD_TOOL_SCHEMA
 from PySide6.QtWidgets import QMessageBox
 from tkinter import messagebox
 from rs_bpe.bpe import openai
@@ -435,7 +437,7 @@ def load_model(globs, model, endpoint="http://localhost:11434/"):
             if response.status_code == 200:
                 start_time = time.time()
                 while time.time() - start_time < 20:
-                    if model in get_loaded_models(globs):
+                    if model in get_loaded_models(globs, globs.ollama_chat_path):
                         logging.info(f"{model} loaded!")
                         return True
                     time.sleep(1)
@@ -461,7 +463,7 @@ def unload_model(globs, model):
         if response.status_code == 200:
             start_time = time.time()
             while time.time() - start_time < 10:
-                if model not in get_loaded_models(globs):
+                if model not in get_loaded_models(globs, globs.ollama_chat_path):
                     logging.info(f"Unloaded {model}")
                     show_toast(globs, message=f"{model} unloaded")
                     return True
@@ -501,14 +503,34 @@ def chat_stream(globs, model, messages, out_q, cancel_event):
     # Determine if context length can exceed 64,000
     is_gpu = gpu_check()
     if is_gpu:
-        globs.context_length = model_max_context
+        # Set context length for GPU-enabled systems
+        model_gb = get_model_size(globs, globs.active_model)
+        total_vram = get_gpu_info()['gpu_vram_gb']
+        if total_vram - model_gb - 1 >= 20:
+            globs.context_length = model_max_context
+        elif total_vram - model_gb - 1 >= 10:
+            globs.context_length = min(model_max_context, 32768)
+        elif total_vram - model_gb - 1 >= 6:
+            globs.context_length = min(model_max_context, 16384)
+        elif total_vram - model_gb - 1 >= 4:
+            globs.context_length = min(model_max_context, 8192)
+        else:
+            globs.context_length = min(model_max_context, 4096)
     else:
-        globs.context_length = model_max_context if model_max_context < 64000 else 64000
-        # Set context length lower if RAM is low
+        # Set context length for CPU-bound systems
         free_ram = get_ram_info()['avail_ram_gb']
-        if free_ram < 10:
-            globs.context_length = 32000
-    logging.debug(f"Max Context Length: {globs.context_length}")
+        if free_ram - 1 >= 20:
+            globs.context_length = min(model_max_context, 64000)
+        elif free_ram - 1 >= 10:
+            globs.context_length = min(model_max_context, 32768)
+        elif free_ram - 1 >= 6:
+            globs.context_length = min(model_max_context, 16384)
+        elif free_ram - 1 >= 4:
+            globs.context_length = min(model_max_context, 8192)
+        else:
+            globs.context_length = min(model_max_context, 4096)
+
+    logging.debug(f"Using Context Length: {globs.context_length}")
 
     # Calculate token count for conversation history
     encoder = openai.cl100k_base()
@@ -534,23 +556,9 @@ def chat_stream(globs, model, messages, out_q, cancel_event):
 
     # Define available tools
     globs.available_tools = []
-    if "pearl" in globs.active_model.lower() or "ministral" in globs.active_model.lower():
-        globs.available_tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "generate_password",
-                "description": "Generates a random secure password.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "length": {"type": "integer", "description": "Length of the password in characters."}
-                    },
-                    "required": []
-                }
-            }
-        }
-        ]
+    if model_supports_tools(globs.active_model, globs.ollama_chat_path):
+        if globs.password_generator:
+            globs.available_tools.append(PASSWORD_TOOL_SCHEMA)
 
     # Generate payload
     url = f"{globs.ollama_chat_path}api/chat"
@@ -990,3 +998,15 @@ def ram_check(globs, model):
                 title="Not Enough RAM",
                 message=f"Not enough RAM for this model - free up space to load.")
             return False
+
+
+def model_supports_tools(model_name, base_url="http://localhost:11434"):
+    """Returns True only if Ollama lists 'tools' among the model's capabilities.
+    Fails closed (False) so a dead server never enables tools by accident."""
+    try:
+        r = requests.post(f"{base_url}/api/show", json={"model": model_name}, timeout=10)
+        r.raise_for_status()
+        return "tools" in r.json().get("capabilities", [])
+    except Exception as e:
+        logging.error(f"Tool support check failed for {model_name}: {e}")
+        return False

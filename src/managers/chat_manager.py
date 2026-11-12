@@ -103,6 +103,10 @@ def send_message(globs, ui_elements):
     # Delete entry box contents
     if not globs.legacy_mode:
         globs.input_box.clear()
+        # If we're on the landing page, flip to the chat view
+        flip = getattr(globs, "switch_to_chat_page", None)
+        if flip:
+            flip(globs)
     else:
         globs.input_box.delete("1.0", "end")
 
@@ -148,6 +152,8 @@ def send_message(globs, ui_elements):
         globs.attach_tip.configure(message="Attach")
     globs.file_attachment = None
     globs.attachment_path = None
+    if getattr(globs, "show_attachment_chip", None):
+        globs.show_attachment_chip(globs, None)
 
     # Toggle button to stop mode
     if globs.legacy_mode:

@@ -11,7 +11,7 @@ import tkinter as tk
 import customtkinter as ctk
 from src.connections.ollama import ollama_test, load_model, get_loaded_models
 from src.utils.hardware import get_hardware_stats
-from src.utils.load import load_data_path, load_settings
+from src.utils.load import load_data_path, load_settings, load_tools
 from src.connections.docker import docker_check
 from src.connections.kokoro import kokoro_test
 from src.connections.updater import version_check
@@ -65,6 +65,39 @@ def startup(globs):
             logging.root.setLevel(getattr(logging, settings.get("logging_level", "INFO")))
 
         logging.debug(f"File and console logging initialized successfully.")
+
+    def setup_tools():
+        """Ensures that available tool calls are present with conforming values."""
+        try:
+            tools = load_data_path("config", "tools.json")
+            with open(tools, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            logging.debug(f"Tools loaded successfully from {tools}!")
+
+            changed = False
+
+            # Check to make sure keys are present and the correct type
+            if "password_generator" not in data or not isinstance(data["password_generator"], bool):
+                data["password_generator"] = False
+                changed = True
+                logging.info(f"Added missing or nonconforming 'password_generator' key to tools.json")
+
+            # Write to file
+            if changed:
+                with open(tools, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=4)
+
+        # Sanitize on exceptions
+        except json.JSONDecodeError as e:
+            logging.error(f"Invalid json syntax {e}. Replacing corrupted tools file with default.")
+            os.remove(tools)
+            load_data_path("config", "tools.json")
+        except TypeError as e:
+            logging.error(f"Invalid json structure: {e} | Replacing corrupted tools file with default.")
+            os.remove(tools)
+            load_data_path("config", "tools.json")
+        except Exception as e:
+            logging.error(f"Unable to sanitize tools due to: {e}")
 
     def setup_settings():
         """Ensure the settings files is present and has conforming values."""
@@ -184,7 +217,7 @@ def startup(globs):
                 logging.info(
                     f"Added missing or nonconforming 'dynamic_window_size' key to settings.json")
             if "legacy_mode" not in data or not isinstance(data["legacy_mode"], bool):
-                data["dynamic_window_size"] = True
+                data["dynamic_window_size"] = False
                 changed = True
                 logging.info(
                     f"Added missing or nonconforming 'legacy_mode' key to settings.json")
@@ -201,7 +234,7 @@ def startup(globs):
 
         # Sanitize on exceptions
         except json.JSONDecodeError as e:
-            logging.error(f"Invalid json syntax {e}. Replacing corrupted file with default.")
+            logging.error(f"Invalid json syntax {e}. Replacing corrupted settings file with default.")
             os.remove(settings)
             load_data_path("config", "settings.json")
         except TypeError as e:
@@ -549,6 +582,7 @@ def startup(globs):
     def startup_tasks(globs, tasks_done):
         """Tests dependencies and sets flags."""
         setup_logging()
+        setup_tools()
         setup_settings()
         setup_themes()
         setup_context()
@@ -605,41 +639,46 @@ def startup(globs):
     if tasks_done.is_set():
         return
 
-    # Create the loading window
-    globs.startup_root = ctk.CTk()
-    globs.startup_root.title("Loading Pearl...")
-    screen_width = globs.startup_root.winfo_screenwidth()
-    screen_height = globs.startup_root.winfo_screenheight()
-    x = (screen_width - 900) // 2
-    y = (screen_height - 850) // 2
-    globs.startup_root.geometry(f"300x100+{x}+{y}")
+    if globs.legacy_mode:
+        # Create the loading window
+        globs.startup_root = ctk.CTk()
+        globs.startup_root.title("Loading Pearl...")
+        screen_width = globs.startup_root.winfo_screenwidth()
+        screen_height = globs.startup_root.winfo_screenheight()
+        x = (screen_width - 900) // 2
+        y = (screen_height - 850) // 2
+        globs.startup_root.geometry(f"300x100+{x}+{y}")
 
-    # Create progress bar
-    progress_bar = ctk.CTkProgressBar(globs.startup_root, mode="indeterminate")
-    progress_bar.pack(padx=10, pady=10, fill="x")
-    progress_bar.start()
+        # Create progress bar
+        progress_bar = ctk.CTkProgressBar(globs.startup_root, mode="indeterminate")
+        progress_bar.pack(padx=10, pady=10, fill="x")
+        progress_bar.start()
 
     # Callback to destroy the window when tasks are done
     def close_startup_window():
         """Closes the progress bar window."""
-        progress_bar.stop()
-        if globs.startup_root:
-            globs.startup_root.quit()
+        if globs.legacy_mode:
+            progress_bar.stop()
+            if globs.startup_root:
+                globs.startup_root.quit()
 
     def check_if_done():
         """Periodically checks to see if loading is finished."""
-        if tasks_done.is_set():
-            close_startup_window()
-        else:
-            if globs.startup_root:
-                globs.startup_root.after(100, check_if_done)
+        if globs.legacy_mode:
+            if tasks_done.is_set():
+                close_startup_window()
+            else:
+                if globs.startup_root:
+                    globs.startup_root.after(100, check_if_done)
 
     # Set up polling loop
-    if globs.startup_root:
-        globs.startup_root.after(100, check_if_done)
+    if globs.legacy_mode:
+        if globs.startup_root:
+            globs.startup_root.after(100, check_if_done)
 
     # Destroy loading screen
-    try:
-        globs.startup_root.mainloop()
-    except tk.TclError:
-        pass #  Ignores callback errors
+    if globs.legacy_mode:
+        try:
+            globs.startup_root.mainloop()
+        except tk.TclError:
+            pass #  Ignores callback errors
